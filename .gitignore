@@ -1,0 +1,37 @@
+# Node & Frontend
+node_modules/
+**/node_modules/
+.next/
+**/build/
+**/dist/
+
+# Python & Virtual Envs
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.venv/
+backend/.venv/
+
+# Testing & Cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment & DB
+.env
+*.db
+backend/*.db
+downloads/
+uploads/
+scratch/
+
+# IDE & System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

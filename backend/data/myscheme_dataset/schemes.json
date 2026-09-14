@@ -1,0 +1,102 @@
+[
+  {
+    "title": "Pradhan Mantri Awas Yojana - Urban (PMAY-U)",
+    "title_ta": "பிரதம மந்திரி நகர்ப்புற வீட்டுவசதி திட்டம்",
+    "category": "Housing & Urban Development",
+    "ministry": "Ministry of Housing and Urban Affairs",
+    "central_or_state": "Central",
+    "state_name": "All India",
+    "description": "Provides interest subsidy and financial grants up to Rs. 2.67 Lakhs for construction of houses to urban families belonging to EWS, LIG, and MIG categories.",
+    "eligibility_text": "Urban families below age 70 years with annual household income up to 3.0 lakh.",
+    "benefits_text": "Interest subsidy up to 6.5% on housing loans with maximum subsidy value of Rs. 2,67,000 directly credited to loan accounts.",
+    "required_documents": ["Aadhaar Card", "Income Certificate", "Ration Card", "Bank Account Passbook", "Land Ownership Deed"],
+    "helpline": "1800-11-3377",
+    "official_url": "https://pmaymis.gov.in",
+    "faqs": [
+      {
+        "question": "Who is eligible for PMAY-U?",
+        "answer": "Any urban family with income below 3 lakh not owning any other brick house in India."
+      }
+    ]
+  },
+  {
+    "title": "PM-KISAN Samman Nidhi Scheme",
+    "title_ta": "பிரதம மந்திரி விவசாயிகள் நிதியுதவி திட்டம்",
+    "category": "Agriculture & Farmers Welfare",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "central_or_state": "Central",
+    "state_name": "All India",
+    "description": "An initiative by the Government of India that provides Rs. 6,000 per year in three equal installments to all small and marginal landholding farmer families.",
+    "eligibility_text": "Small and marginal farmers above 18 years owning cultivable land up to 5 acres.",
+    "benefits_text": "Direct cash transfer of Rs. 6,000 annually split into three equal quarterly bank transfers of Rs. 2,000.",
+    "required_documents": ["Aadhaar Card", "Land Holding Patta Certificate", "Bank Account Passbook"],
+    "helpline": "155261",
+    "official_url": "https://pmkisan.gov.in",
+    "faqs": [
+      {
+        "question": "Is land ownership required for PM-KISAN?",
+        "answer": "Yes, valid land cultivation registry certificates are required to be submitted."
+      }
+    ]
+  },
+  {
+    "title": "TN Kalaignar Magalir Urimai Thogai Thittam",
+    "title_ta": "கலைஞர் மகளிர் உரிமைத் தொகைத் திட்டம்",
+    "category": "Women & Child Development",
+    "ministry": "Government of Tamil Nadu",
+    "central_or_state": "State",
+    "state_name": "Tamil Nadu",
+    "description": "Monthly cash assistance scheme for eligible women heads of households in Tamil Nadu to improve economic livelihood and financial independence.",
+    "eligibility_text": "Women above 21 years with annual household income below 2.5 lakh and electricity consumption under 3600 units.",
+    "benefits_text": "Direct monthly bank account transfer of Rs. 1,000 on the 15th of every month.",
+    "required_documents": ["Aadhaar Card", "Smart Ration Card", "Electricity Bill", "Bank Passbook"],
+    "helpline": "1100",
+    "official_url": "https://kmt.tn.gov.in",
+    "faqs": [
+      {
+        "question": "Can multiple women in a family apply?",
+        "answer": "No, only one eligible female head per family Ration Card can receive the benefit."
+      }
+    ]
+  },
+  {
+    "title": "Ayushman Bharat PM-JAY Health Insurance",
+    "title_ta": "ஆயுஷ்மான் பாரத் இலவச மருத்துவக் காப்பீடு",
+    "category": "Healthcare & Insurance",
+    "ministry": "Ministry of Health and Family Welfare",
+    "central_or_state": "Central",
+    "state_name": "All India",
+    "description": "The largest health assurance scheme in the world, providing a health cover of Rs. 5 Lakhs per family per year for secondary and tertiary care hospitalization.",
+    "eligibility_text": "Low income families below annual household income of 2.5 lakh listed in SECC registry.",
+    "benefits_text": "Cashless hospitalization cover of up to Rs. 5,00,000 per family per year in all government and empaneled private hospitals.",
+    "required_documents": ["Aadhaar Card", "Ration Card", "PM-JAY Letter"],
+    "helpline": "14555",
+    "official_url": "https://pmjay.gov.in",
+    "faqs": [
+      {
+        "question": "Are pre-existing diseases covered?",
+        "answer": "Yes, all pre-existing medical conditions are covered from day one of card activation."
+      }
+    ]
+  },
+  {
+    "title": "Pudhumai Penn Scheme (Higher Education Girl Grant)",
+    "title_ta": "மூவலூர் ராமாமிர்தம் அம்மையார் புதுமைப் பெண் திட்டம்",
+    "category": "Education & Scholarships",
+    "ministry": "Government of Tamil Nadu",
+    "central_or_state": "State",
+    "state_name": "Tamil Nadu",
+    "description": "TN higher education assurance scheme providing financial assistance to girl students who studied in government schools to pursue collegiate education.",
+    "eligibility_text": "Girl students above 17 years and below 25 years who studied classes 6th to 12th in Tamil Nadu government schools.",
+    "benefits_text": "Monthly deposit of Rs. 1,000 directly into the student's bank account till completion of college degree or diploma.",
+    "required_documents": ["Aadhaar Card", "10th and 12th Marksheets", "Govt School Study Certificate", "College Bonafide Certificate"],
+    "helpline": "1800-425-0110",
+    "official_url": "https://penkalvi.tn.gov.in",
+    "faqs": [
+      {
+        "question": "Is postgraduate education covered under this?",
+        "answer": "The benefit is offered for undergraduate degree, diploma, or ITI course completion only."
+      }
+    ]
+  }
+]
