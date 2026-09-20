@@ -1,5 +1,4 @@
 import streamlit as st
-import streamlit.components.v1 as components
 import json
 import os
 import base64
@@ -14,34 +13,57 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Global Styling & Button Colors (#00865a)
+st.markdown("""
+<style>
+    section[data-testid="stSidebar"] { display: none !important; }
+    header[data-testid="stHeader"] { display: none !important; }
+    footer { display: none !important; }
+    .block-container { padding: 1.5rem 2rem !important; max-width: 1380px !important; margin: 0 auto !important; }
+    .stApp { background-color: #f8fafc !important; }
+    
+    /* Primary Green Button Styling */
+    div.stButton > button[kind="primary"] {
+        background-color: #00865a !important;
+        color: white !important;
+        border: none !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+        transition: all 0.2s ease !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #006e4a !important;
+        box-shadow: 0 4px 12px rgba(0,134,90,0.2) !important;
+    }
+    
+    /* Secondary Outline Button Styling */
+    div.stButton > button[kind="secondary"] {
+        background-color: #ffffff !important;
+        color: #00865a !important;
+        border: 1px solid #cbd5e1 !important;
+        font-weight: 600 !important;
+        border-radius: 8px !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        border-color: #00865a !important;
+        background-color: #f0fdf4 !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # API Base URL
 API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
-# READ QUERY PARAMETERS FOR TOP-LEVEL RUNTIME ROUTING
+# Helper Navigation Function
+def navigate(page, **params):
+    st.query_params["page"] = page
+    for k, v in params.items():
+        st.query_params[k] = str(v)
+    st.rerun()
+
+# READ QUERY PARAMETER FOR TOP-LEVEL RUNTIME ROUTING
 query_params = st.query_params
 current_page = query_params.get("page", "home")
-
-# Apply layout styles depending on active page
-if current_page == "home":
-    st.markdown("""
-    <style>
-        section[data-testid="stSidebar"] { display: none !important; }
-        header[data-testid="stHeader"] { display: none !important; }
-        footer { display: none !important; }
-        .block-container { padding: 0 !important; margin: 0 !important; max-width: 100% !important; }
-        .stApp { background-color: #ffffff !important; }
-    </style>
-    """, unsafe_allow_html=True)
-else:
-    st.markdown("""
-    <style>
-        section[data-testid="stSidebar"] { display: none !important; }
-        header[data-testid="stHeader"] { display: none !important; }
-        footer { display: none !important; }
-        .block-container { padding: 1.5rem 2rem !important; max-width: 1380px !important; margin: 0 auto !important; }
-        .stApp { background-color: #f8fafc !important; }
-    </style>
-    """, unsafe_allow_html=True)
 
 # Helper function to convert local image files to Base64
 def get_image_b64(filename):
@@ -60,7 +82,7 @@ hero_b64 = get_image_b64("gwa-hero.png")
 # Core Real Dataset Fallback
 DEFAULT_CATEGORIES = [
     {"id": "cat_housing", "name": "Housing & Urban Development", "name_ta": "வீட்டுவசதித் திட்டம்", "name_hi": "आवास और शहरी विकास", "icon": "home", "description": "Subsidies and financial aid for housing construction"},
-    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "कृषि एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
+    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "কৃষি एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
     {"id": "cat_women", "name": "Women & Child Development", "name_ta": "மகளிர் நலம்", "name_hi": "महिला एवं बाल विकास", "icon": "heart", "description": "Monthly assistance, maternity benefit, and empowerment grants"},
     {"id": "cat_health", "name": "Healthcare & Insurance", "name_ta": "சுகாதாரம் & காப்பீடு", "name_hi": "स्वास्थ्य सेवा एवं बीमा", "icon": "activity", "description": "Cashless hospital treatment and medical coverage"},
     {"id": "cat_education", "name": "Education & Scholarships", "name_ta": "கல்வி உதவித் தொகை", "name_hi": "शिक्षा एवं छात्रवृत्ति", "icon": "graduation-cap", "description": "Financial assistance for school and college education"}
@@ -202,7 +224,7 @@ DEFAULT_SCHEMES = [
 # Shared Navigation Banner for Functional Streamlit Pages
 def render_functional_header(title_en, title_ta, subtitle_en=""):
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #00865a 0%, #112448 100%); padding: 22px 30px; border-radius: 12px; margin-bottom: 25px; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
+    <div style="background: linear-gradient(135deg, #00865a 0%, #112448 100%); padding: 22px 30px; border-radius: 12px; margin-bottom: 20px; color: white; box-shadow: 0 4px 14px rgba(0,0,0,0.08);">
         <div style="display:flex; justify-content:space-between; align-items:center;">
             <div>
                 <span style="background:rgba(255,255,255,0.2); font-size:11px; font-weight:700; text-transform:uppercase; padding:3px 10px; border-radius:20px; letter-spacing:0.5px;">Government Welfare Assistant</span>
@@ -217,8 +239,7 @@ def render_functional_header(title_en, title_ta, subtitle_en=""):
     col_a, col_b = st.columns([1, 4])
     with col_a:
         if st.button("← Back to Approved Homepage", key=f"back_home_{title_en.lower().replace(' ', '_').replace('&', 'and')}", type="secondary"):
-            st.query_params["page"] = "home"
-            st.rerun()
+            navigate("home")
 
 # REAL FUNCTIONAL PAGE RENDERERS CONNECTED TO FASTAPI BACKEND
 
@@ -254,13 +275,14 @@ def render_signin_page():
                         st.session_state["user"] = {"name": "Arun Kumar", "email": email, "district": "Madurai"}
                         st.success("Authenticated successfully! Prompting Multi-Factor Authentication...")
                         
-                    st.query_params["page"] = "mfa"
-                    st.rerun()
+                    navigate("mfa")
                 else:
                     st.error("Please enter valid credentials.")
                     
-        st.markdown("<div style='text-align:center; margin-top:15px;'><a href='/?page=register' target='_top' style='color:#00865a; font-weight:600; text-decoration:none;'>Don't have an account? Create Citizen Account →</a></div>", unsafe_allow_html=True)
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; margin-top:15px;'>", unsafe_allow_html=True)
+        if st.button("Don't have an account? Create Citizen Account →", key="auth_reg_link", type="secondary"):
+            navigate("register")
+        st.markdown("</div></div>", unsafe_allow_html=True)
 
 def render_register_page():
     render_functional_header("Create Citizen Account & Setup MFA", "புதிய கணக்கு உருவாக்குதல்", "Register to enable automated eligibility tracking and AI form auto-filling.")
@@ -311,8 +333,7 @@ def render_register_page():
                     
                 st.session_state["user"] = reg_payload
                 st.success("Account created in FastAPI backend! Redirecting to MFA TOTP QR setup...")
-                st.query_params["page"] = "mfa"
-                st.rerun()
+                navigate("mfa")
                 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -334,8 +355,7 @@ def render_mfa_page():
                 if len(totp) == 6:
                     st.success("MFA Verification Successful! Welcome Arun Kumar.")
                     st.session_state["authenticated"] = True
-                    st.query_params["page"] = "dashboard"
-                    st.rerun()
+                    navigate("dashboard")
                 else:
                     st.error("Invalid TOTP code. Please enter 6 digits.")
         st.markdown("</div>", unsafe_allow_html=True)
@@ -403,14 +423,10 @@ def render_schemes_page():
             b1, b2, b3 = st.columns([1, 1, 3])
             with b1:
                 if st.button("View Details →", key=f"v_{sid}", use_container_width=True):
-                    st.query_params["page"] = "scheme_detail"
-                    st.query_params["id"] = sid
-                    st.rerun()
+                    navigate("scheme_detail", id=sid)
             with b2:
                 if st.button("Check Eligibility", key=f"e_{sid}", use_container_width=True, type="primary"):
-                    st.query_params["page"] = "eligibility"
-                    st.query_params["id"] = sid
-                    st.rerun()
+                    navigate("eligibility", id=sid)
             st.divider()
 
 def render_scheme_detail_page(scheme_id):
@@ -459,14 +475,10 @@ def render_scheme_detail_page(scheme_id):
         st.markdown("<div style='background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
         st.subheader("⚡ Quick Actions")
         if st.button("Check My Eligibility Now →", use_container_width=True, type="primary"):
-            st.query_params["page"] = "eligibility"
-            st.query_params["id"] = scheme_id
-            st.rerun()
+            navigate("eligibility", id=scheme_id)
             
         if st.button("Proceed to Apply with AI", use_container_width=True):
-            st.query_params["page"] = "apply"
-            st.query_params["id"] = scheme_id
-            st.rerun()
+            navigate("apply", id=scheme_id)
             
         st.divider()
         st.markdown(f"**Helpline:** 📞 {helpline}")
@@ -548,9 +560,7 @@ def render_eligibility_page(scheme_id):
         
         st.markdown("<div style='margin-top:15px;'></div>", unsafe_allow_html=True)
         if st.button("Proceed to Apply with AI Assistant →", type="primary", use_container_width=True):
-            st.query_params["page"] = "apply"
-            st.query_params["id"] = scheme_id
-            st.rerun()
+            navigate("apply", id=scheme_id)
 
 def render_apply_page(scheme_id):
     scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
@@ -586,8 +596,7 @@ def render_apply_page(scheme_id):
                     
             st.success("🎉 Application Submitted Successfully! Application Receipt Reference: `APP-2026-TN-98124`")
             st.info("PDF Receipt generated. Redirecting to My Welfare Journey Dashboard...")
-            st.query_params["page"] = "dashboard"
-            st.rerun()
+            navigate("dashboard")
 
 def render_ocr_page():
     render_functional_header("DocReady Document Extraction & Verification Engine", "ஆவணப் பரிசோதனை எஞ்சின்", "Upload government identity certificates to automatically extract text and verify against scheme rules.")
@@ -694,6 +703,177 @@ def render_dashboard_page():
     </div>
     """, unsafe_allow_html=True)
 
+# APPROVED HOMEPAGE RENDERER USING NATIVE STREAMLIT INTERACTIVE CONTROLS
+def render_approved_homepage():
+    # 1. Header Navigation Bar
+    h_col1, h_col2, h_col3 = st.columns([2, 4, 3])
+    with h_col1:
+        if logo_b64:
+            st.markdown(f'<img src="{logo_b64}" style="height:42px; width:auto; object-fit:contain;">', unsafe_allow_html=True)
+        else:
+            st.markdown("<h3 style='color:#00865a; margin:0;'>🏛️ Government Welfare Assistant</h3>", unsafe_allow_html=True)
+            
+    with h_col2:
+        n1, n2, n3, n4 = st.columns(4)
+        if n1.button("Home", key="nav_home", use_container_width=True):
+            navigate("home")
+        if n2.button("Explore Schemes", key="nav_schemes", use_container_width=True):
+            navigate("schemes")
+        if n3.button("My Journey", key="nav_dash", use_container_width=True):
+            navigate("dashboard")
+        if n4.button("Document AI", key="nav_ocr", use_container_width=True):
+            navigate("ocr")
+            
+    with h_col3:
+        a1, a2, a3 = st.columns([2, 2, 2])
+        lang = a1.selectbox("Lang", ["English", "தமிழ்", "हिन्दी"], label_visibility="collapsed")
+        if a2.button("Sign In", key="btn_signin", use_container_width=True, type="secondary"):
+            navigate("signin")
+        if a3.button("Create Account", key="btn_register", use_container_width=True, type="primary"):
+            navigate("register")
+
+    st.divider()
+
+    # 2. Hero Section
+    hero_col1, hero_col2 = st.columns([1.1, 0.9])
+    with hero_col1:
+        st.markdown("""
+        <div style="font-size:12px; font-weight:700; color:#64748b; margin-bottom:12px; text-transform:uppercase; letter-spacing:0.5px;">
+            Citizens | Schemes | AI | A Stronger Tomorrow
+        </div>
+        <h1 style="font-size:42px; font-weight:800; color:#0f172a; line-height:1.15; margin-bottom:16px; letter-spacing:-0.5px;">
+            Find Government Support That Fits <span style="color:#00865a;">Your Situation</span>
+        </h1>
+        <p style="font-size:16px; color:#475569; margin-bottom:28px;">
+            Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility, and prepare your application.
+        </p>
+        """, unsafe_allow_html=True)
+        
+        c_cta1, c_cta2, c_cta3 = st.columns([2, 2, 1])
+        if c_cta1.button("Start My Welfare Journey →", key="hero_journey", use_container_width=True, type="primary"):
+            navigate("dashboard")
+        if c_cta2.button("Explore Schemes", key="hero_schemes", use_container_width=True, type="secondary"):
+            navigate("schemes")
+            
+        st.markdown("""
+        <div style="display:flex; gap:32px; padding:20px; background:#f8fafc; border-radius:12px; border:1px solid #f1f5f9; margin-top:24px;">
+            <div><span style="font-size:20px; font-weight:800; color:#0f172a;">46+</span><br><span style="font-size:12px; color:#64748b;">Central & State Sources</span></div>
+            <div><span style="font-size:20px; font-weight:800; color:#0f172a;">5+</span><br><span style="font-size:12px; color:#64748b;">Indexed Schemes</span></div>
+            <div><span style="font-size:20px; font-weight:800; color:#0f172a;">3</span><br><span style="font-size:12px; color:#64748b;">Languages Supported</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with hero_col2:
+        if hero_b64:
+            st.markdown(f'<div style="border-radius:16px; overflow:hidden; box-shadow:0 10px 25px -5px rgba(0,0,0,0.1);"><img src="{hero_b64}" style="width:100%; height:auto; display:block;"></div>', unsafe_allow_html=True)
+
+    st.markdown("<div style='margin-top:35px;'></div>", unsafe_allow_html=True)
+
+    # 3. Ask the Welfare Assistant Section
+    st.markdown("""
+    <div style="background:white; border:1px solid #e2e8f0; border-radius:16px 16px 0 0; padding:24px 24px 12px 24px;">
+        <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:36px; height:36px; background:#e0e7ff; color:#4338ca; border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;">AI</div>
+            <div>
+                <strong style="color:#0f172a; font-size:16px;">Ask the Welfare Assistant</strong>
+                <p style="color:#64748b; font-size:13px; margin:0;">Tell us what you need in your own words. You can type or speak.</p>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    ai_col1, ai_col2, ai_col3 = st.columns([4, 1, 1])
+    with ai_col1:
+        ai_q = st.text_input("Assistant Search", placeholder="e.g., I am looking for financial assistance for my education...", label_visibility="collapsed")
+    with ai_col2:
+        if st.button("🎙 Speak", key="home_speak", use_container_width=True, type="secondary"):
+            navigate("voice")
+    with ai_col3:
+        if st.button("🔍 Search", key="home_search", use_container_width=True, type="primary"):
+            navigate("schemes")
+
+    # Chips
+    chip_col1, chip_col2, chip_col3, chip_col4 = st.columns(4)
+    if chip_col1.button("🎓 I need a scholarship", key="chip_1", use_container_width=True, type="secondary"):
+        navigate("schemes")
+    if chip_col2.button("🏠 Looking for housing support", key="chip_2", use_container_width=True, type="secondary"):
+        navigate("schemes")
+    if chip_col3.button("🌾 Farmer financial assistance", key="chip_3", use_container_width=True, type="secondary"):
+        navigate("schemes")
+    if chip_col4.button("👨‍👩‍👧 Scheme eligibility for my family", key="chip_4", use_container_width=True, type="secondary"):
+        navigate("eligibility", id="pmay-urban")
+
+    st.markdown("<div style='margin-top:35px;'></div>", unsafe_allow_html=True)
+    st.subheader("Browse Schemes by Category")
+    
+    cat1, cat2, cat3, cat4 = st.columns(4)
+    with cat1:
+        st.markdown("<div style='background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:8px;'><strong>Housing & Urban</strong><br><small style='color:#64748b;'>Subsidies & Aid</small></div>", unsafe_allow_html=True)
+        if st.button("Explore Housing →", key="cat_1", use_container_width=True, type="secondary"):
+            navigate("schemes")
+    with cat2:
+        st.markdown("<div style='background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:8px;'><strong>Agriculture & Farmers</strong><br><small style='color:#64748b;'>Direct Income Support</small></div>", unsafe_allow_html=True)
+        if st.button("Explore Farmers →", key="cat_2", use_container_width=True, type="secondary"):
+            navigate("schemes")
+    with cat3:
+        st.markdown("<div style='background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:8px;'><strong>Women & Child</strong><br><small style='color:#64748b;'>Monthly Grants</small></div>", unsafe_allow_html=True)
+        if st.button("Explore Women →", key="cat_3", use_container_width=True, type="secondary"):
+            navigate("schemes")
+    with cat4:
+        st.markdown("<div style='background:white; border:1px solid #e2e8f0; border-radius:12px; padding:16px; margin-bottom:8px;'><strong>Healthcare & Insurance</strong><br><small style='color:#64748b;'>Cashless Coverage</small></div>", unsafe_allow_html=True)
+        if st.button("Explore Health →", key="cat_4", use_container_width=True, type="secondary"):
+            navigate("schemes")
+
+    st.markdown("<div style='margin-top:35px;'></div>", unsafe_allow_html=True)
+    st.subheader("Recommended Schemes")
+
+    rec1, rec2, rec3 = st.columns(3)
+    with rec1:
+        st.markdown("""
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:10px;">
+            <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">PMAY-U</span>
+            <h3 style="font-size:16px; font-weight:700; color:#0f172a; margin:8px 0;">Pradhan Mantri Awas Yojana (Urban)</h3>
+            <p style="font-size:13px; color:#64748b; margin-bottom:0;">Interest subsidy up to ₹2.67 Lakhs on housing loans for EWS/LIG families building their first home.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        b_p1, b_p2 = st.columns(2)
+        if b_p1.button("View Details", key="card_v_pmay", use_container_width=True, type="secondary"):
+            navigate("scheme_detail", id="pmay-urban")
+        if b_p2.button("Check Eligibility", key="card_e_pmay", use_container_width=True, type="primary"):
+            navigate("eligibility", id="pmay-urban")
+
+    with rec2:
+        st.markdown("""
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:10px;">
+            <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">PM-KISAN</span>
+            <h3 style="font-size:16px; font-weight:700; color:#0f172a; margin:8px 0;">PM-KISAN Samman Nidhi</h3>
+            <p style="font-size:13px; color:#64748b; margin-bottom:0;">Direct annual income support of ₹6,000 for land-holding farmer families transferred in 3 equal quarterly installments.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        b_k1, b_k2 = st.columns(2)
+        if b_k1.button("View Details", key="card_v_kisan", use_container_width=True, type="secondary"):
+            navigate("scheme_detail", id="pm-kisan")
+        if b_k2.button("Check Eligibility", key="card_e_kisan", use_container_width=True, type="primary"):
+            navigate("eligibility", id="pm-kisan")
+
+    with rec3:
+        st.markdown("""
+        <div style="background:white; border:1px solid #e2e8f0; border-radius:12px; padding:20px; margin-bottom:10px;">
+            <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">KMT</span>
+            <h3 style="font-size:16px; font-weight:700; color:#0f172a; margin:8px 0;">Kalaignar Magalir Urimai Thogai</h3>
+            <p style="font-size:13px; color:#64748b; margin-bottom:0;">Monthly financial assistance grant of ₹1,000 directly transferred to eligible female heads of households in Tamil Nadu.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        b_m1, b_m2 = st.columns(2)
+        if b_m1.button("View Details", key="card_v_kmt", use_container_width=True, type="secondary"):
+            navigate("scheme_detail", id="kalaignar-magalir")
+        if b_m2.button("Check Eligibility", key="card_e_kmt", use_container_width=True, type="primary"):
+            navigate("eligibility", id="kalaignar-magalir")
+
+    st.markdown("<div style='margin-top:40px;'></div>", unsafe_allow_html=True)
+    st.divider()
+    st.markdown("<div style='display:flex; justify-content:space-between; align-items:center; color:#94a3b8; font-size:13px;'><div>© 2026 Government Welfare Assistant. All rights reserved.</div><div>Built with AI for a Better Tomorrow →</div></div>", unsafe_allow_html=True)
+
 
 # ROUTER EXECUTION CONTROLLER
 if current_page == "signin":
@@ -720,201 +900,5 @@ elif current_page == "voice":
 elif current_page == "dashboard":
     render_dashboard_page()
 else:
-    # RENDER APPROVED HOMEPAGE HTML WITH NATIVE ABSOLUTE ROOT TARGET_TOP ANCHORS
-    USER_UI_HTML_TEMPLATE = """<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Government Welfare Assistant</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
-body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
-.app-container { width: 100%; max-width: 1380px; margin: 0 auto; background: #ffffff; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; }
-.header { display: flex; justify-content: space-between; align-items: center; padding: 16px 32px; border-bottom: 1px solid #e2e8f0; background: #ffffff; position: sticky; top: 0; z-index: 100; }
-.brand { display: flex; align-items: center; gap: 12px; }
-.brand img { height: 42px; width: auto; object-fit: contain; }
-.nav-links { display: flex; gap: 24px; align-items: center; }
-.nav-links a { text-decoration: none; color: #475569; font-weight: 500; font-size: 14px; cursor: pointer; transition: color 0.2s; }
-.nav-links a:hover, .nav-links a.active { color: #00865a; font-weight: 600; }
-.actions { display: flex; gap: 12px; align-items: center; }
-.btn { border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
-.btn.outline { background: transparent; border: 1px solid #cbd5e1; color: #00865a; }
-.btn.outline:hover { border-color: #00865a; background: #f0fdf4; }
-.btn.primary { background: #00865a; color: #ffffff; }
-.btn.primary:hover { background: #006e4a; }
-.lang-select { border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 12px; font-size: 14px; color: #334155; background: #ffffff; cursor: pointer; outline: none; }
-.main-content { flex: 1; padding: 32px; }
-.hero-section { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 32px; align-items: center; padding: 24px 0 40px; }
-.hero-badges { display: flex; gap: 12px; margin-bottom: 16px; font-size: 12px; font-weight: 600; color: #64748b; }
-.hero-title { font-size: 42px; font-weight: 800; color: #0f172a; line-height: 1.15; margin-bottom: 16px; letter-spacing: -0.5px; }
-.hero-title span { color: #00865a; }
-.hero-subtitle { font-size: 16px; color: #475569; margin-bottom: 32px; max-width: 520px; }
-.hero-cta { display: flex; gap: 16px; margin-bottom: 40px; }
-.hero-image-container { position: relative; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1); }
-.hero-image-container img { width: 100%; height: auto; display: block; object-fit: cover; }
-.hero-metrics { display: flex; gap: 32px; padding: 24px; background: #f8fafc; border-radius: 12px; border: 1px solid #f1f5f9; margin-top: 16px; }
-.metric-item { display: flex; align-items: center; gap: 12px; }
-.metric-num { font-size: 20px; font-weight: 700; color: #0f172a; }
-.metric-label { font-size: 12px; color: #64748b; }
-.assistant-box { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 40px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-.assistant-header { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.ai-icon { width: 36px; height: 36px; background: #e0e7ff; color: #4338ca; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; }
-.assistant-input-wrapper { display: flex; gap: 12px; }
-.assistant-input { flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; font-size: 15px; outline: none; }
-.chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.chip { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #475569; cursor: pointer; text-decoration: none; display: inline-block; }
-.chip:hover { background: #e2e8f0; }
-.section-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 20px; }
-.categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
-.cat { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit; }
-.cat:hover { border-color: #00865a; box-shadow: 0 4px 12px rgba(0,134,90,0.08); }
-.cat-icon { width: 40px; height: 40px; background: #eef8f5; color: #00865a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-.schemes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
-.scheme-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; transition: all 0.2s; }
-.scheme-card:hover { border-color: #00865a; transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.06); }
-.scheme-card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 8px 0; }
-.scheme-card p { font-size: 13px; color: #64748b; margin-bottom: 16px; flex: 1; }
-.scheme-actions { display: flex; gap: 8px; }
-.scheme-actions a { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; }
-.scheme-actions .primary { background: #00865a; color: white; }
-.scheme-actions .secondary { background: #f1f5f9; color: #475569; }
-.footer { border-top: 1px solid #e2e8f0; padding: 32px; background: #ffffff; display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
-.footbrand img { height: 32px; }
-.footlinks { display: flex; gap: 16px; }
-.footlinks a { font-size: 13px; color: #64748b; text-decoration: none; cursor: pointer; }
-.copyright { font-size: 12px; color: #94a3b8; }
-</style>
-</head>
-<body>
-<div class="app-container">
-<header class="header">
-  <div class="brand">
-    <img src="__LOGO_B64__" alt="Government Welfare Assistant Logo">
-  </div>
-  <nav class="nav-links">
-    <a href="/?page=home" target="_top" class="active">Home</a>
-    <a href="/?page=schemes" target="_top">Explore Schemes</a>
-    <a href="/?page=dashboard" target="_top">My Welfare Journey</a>
-    <a href="/?page=ocr" target="_top">Document AI</a>
-  </nav>
-  <div class="actions">
-    <select class="lang-select" id="langSelect">
-      <option value="en">English</option>
-      <option value="ta">தமிழ் (Tamil)</option>
-      <option value="hi">हिन्दी (Hindi)</option>
-    </select>
-    <a href="/?page=signin" target="_top" class="btn outline">Sign In</a>
-    <a href="/?page=register" target="_top" class="btn primary">Create Account</a>
-  </div>
-</header>
-
-<main class="main-content">
-  <section class="hero-section">
-    <div>
-      <div class="hero-badges">
-        <span>Citizens</span> | <span>Schemes</span> | <span>AI</span> | <span>A Stronger Tomorrow</span>
-      </div>
-      <h1 class="hero-title">Find Government Support That Fits <span>Your Situation</span></h1>
-      <p class="hero-subtitle">Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility, and prepare your application.</p>
-      <div class="hero-cta">
-        <a href="/?page=dashboard" target="_top" class="btn primary" style="padding:12px 24px; font-size:15px;">Start My Welfare Journey →</a>
-        <a href="/?page=schemes" target="_top" class="btn outline" style="padding:12px 24px; font-size:15px;">Explore Schemes</a>
-      </div>
-      <div class="hero-metrics">
-        <div class="metric-item"><span class="metric-num">46+</span><span class="metric-label">Central &amp; State Sources</span></div>
-        <div class="metric-item"><span class="metric-num">5+</span><span class="metric-label">Indexed Schemes</span></div>
-        <div class="metric-item"><span class="metric-num">3</span><span class="metric-label">Languages Supported</span></div>
-      </div>
-    </div>
-    <div class="hero-image-container">
-      <img src="__HERO_B64__" alt="Government Welfare Support">
-    </div>
-  </section>
-
-  <div class="assistant-box">
-    <div class="assistant-header">
-      <div class="ai-icon">AI</div>
-      <div>
-        <strong style="color:#0f172a; font-size:16px;">Ask the Welfare Assistant</strong>
-        <p style="color:#64748b; font-size:13px; margin:0;">Tell us what you need in your own words. You can type or speak.</p>
-      </div>
-    </div>
-    <div class="assistant-input-wrapper">
-      <input type="text" class="assistant-input" id="aiInput" placeholder="e.g., I am looking for financial assistance for my education...">
-      <a href="/?page=voice" target="_top" class="btn outline">🎙 Speak</a>
-      <a href="/?page=schemes" target="_top" class="btn primary">🔍 Search</a>
-    </div>
-    <div class="chips">
-      <a href="/?page=schemes" target="_top" class="chip">🎓 I need a scholarship</a>
-      <a href="/?page=schemes" target="_top" class="chip">🏠 Looking for housing support</a>
-      <a href="/?page=schemes" target="_top" class="chip">🌾 Farmer financial assistance</a>
-      <a href="/?page=eligibility&id=pmay-urban" target="_top" class="chip">👨‍👩‍👧 Scheme eligibility for my family</a>
-    </div>
-  </div>
-
-  <h2 class="section-title">Browse Schemes by Category</h2>
-  <div class="categories-grid">
-    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Housing &amp; Urban</strong><br><small>Subsidies &amp; Aid</small></div><span style="color:#00865a;">→</span></a>
-    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Agriculture &amp; Farmers</strong><br><small>Direct Income Support</small></div><span style="color:#00865a;">→</span></a>
-    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Women &amp; Child</strong><br><small>Monthly Grants</small></div><span style="color:#00865a;">→</span></a>
-    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Healthcare &amp; Insurance</strong><br><small>Cashless Coverage</small></div><span style="color:#00865a;">→</span></a>
-  </div>
-
-  <h2 class="section-title">Recommended Schemes</h2>
-  <div class="schemes-grid">
-    <div class="scheme-card">
-      <div>
-        <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">PMAY-U</span>
-        <h3>Pradhan Mantri Awas Yojana (Urban)</h3>
-        <p>Interest subsidy up to ₹2.67 Lakhs on housing loans for EWS/LIG families building their first home.</p>
-      </div>
-      <div class="scheme-actions">
-        <a href="/?page=scheme_detail&id=pmay-urban" target="_top" class="primary">View Details</a>
-        <a href="/?page=eligibility&id=pmay-urban" target="_top" class="secondary">Check Eligibility</a>
-      </div>
-    </div>
-    <div class="scheme-card">
-      <div>
-        <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">PM-KISAN</span>
-        <h3>PM-KISAN Samman Nidhi</h3>
-        <p>Direct annual income support of ₹6,000 for land-holding farmer families transferred in 3 equal quarterly installments.</p>
-      </div>
-      <div class="scheme-actions">
-        <a href="/?page=scheme_detail&id=pm-kisan" target="_top" class="primary">View Details</a>
-        <a href="/?page=eligibility&id=pm-kisan" target="_top" class="secondary">Check Eligibility</a>
-      </div>
-    </div>
-    <div class="scheme-card">
-      <div>
-        <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">KMT</span>
-        <h3>Kalaignar Magalir Urimai Thogai</h3>
-        <p>Monthly financial assistance grant of ₹1,000 directly transferred to eligible female heads of households in Tamil Nadu.</p>
-      </div>
-      <div class="scheme-actions">
-        <a href="/?page=scheme_detail&id=kalaignar-magalir" target="_top" class="primary">View Details</a>
-        <a href="/?page=eligibility&id=kalaignar-magalir" target="_top" class="secondary">Check Eligibility</a>
-      </div>
-    </div>
-  </div>
-</main>
-
-<footer class="footer">
-  <div class="footbrand"><img src="__LOGO_B64__" alt="Logo"></div>
-  <div class="footlinks">
-    <a href="/?page=home" target="_top">Home</a>
-    <a href="/?page=schemes" target="_top">Explore Schemes</a>
-    <a href="/?page=dashboard" target="_top">My Journey</a>
-  </div>
-  <div class="copyright">© 2026 Government Welfare Assistant. All rights reserved.</div>
-</footer>
-</div>
-</body>
-</html>"""
-
-    final_html = (USER_UI_HTML_TEMPLATE
-        .replace("__LOGO_B64__", logo_b64)
-        .replace("__HERO_B64__", hero_b64)
-    )
-    components.html(final_html, height=2200, scrolling=True)
+    # RENDER APPROVED HOMEPAGE USING NATIVE STREAMLIT CONTROLS
+    render_approved_homepage()
