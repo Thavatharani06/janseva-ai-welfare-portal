@@ -1085,7 +1085,7 @@ function updateHeaderAuth() {
   const lang = window.currentLang || 'en';
   if(actionsDiv && window.currentUser){
     const logoutText = lang === 'ta' ? 'வெளியேறு' : 'Sign Out';
-    actionsDiv.innerHTML = '<span style="font-size:12px; font-weight:700; color:#00865a; background:#eef8f5; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="showPage(\'view-dashboard\')">👤 ' + (window.currentUser.name||'Citizen') + '</span><button class="btn outline" onclick="logout()">' + logoutText + '</button>';
+    actionsDiv.innerHTML = '<span style="font-size:12px; font-weight:700; color:#00865a; background:#eef8f5; padding:6px 12px; border-radius:6px; cursor:pointer;" onclick="event.preventDefault(); showPage(\'view-dashboard\')">👤 ' + (window.currentUser.name||'Citizen') + '</span><button class="btn outline" onclick="event.preventDefault(); logout()">' + logoutText + '</button>';
   }
 }
 
