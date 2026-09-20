@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "backend"))
 
-import asyncio
+import time
 import pyotp
 import json
 from fastapi.testclient import TestClient
@@ -15,10 +15,12 @@ def run_verification_suite():
 
     client = TestClient(app)
 
+    unique_email = f"test_citizen_{int(time.time())}@janseva.gov.in"
+
     # 1. TEST REGISTRATION & MFA SETUP
-    print("\n[TEST 1] Registering New Citizen User & Requesting TOTP MFA Setup...")
+    print(f"\n[TEST 1] Registering New Citizen User ({unique_email}) & Requesting TOTP MFA Setup...")
     reg_payload = {
-        "email": "test_citizen_2026@janseva.gov.in",
+        "email": unique_email,
         "password": "Password123!",
         "full_name": "Arun Kumar Test Citizen",
         "language_preference": "ta"
@@ -56,7 +58,7 @@ def run_verification_suite():
     # 4. TEST RETURNING USER SIGN IN & MFA CHALLENGE
     print("\n[TEST 4] Testing Returning User Sign In & TOTP Challenge...")
     login_payload = {
-        "email": "test_citizen_2026@janseva.gov.in",
+        "email": unique_email,
         "password": "Password123!"
     }
     r = client.post("/api/v1/auth/login", json=login_payload)
