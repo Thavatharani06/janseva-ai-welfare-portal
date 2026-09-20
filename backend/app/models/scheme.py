@@ -20,7 +20,7 @@ class Scheme(Base):
 
     id = Column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
     category_id = Column(String(36), ForeignKey("scheme_categories.id"), nullable=True)
-    category = Column(String(100), nullable=True, index=True)
+    category_name = Column(String(100), nullable=True, index=True)
     title = Column(String(255), index=True, nullable=False)
     title_ta = Column(String(255), index=True, nullable=True)
     code = Column(String(50), unique=True, index=True, nullable=False)  # e.g., PMAY-U, PM-KISAN, KMT

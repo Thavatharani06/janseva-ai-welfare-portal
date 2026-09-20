@@ -30,7 +30,7 @@ class SchemeRepository:
             cat_term = f"%{category_id.strip()}%"
             query = query.outerjoin(Scheme.category).where(
                 (Scheme.category_id == category_id) | 
-                (Scheme.category.ilike(cat_term)) | 
+                (Scheme.category_name.ilike(cat_term)) | 
                 (SchemeCategory.name.ilike(cat_term))
             )
         if state and state not in ["All", "All States / UTs"]:

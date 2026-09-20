@@ -65,6 +65,9 @@ def ensure_sqlite_db():
             conn = sqlite3.connect(db_path)
             c = conn.cursor()
             cols = [r[1] for r in c.execute("PRAGMA table_info(schemes);").fetchall()]
+            if "category_name" not in cols:
+                c.execute("ALTER TABLE schemes ADD COLUMN category_name TEXT;")
+                conn.commit()
             if "category" not in cols:
                 c.execute("ALTER TABLE schemes ADD COLUMN category TEXT;")
                 conn.commit()
@@ -90,6 +93,7 @@ def ensure_sqlite_db():
     CREATE TABLE IF NOT EXISTS schemes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER,
+        category_name TEXT,
         category TEXT,
         title TEXT NOT NULL,
         title_ta TEXT,
@@ -143,14 +147,14 @@ def ensure_sqlite_db():
 
         cursor.execute('''
         INSERT OR IGNORE INTO schemes (
-            title, title_ta, code, category, ministry, official_website, helpline_number,
+            title, title_ta, code, category_name, category, ministry, official_website, helpline_number,
             legal_summary, simple_summary, eli10_summary, min_age, max_age, max_income,
             gender_restriction, disability_required, target_community, target_occupation,
             state_district_scope, required_documents, source_name, source_url,
             benefits_summary, eligibility_description, application_process
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            title, s.get("title_ta", title), code, cat_name, s.get("ministry", "Ministry of Social Justice"),
+            title, s.get("title_ta", title), code, cat_name, cat_name, s.get("ministry", "Ministry of Social Justice"),
             s.get("official_url", ""), s.get("helpline", "1100"),
             f"{desc} Eligible: {elig_text}",
             f"This scheme helps you get {benefits_text}. To apply, you need: {req_docs}.",
@@ -167,6 +171,16 @@ def ensure_sqlite_db():
     return target_db
 
 def get_db_categories():
+    try:
+        with httpx.Client(timeout=3.0) as client:
+            resp = client.get(f"{API_BASE_URL}/schemes/categories")
+            if resp.status_code == 200:
+                cats = [c["name"] for c in resp.json() if "name" in c]
+                if cats:
+                    return cats
+    except Exception:
+        pass
+
     db_path = ensure_sqlite_db()
     if not db_path:
         return []
@@ -174,8 +188,9 @@ def get_db_categories():
         conn = sqlite3.connect(db_path)
         cursor = conn.cursor()
         cols = [r[1] for r in cursor.execute("PRAGMA table_info(schemes);").fetchall()]
-        if "category" in cols:
-            cats = [row[0] for row in cursor.execute("SELECT DISTINCT category FROM schemes WHERE category IS NOT NULL AND category != '' ORDER BY category").fetchall()]
+        cat_col = "category_name" if "category_name" in cols else ("category" if "category" in cols else None)
+        if cat_col:
+            cats = [row[0] for row in cursor.execute(f"SELECT DISTINCT {cat_col} FROM schemes WHERE {cat_col} IS NOT NULL AND {cat_col} != '' ORDER BY {cat_col}").fetchall()]
             conn.close()
             return cats
         conn.close()
@@ -191,6 +206,9 @@ def fetch_schemes_from_sqlite_db(params):
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
+
+    cols = [r[1] for r in cursor.execute("PRAGMA table_info(schemes);").fetchall()]
+    cat_col = "category_name" if "category_name" in cols else ("category" if "category" in cols else "legal_summary")
 
     query = "SELECT * FROM schemes WHERE 1=1"
     sql_params = []
@@ -233,7 +251,7 @@ def fetch_schemes_from_sqlite_db(params):
 
     category = params.get("category")
     if category and category not in ["All Categories", "Select"]:
-        query += " AND (category LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
+        query += f" AND ({cat_col} LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
         cat_term = f"%{category}%"
         sql_params.extend([cat_term, cat_term, cat_term, cat_term])
 

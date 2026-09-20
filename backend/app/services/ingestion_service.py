@@ -145,7 +145,7 @@ class IngestionService:
             rules = RuleExtractor.extract_eligibility_limits(eligibility_text)
 
             scheme.category_id = category.id
-            scheme.category = category_name
+            scheme.category_name = category_name
             scheme.title = title
             scheme.title_ta = item.get("title_ta", title)
             scheme.ministry = ministry
