@@ -42,3 +42,9 @@ class User(Base):
     voice_conversations = relationship("VoiceConversation", back_populates="user", cascade="all, delete-orphan")
     notifications = relationship("Notification", back_populates="user", cascade="all, delete-orphan")
     feedbacks = relationship("Feedback", back_populates="user", cascade="all, delete-orphan")
+    
+    digilocker_connection = relationship("DigiLockerConnection", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    digilocker_documents = relationship("DigiLockerDocument", back_populates="user", cascade="all, delete-orphan")
+    lpg_connection = relationship("LPGConnection", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    family_members = relationship("FamilyMember", back_populates="user", cascade="all, delete-orphan")
+

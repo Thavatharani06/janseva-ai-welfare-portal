@@ -34,5 +34,7 @@ async def get_db():
             await session.close()
 
 async def init_db():
+    import app.models  # Ensures all SQLAlchemy models are registered
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+

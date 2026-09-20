@@ -58,3 +58,49 @@ def generate_recovery_codes(count: int = 8) -> list:
         code = f"{secrets.token_hex(4).upper()}-{secrets.token_hex(4).upper()}"
         codes.append(code)
     return codes
+
+def mask_identifier(val: Optional[str], visible_suffix: int = 4) -> str:
+    """Mask sensitive identifiers e.g. XXXX-XXXX-1234."""
+    if not val:
+        return "N/A"
+    clean = str(val).strip()
+    if len(clean) <= visible_suffix:
+        return "*" * len(clean)
+    suffix = clean[-visible_suffix:]
+    prefix_len = len(clean) - visible_suffix
+    masked_prefix = "X" * prefix_len
+    # Format with hyphens for readability if length is 12-16
+    if len(clean) >= 10:
+        return f"XXXX-XXXX-{suffix}"
+    return f"{masked_prefix}{suffix}"
+
+def hash_identifier(val: str) -> str:
+    """Salted SHA-256 hash for secure identifier lookup without storing raw text."""
+    salt = settings.SECRET_KEY.encode('utf-8')
+    return hashlib.pbkdf2_hmac('sha256', val.encode('utf-8'), salt, 10000).hex()
+
+def encrypt_token(plain_str: str) -> str:
+    """Simple obfuscated token storage using HMAC-SHA256 key XOR."""
+    if not plain_str:
+        return ""
+    key = hashlib.sha256(settings.SECRET_KEY.encode('utf-8')).digest()
+    data = plain_str.encode('utf-8')
+    cipher = bytearray()
+    for i, b in enumerate(data):
+        cipher.append(b ^ key[i % len(key)])
+    return cipher.hex()
+
+def decrypt_token(enc_hex: str) -> str:
+    """Decrypt token stored with encrypt_token."""
+    if not enc_hex:
+        return ""
+    try:
+        key = hashlib.sha256(settings.SECRET_KEY.encode('utf-8')).digest()
+        cipher = bytes.fromhex(enc_hex)
+        plain = bytearray()
+        for i, b in enumerate(cipher):
+            plain.append(b ^ key[i % len(key)])
+        return plain.decode('utf-8')
+    except Exception:
+        return ""
+

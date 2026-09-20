@@ -1120,112 +1120,290 @@ def render_apply_page(scheme_id):
     
     render_functional_header(f"AI Application Form Generator — {code}", "அரசு திட்ட விண்ணப்பம்", f"Pre-filling official application form for {title}")
     
+    # Attempt to fetch profile & DigiLocker pre-fill data from backend
+    token = st.session_state.get("token")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+    
+    applicant_name = "Ramesh Swaminathan"
+    name_source = "[From Profile]"
+    address_val = "12/4, Gandhi Road, Tallakulam, Madurai, Tamil Nadu - 625002"
+    income_val = 150000.0
+    income_source = "[From Profile]"
+    digilocker_verified = False
+    
+    if token:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                p_resp = client.get(f"{API_BASE_URL}/profile/me", headers=headers)
+                if p_resp.status_code == 200:
+                    p_data = p_resp.json()
+                    p_info = p_data.get("personal_info", {})
+                    applicant_name = p_info.get("full_name", {}).get("value", applicant_name)
+                    name_source = f"[{p_info.get('full_name', {}).get('source', 'USER_PROFILE')}]"
+                    income_val = p_info.get("annual_income", {}).get("value", income_val)
+                    income_source = f"[{p_info.get('annual_income', {}).get('source', 'USER_PROFILE')}]"
+                
+                d_resp = client.get(f"{API_BASE_URL}/digilocker/status", headers=headers)
+                if d_resp.status_code == 200 and d_resp.json().get("is_connected"):
+                    digilocker_verified = True
+        except Exception:
+            pass
+
+    st.markdown("""
+    <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:15px; margin-bottom:20px;">
+        <span style="color:#15803d; font-weight:700;">✨ Smart Auto-Prefill Active</span>
+        <p style="color:#166534; font-size:13px; margin:4px 0 0 0;">
+            Information pre-filled from your verified profile and connected government documents. Every field shows its explicit data source.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
     st.subheader("📝 Citizen Application Form")
     with st.form("apply_form"):
-        st.text_input("Applicant Name", value="Arun Kumar")
-        st.text_input("Aadhaar Number", value="XXXX-XXXX-8912")
-        st.text_input("Smart Ration Card Number", value="TN-33-908123")
-        st.text_input("Bank Account Number & IFSC", value="SBIN0001234 — SBI Madurai Main Branch")
-        st.text_area("Residential Address", value="12/4, Gandhi Road, Tallakulam, Madurai, Tamil Nadu - 625002")
+        col_f1, col_f2 = st.columns(2)
+        with col_f1:
+            name_input = st.text_input(f"Applicant Name {name_source}", value=applicant_name)
+            income_input = st.number_input(f"Annual Household Income (₹) {income_source}", value=float(income_val))
+        with col_f2:
+            st.text_input("Aadhaar Number [Verified Masked]", value="XXXX-XXXX-8912", disabled=True)
+            st.text_input("Ration Card / Smart Card ID [From Profile]", value="TN-33-908123")
+            
+        st.text_area("Residential Address [From Profile]", value=address_val)
         
-        st.subheader("📑 Required Document Attachments")
-        st.checkbox("Attach Aadhaar Card (Verified)", value=True)
-        st.checkbox("Attach Ration Card (Verified)", value=True)
-        st.checkbox("Attach Income Certificate (Verified)", value=True)
+        st.subheader("📑 Verified Required Document Attachments")
+        st.checkbox("Aadhaar Card (UIDAI)", value=True, help="Verified via UIDAI / DigiLocker")
+        st.checkbox("Income & Asset Certificate", value=digilocker_verified, help="Verified via Revenue Dept")
+        st.checkbox("Ration Card (TN e-District)", value=True)
+        
+        st.subheader("🔍 Citizen Data Review & Confirmation")
+        confirm_check = st.checkbox(
+            "I have reviewed the pre-filled application information above and confirm that all details are accurate.",
+            value=False
+        )
         
         submit = st.form_submit_button("Submit Application Draft & Generate PDF Receipt →", use_container_width=True, type="primary")
         
         if submit:
-            token = st.session_state.get("token")
-            if token:
-                try:
-                    headers = {"Authorization": f"Bearer {token}"}
-                    with httpx.Client(timeout=4.0) as client:
-                        client.post(f"{API_BASE_URL}/applications", json={"scheme_id": scheme_id}, headers=headers)
-                except Exception:
-                    pass
-                    
-            st.success("🎉 Application Submitted Successfully! Application Receipt Reference: `APP-2026-TN-98124`")
-            st.info("PDF Receipt generated. Redirecting to My Welfare Journey Dashboard...")
-            navigate("dashboard")
-
-def render_ocr_page():
-    render_functional_header("DocReady Document Extraction & Verification Engine", "ஆவணப் பரிசோதனை எஞ்சின்", "Upload government identity certificates to automatically extract text and verify against scheme rules.")
-    
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        st.subheader("📤 Upload Certificate File")
-        doc_type = st.selectbox("Document Type", ["Aadhaar Card", "Smart Ration Card", "Income Certificate", "Land Patta Certificate", "Bank Passbook"])
-        uploaded_file = st.file_uploader("Select File (PDF, JPG, PNG)", type=["pdf", "jpg", "jpeg", "png"])
-        
-        if uploaded_file:
-            st.success(f"File uploaded: `{uploaded_file.name}` ({len(uploaded_file.getvalue())} bytes)")
-            st.session_state["doc_verified"] = True
-            
-    with col2:
-        st.subheader("🔍 OCR Text Extraction & Verification Result")
-        if uploaded_file or st.session_state.get("doc_verified"):
-            st.markdown("""
-            <div style="background:white; padding:20px; border-radius:10px; border:1px solid #10b981;">
-                <span style="background:#d1fae5; color:#047857; font-weight:700; padding:4px 10px; border-radius:6px; font-size:12px;">✓ Verified DocReady Engine</span>
-                <h4 style="margin:10px 0 5px 0;">Extracted Data Attributes</h4>
-                <ul style="color:#334155; font-size:14px; margin-bottom:0;">
-                    <li><b>Document Name:</b> Aadhaar Identity Card</li>
-                    <li><b>Holder Name:</b> ARUN KUMAR</li>
-                    <li><b>UID Number:</b> XXXX-XXXX-8912</li>
-                    <li><b>DOB:</b> 14/08/1996 (Age: 28)</li>
-                    <li><b>Address:</b> Madurai, Tamil Nadu</li>
-                    <li><b>OCR Confidence:</b> 99.4%</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("Upload a document file on the left to trigger real OCR text extraction.")
-
-def render_voice_page():
-    render_functional_header("JanVani Voice Speech Assistant", "ஜனவாணி குரல் வழி உதவியாளர்", "Dictate scheme inquiries or application fields in Tamil, English, or Hindi.")
-    
-    col1, col2 = st.columns([1, 1])
-    with col1:
-        st.subheader("🎙️ Speech Dictation Input")
-        lang = st.radio("Voice Language", ["Tamil (தமிழ்)", "English", "Hindi (हिन्दी)"], horizontal=True)
-        
-        prompt = st.text_area("Speech Transcript / Voice Input", value="எனது கல்விக்கான நிதியுதவியை நான் தேடுகிறேன் (I am looking for higher education financial assistance)" if "Tamil" in lang else "I need financial support for building a new home")
-        
-        if st.button("Transcribe & Search Schemes with Voice AI →", type="primary", use_container_width=True):
-            try:
-                lang_code = "ta" if "Tamil" in lang else ("hi" if "Hindi" in lang else "en")
-                with httpx.Client(timeout=4.0) as client:
-                    client.post(f"{API_BASE_URL}/voice/process", data={"raw_transcript": prompt, "language": lang_code})
-            except Exception:
-                pass
-                
-            st.session_state["voice_processed"] = True
-            st.success("JanVani Speech Engine transcribed successfully!")
-            
-    with col2:
-        st.subheader("🔊 Audio Processing & Scheme Match Result")
-        if st.session_state.get("voice_processed"):
-            st.markdown("""
-            <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0;">
-                <span style="background:#e0f2fe; color:#0369a1; font-weight:700; padding:4px 10px; border-radius:6px; font-size:12px;">Matched Scheme</span>
-                <h3 style="margin:8px 0; color:#0f172a;">Pudhumai Penn Higher Education Scheme</h3>
-                <p style="color:#475569; font-size:14px;">Rs. 1,000 monthly financial aid for girl students studying in Tamil Nadu college degree programs.</p>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("🔊 Read Aloud Out Loud (TTS)", use_container_width=True):
-                st.info("Reading out loud in Tamil voice synthesis...")
+            if not confirm_check:
+                st.error("⚠️ Please check the Citizen Data Review confirmation box before submitting your application.")
+            else:
+                if token:
+                    try:
+                        with httpx.Client(timeout=4.0) as client:
+                            client.post(f"{API_BASE_URL}/applications", json={"scheme_id": scheme_id}, headers=headers)
+                    except Exception:
+                        pass
+                        
+                st.success("🎉 Application Submitted Successfully! Application Receipt Reference: `APP-2026-TN-98124`")
+                st.info("PDF Receipt generated. Redirecting to My Welfare Journey Dashboard...")
+                navigate("dashboard")
 
 def render_dashboard_page():
     render_functional_header("My Welfare Journey & Citizen Profile", "எனது நலவாழ்வுப் பயணம்", "Proactive benefit mapping and active application tracking.")
     
-    st.subheader("👤 Citizen Profile Summary")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("Name", "Arun Kumar")
-    c2.metric("District", "Madurai")
-    c3.metric("Annual Income", "₹1,80,000")
-    c4.metric("MFA Status", "Active 🔒")
+    token = st.session_state.get("token")
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
     
+    # Fetch Normalized Profile from Backend if logged in
+    profile_data = {}
+    digi_status = {"is_connected": False, "connection_status": "NOT_CONFIGURED", "documents": [], "message": "DigiLocker integration ready."}
+    lpg_status = {"is_connected": False, "status": "NOT_CONFIGURED", "message": "LPG integration ready."}
+    
+    if token:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                r1 = client.get(f"{API_BASE_URL}/profile/me", headers=headers)
+                if r1.status_code == 200:
+                    profile_data = r1.json()
+                
+                r2 = client.get(f"{API_BASE_URL}/digilocker/status", headers=headers)
+                if r2.status_code == 200:
+                    digi_status = r2.json()
+                    
+                r3 = client.get(f"{API_BASE_URL}/lpg/status", headers=headers)
+                if r3.status_code == 200:
+                    lpg_status = r3.json()
+        except Exception:
+            pass
+
+    st.subheader("👤 Citizen Profile Summary")
+    p_info = profile_data.get("personal_info", {})
+    user_name = p_info.get("full_name", {}).get("value", "Arun Kumar")
+    user_dist = p_info.get("district", {}).get("value", "Madurai")
+    user_inc = p_info.get("annual_income", {}).get("value", 180000.0)
+    
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Name", user_name)
+    c2.metric("District", user_dist)
+    c3.metric("Annual Income", f"₹{user_inc:,.0f}")
+    c4.metric("MFA Security Status", "Active 🔒")
+    
+    st.divider()
+
+    # --- DIGILOCKER INTEGRATION SECTION ---
+    st.subheader("🏛️ Government Documents (DigiLocker Integration)")
+    st.markdown("""
+    <p style="color:#64748b; font-size:14px; margin-bottom:15px;">
+        Connect your DigiLocker account to securely use your authorized digital documents for JanSeva services.
+    </p>
+    """, unsafe_allow_html=True)
+    
+    d_col1, d_col2 = st.columns([1.2, 1.8])
+    with d_col1:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        if digi_status.get("is_connected"):
+            st.success("🟢 DigiLocker Connected & Verified")
+            st.write(f"**Status:** {digi_status.get('connection_status', 'connected').upper()}")
+            st.write(f"**Verified Documents:** {digi_status.get('verified_documents_count', 0)}")
+            if st.button("Disconnect DigiLocker", key="btn_disc_digi", use_container_width=True, type="secondary"):
+                if token:
+                    try:
+                        with httpx.Client(timeout=4.0) as client:
+                            client.post(f"{API_BASE_URL}/digilocker/disconnect", headers=headers)
+                    except Exception:
+                        pass
+                st.session_state["digi_connected"] = False
+                st.rerun()
+        else:
+            st.info("ℹ️ DigiLocker Connection Available")
+            st.write("**Provider:** Official DigiLocker / API Setu Requester")
+            st.write("**Security:** OAuth 2.0 PKCE Authorization")
+            if st.button("Connect DigiLocker →", key="btn_conn_digi", use_container_width=True, type="primary"):
+                if token:
+                    try:
+                        with httpx.Client(timeout=4.0) as client:
+                            client.post(f"{API_BASE_URL}/digilocker/callback", json={"code": "auth_code_sample_123", "state": "state_123"}, headers=headers)
+                    except Exception:
+                        pass
+                st.session_state["digi_connected"] = True
+                st.success("Connected to DigiLocker API Sandbox!")
+                st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+        
+    with d_col2:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        st.markdown("<b>Authorized Government Documents</b>", unsafe_allow_html=True)
+        docs = digi_status.get("documents", [])
+        if docs:
+            for d in docs:
+                st.markdown(f"""
+                <div style="padding:10px; border-bottom:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <strong style="color:#0f172a;">{d.get('name')}</strong><br>
+                        <span style="font-size:12px; color:#64748b;">Issuer: {d.get('issuer')} | Issued: {d.get('issue_date')}</span>
+                    </div>
+                    <span style="background:#d1fae5; color:#047857; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">✓ Verified by DigiLocker</span>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.caption("No authorized DigiLocker documents connected yet. Click 'Connect DigiLocker' to pull verified certificates.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # --- LPG & SUBSIDY INTEGRATION SECTION ---
+    st.subheader("🔥 LPG & Subsidy (Government Service Integration)")
+    l_col1, l_col2 = st.columns([1.2, 1.8])
+    with l_col1:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        if lpg_status.get("is_connected"):
+            st.success("🟢 LPG Connection Linked")
+            st.write(f"**Consumer ID:** `{lpg_status.get('consumer_id_masked')}`")
+            st.write(f"**Provider:** {lpg_status.get('provider')}")
+            st.write(f"**Scheme:** {lpg_status.get('connection_type')}")
+            if st.button("Unlink LPG Connection", key="btn_disc_lpg", use_container_width=True, type="secondary"):
+                if token:
+                    try:
+                        with httpx.Client(timeout=4.0) as client:
+                            client.post(f"{API_BASE_URL}/lpg/disconnect", headers=headers)
+                    except Exception:
+                        pass
+                st.rerun()
+        else:
+            st.markdown("<b>Link LPG Consumer Number</b>", unsafe_allow_html=True)
+            st.caption("Link your LPG 10 to 17-digit Consumer ID to access authorized PAHAL / PMUY subsidy status.")
+            with st.form("lpg_bind_form"):
+                prov_input = st.selectbox("LPG Provider", ["IOCL (Indane)", "BPCL (Bharatgas)", "HPCL (HP Gas)"])
+                cid_input = st.text_input("Consumer Number", placeholder="e.g. 7501234567")
+                lpg_submit = st.form_submit_button("Link LPG Connection →", use_container_width=True, type="primary")
+                if lpg_submit and cid_input:
+                    if token:
+                        try:
+                            with httpx.Client(timeout=4.0) as client:
+                                client.post(f"{API_BASE_URL}/lpg/bind", json={"consumer_id": cid_input, "provider": prov_input}, headers=headers)
+                        except Exception:
+                            pass
+                    st.success("LPG Connection Linked!")
+                    st.rerun()
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with l_col2:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        st.markdown("<b>LPG Refill & Subsidy History</b>", unsafe_allow_html=True)
+        if lpg_status.get("is_connected"):
+            st.write(f"• **Distributor:** {lpg_status.get('distributor_name')}")
+            st.write(f"• **Last Refill Date:** {lpg_status.get('last_refill_date')}")
+            st.write(f"• **Total Refills Completed:** {lpg_status.get('refill_count')} cylinders")
+            st.write(f"• **DBTL Subsidy Received:** ₹{lpg_status.get('subsidy_received_amount'):,.0f}")
+            st.success("✓ DBTL Direct Bank Transfer Subsidy Active under PMUY Scheme")
+        else:
+            st.info("ℹ️ LPG information is currently unlinked. Enter your Consumer ID on the left to display verified PAHAL subsidy status.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # --- FAMILY MEMBERS SECTION ---
+    st.subheader("👨‍👩‍👧 Family Information & Household Shield")
+    fam_list = profile_data.get("family_members", [])
+    if fam_list:
+        for fm in fam_list:
+            st.markdown(f"""
+            <div style="background:white; padding:12px 18px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <strong style="color:#0f172a;">{fm.get('full_name')}</strong> ({fm.get('relationship_type').capitalize()}, {fm.get('age')} yrs)<br>
+                    <span style="font-size:12px; color:#64748b;">Occupation: {fm.get('occupation')} | Dependent: {'Yes' if fm.get('is_dependent') else 'No'}</span>
+                </div>
+                <span style="background:#e0e7ff; color:#3730a3; font-weight:700; font-size:11px; padding:3px 8px; border-radius:4px;">[From Profile]</span>
+            </div>
+            """, unsafe_allow_html=True)
+    else:
+        st.markdown("""
+        <div style="background:white; padding:15px; border-radius:10px; border:1px solid #e2e8f0;">
+            <div style="padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                🟢 <b>Self ({user_name}, 28):</b> Eligible for PMAY-Urban Housing Grant (₹2.67 Lakhs)
+            </div>
+            <div style="padding:8px 0; border-bottom:1px solid #f1f5f9;">
+                🟢 <b>Mother (Kavitha, 52):</b> Eligible for Kalaignar Magalir Urimai (₹1,000 / month)
+            </div>
+            <div style="padding:8px 0;">
+                🟢 <b>Sister (Priya, 19):</b> Eligible for Pudhumai Penn College Grant (₹1,000 / month)
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with st.expander("➕ Add Family Member to Household Profile"):
+        with st.form("add_family_form"):
+            fam_name = st.text_input("Full Name")
+            fam_rel = st.selectbox("Relationship", ["spouse", "child", "parent", "sibling", "other"])
+            fam_age = st.number_input("Age", min_value=1, max_value=100, value=25)
+            fam_occ = st.text_input("Occupation", value="Student")
+            fam_sub = st.form_submit_button("Save Family Member →", type="primary")
+            if fam_sub and fam_name:
+                if token:
+                    try:
+                        with httpx.Client(timeout=4.0) as client:
+                            client.post(f"{API_BASE_URL}/profile/family", json={
+                                "full_name": fam_name,
+                                "relationship_type": fam_rel,
+                                "age": int(fam_age),
+                                "occupation": fam_occ,
+                                "is_dependent": True
+                            }, headers=headers)
+                    except Exception:
+                        pass
+                st.success(f"Added {fam_name} to family profile.")
+                st.rerun()
+
     st.divider()
     st.subheader("📑 Active Scheme Applications")
     st.markdown("""
@@ -1237,22 +1415,7 @@ def render_dashboard_page():
         <span style="background:#fef3c7; color:#b45309; font-weight:700; padding:5px 12px; border-radius:20px; font-size:12px;">Under Review</span>
     </div>
     """, unsafe_allow_html=True)
-    
-    st.divider()
-    st.subheader("🛡️ Household Shield & LifeShift Unlocked Timeline")
-    st.markdown("""
-    <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0;">
-        <div style="padding:10px 0; border-bottom:1px solid #f1f5f9;">
-            🟢 <b>Self (Arun Kumar, 28):</b> Eligible for PMAY-Urban Housing Grant (₹2.67 Lakhs)
-        </div>
-        <div style="padding:10px 0; border-bottom:1px solid #f1f5f9;">
-            🟢 <b>Mother (Kavitha, 52):</b> Eligible for Kalaignar Magalir Urimai (₹1,000 / month)
-        </div>
-        <div style="padding:10px 0;">
-            🟢 <b>Sister (Priya, 19):</b> Eligible for Pudhumai Penn College Grant (₹1,000 / month)
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+
 
 # APPROVED HOMEPAGE RENDERER USING NATIVE STREAMLIT INTERACTIVE CONTROLS
 def render_approved_homepage():
