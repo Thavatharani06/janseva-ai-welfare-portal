@@ -1,0 +1,712 @@
+[
+  {
+    "scheme_code": "PMAY-U",
+    "scheme_title": "Pradhan Mantri Awas Yojana - Urban (PMAY-U)",
+    "source_name": "Open Government Data Platform India / MoHUA",
+    "source_url": "https://pmaymis.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOHUA-001",
+    "ministry": "Ministry of Housing and Urban Affairs",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMAY-G",
+    "scheme_title": "Pradhan Mantri Awas Yojana - Gramin (PMAY-G)",
+    "source_name": "Open Government Data Platform India / MoRD",
+    "source_url": "https://pmayg.nic.in",
+    "source_dataset_id": "OGD-INDIA-MORD-002",
+    "ministry": "Ministry of Rural Development",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-KISAN",
+    "scheme_title": "PM-KISAN Samman Nidhi Scheme",
+    "source_name": "Open Government Data Platform India / MoA&FW",
+    "source_url": "https://pmkisan.gov.in",
+    "source_dataset_id": "OGD-INDIA-AGRI-003",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMFBY",
+    "scheme_title": "Pradhan Mantri Fasal Bima Yojana (PMFBY)",
+    "source_name": "Open Government Data Platform India / MoA&FW",
+    "source_url": "https://pmfby.gov.in",
+    "source_dataset_id": "OGD-INDIA-AGRI-004",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "KCC",
+    "scheme_title": "Kisan Credit Card (KCC) Scheme",
+    "source_name": "Open Government Data Platform India / RBI",
+    "source_url": "https://agricoop.nic.in",
+    "source_dataset_id": "OGD-INDIA-AGRI-005",
+    "ministry": "Ministry of Agriculture & Farmers Welfare / RBI",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-JAY",
+    "scheme_title": "Ayushman Bharat PM-JAY Health Insurance",
+    "source_name": "Open Government Data Platform India / NHA",
+    "source_url": "https://pmjay.gov.in",
+    "source_dataset_id": "OGD-INDIA-NHA-006",
+    "ministry": "National Health Authority / Ministry of Health",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMJJBY",
+    "scheme_title": "Pradhan Mantri Jeevan Jyoti Bima Yojana (PMJJBY)",
+    "source_name": "Open Government Data Platform India / DFS",
+    "source_url": "https://jansuraksha.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOF-007",
+    "ministry": "Ministry of Finance",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMSBY",
+    "scheme_title": "Pradhan Mantri Suraksha Bima Yojana (PMSBY)",
+    "source_name": "Open Government Data Platform India / DFS",
+    "source_url": "https://jansuraksha.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOF-008",
+    "ministry": "Ministry of Finance",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMMVY",
+    "scheme_title": "Pradhan Mantri Matru Vandana Yojana (PMMVY)",
+    "source_name": "Open Government Data Platform India / MoWCD",
+    "source_url": "https://pmmvy.wcd.gov.in",
+    "source_dataset_id": "OGD-INDIA-WCD-009",
+    "ministry": "Ministry of Women and Child Development",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SSY",
+    "scheme_title": "Sukanya Samriddhi Yojana (SSY)",
+    "source_name": "Open Government Data Platform India / India Post",
+    "source_url": "https://www.indiapost.gov.in",
+    "source_dataset_id": "OGD-INDIA-POST-010",
+    "ministry": "Ministry of Finance / India Post",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "IGNOAPS",
+    "scheme_title": "Indira Gandhi National Old Age Pension Scheme (IGNOAPS)",
+    "source_name": "Open Government Data Platform India / NSAP",
+    "source_url": "https://nsap.nic.in",
+    "source_dataset_id": "OGD-INDIA-NSAP-011",
+    "ministry": "Ministry of Rural Development (NSAP)",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "IGNWPS",
+    "scheme_title": "Indira Gandhi National Widow Pension Scheme (IGNWPS)",
+    "source_name": "Open Government Data Platform India / NSAP",
+    "source_url": "https://nsap.nic.in",
+    "source_dataset_id": "OGD-INDIA-NSAP-012",
+    "ministry": "Ministry of Rural Development (NSAP)",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "IGNDPS",
+    "scheme_title": "Indira Gandhi National Disability Pension Scheme (IGNDPS)",
+    "source_name": "Open Government Data Platform India / NSAP",
+    "source_url": "https://nsap.nic.in",
+    "source_dataset_id": "OGD-INDIA-NSAP-013",
+    "ministry": "Ministry of Rural Development (NSAP)",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-SVANIDHI",
+    "scheme_title": "PM Street Vendor's AtmaNirbhar Nidhi (PM SVANidhi)",
+    "source_name": "Open Government Data Platform India / MoHUA",
+    "source_url": "https://pmsvanidhi.mohua.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOHUA-014",
+    "ministry": "Ministry of Housing and Urban Affairs",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-VISHWAKARMA",
+    "scheme_title": "PM Vishwakarma Scheme",
+    "source_name": "Open Government Data Platform India / MSME",
+    "source_url": "https://pmvishwakarma.gov.in",
+    "source_dataset_id": "OGD-INDIA-MSME-015",
+    "ministry": "Ministry of Micro, Small and Medium Enterprises",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMEGP",
+    "scheme_title": "Prime Minister Employment Generation Programme (PMEGP)",
+    "source_name": "Open Government Data Platform India / KVIC",
+    "source_url": "https://www.kviconline.gov.in",
+    "source_dataset_id": "OGD-INDIA-KVIC-016",
+    "ministry": "Ministry of Micro, Small and Medium Enterprises / KVIC",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMKVY",
+    "scheme_title": "Pradhan Mantri Kaushal Vikas Yojana (PMKVY 4.0)",
+    "source_name": "Open Government Data Platform India / MSDE",
+    "source_url": "https://www.pmkvyofficial.org",
+    "source_dataset_id": "OGD-INDIA-MSDE-017",
+    "ministry": "Ministry of Skill Development and Entrepreneurship / NSDC",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "MGNREGA",
+    "scheme_title": "Mahatma Gandhi National Rural Employment Guarantee Act (MGNREGA)",
+    "source_name": "Open Government Data Platform India / MoRD",
+    "source_url": "https://nrega.nic.in",
+    "source_dataset_id": "OGD-INDIA-MORD-018",
+    "ministry": "Ministry of Rural Development",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "NMMSS",
+    "scheme_title": "National Means-cum-Merit Scholarship Scheme (NMMSS)",
+    "source_name": "Open Government Data Platform India / NSP",
+    "source_url": "https://scholarships.gov.in",
+    "source_dataset_id": "OGD-INDIA-NSP-019",
+    "ministry": "Ministry of Education",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "NSP-PMS-SC",
+    "scheme_title": "Post Matric Scholarship for Scheduled Caste Students (NSP-PMS-SC)",
+    "source_name": "Open Government Data Platform India / NSP",
+    "source_url": "https://scholarships.gov.in",
+    "source_dataset_id": "OGD-INDIA-NSP-020",
+    "ministry": "Ministry of Social Justice and Empowerment",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-KUSUM",
+    "scheme_title": "PM KUSUM Solar Pump Scheme",
+    "source_name": "Open Government Data Platform India / MNRE",
+    "source_url": "https://pmkusum.mnre.gov.in",
+    "source_dataset_id": "OGD-INDIA-MNRE-021",
+    "ministry": "Ministry of New and Renewable Energy",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-MUDRA",
+    "scheme_title": "Pradhan Mantri MUDRA Yojana (PMMY)",
+    "source_name": "Open Government Data Platform India / MUDRA",
+    "source_url": "https://www.mudra.org.in",
+    "source_dataset_id": "OGD-INDIA-MOF-022",
+    "ministry": "Ministry of Finance",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "APY",
+    "scheme_title": "Atal Pension Yojana (APY)",
+    "source_name": "Open Government Data Platform India / PFRDA",
+    "source_url": "https://www.pfrda.org.in",
+    "source_dataset_id": "OGD-INDIA-PFRDA-023",
+    "ministry": "Ministry of Finance / PFRDA",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-UJJWALA",
+    "scheme_title": "PM Ujjwala Yojana 2.0 (Free LPG Connection)",
+    "source_name": "Open Government Data Platform India / MoPNG",
+    "source_url": "https://www.pmuy.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOPNG-024",
+    "ministry": "Ministry of Petroleum and Natural Gas",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PMMSY",
+    "scheme_title": "Pradhan Mantri Matsya Sampada Yojana (PMMSY)",
+    "source_name": "Open Government Data Platform India / Fisheries",
+    "source_url": "https://pmmsy.dof.gov.in",
+    "source_dataset_id": "OGD-INDIA-DOF-025",
+    "ministry": "Ministry of Fisheries, Animal Husbandry and Dairying",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SAMAGRA-SHIKSHA",
+    "scheme_title": "Samagra Shiksha Abhiyan",
+    "source_name": "Open Government Data Platform India / MoE",
+    "source_url": "https://samagra.education.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOE-026",
+    "ministry": "Ministry of Education",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-POSHAN",
+    "scheme_title": "PM POSHAN Mid-Day Meal Scheme",
+    "source_name": "Open Government Data Platform India / MoE",
+    "source_url": "https://pmposhan.education.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOE-027",
+    "ministry": "Ministry of Education",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "JAL-JEEVAN",
+    "scheme_title": "Jal Jeevan Mission (Har Ghar Jal)",
+    "source_name": "Open Government Data Platform India / Jal Shakti",
+    "source_url": "https://ejalshakti.gov.in",
+    "source_dataset_id": "OGD-INDIA-JAL-028",
+    "ministry": "Ministry of Jal Shakti",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "JAN-AUSHADHI",
+    "scheme_title": "Pradhan Mantri Bhartiya Janaushadhi Pariyojana (PMBJP)",
+    "source_name": "Open Government Data Platform India / PMBI",
+    "source_url": "https://janaushadhi.gov.in",
+    "source_dataset_id": "OGD-INDIA-PMBI-029",
+    "ministry": "Ministry of Chemicals and Fertilizers / PMBI",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "KMT",
+    "scheme_title": "Kalaignar Magalir Urimai Thogai Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / TN Govt",
+    "source_url": "https://kmt.tn.gov.in",
+    "source_dataset_id": "TN-GOV-KMT-2026",
+    "ministry": "Government of Tamil Nadu - Special Programme Implementation",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PUDHUMAI-PENN",
+    "scheme_title": "Pudhumai Penn Scheme (Moovalur Ramamirtham Ammiyar Higher Education)",
+    "source_name": "Tamil Nadu Open Data Portal / Higher Edu",
+    "source_url": "https://penkalvi.tn.gov.in",
+    "source_dataset_id": "TN-GOV-PENKALVI-2026",
+    "ministry": "Government of Tamil Nadu - Social Welfare & Higher Education",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TAMIL-PUDHALVAN",
+    "scheme_title": "Tamil Pudhalvan Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Higher Edu",
+    "source_url": "https://tn.gov.in",
+    "source_dataset_id": "TN-GOV-PUDHALVAN-2026",
+    "ministry": "Government of Tamil Nadu - Social Welfare & Higher Education",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "CMCHIS",
+    "scheme_title": "Chief Minister's Comprehensive Health Insurance Scheme (CMCHIS)",
+    "source_name": "Tamil Nadu Open Data Portal / Health Dept",
+    "source_url": "https://cmchis.tn.gov.in",
+    "source_dataset_id": "TN-GOV-CMCHIS-2026",
+    "ministry": "Government of Tamil Nadu - Health and Family Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "CM-BREAKFAST",
+    "scheme_title": "Chief Minister's Breakfast Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / School Edu",
+    "source_url": "https://tn.gov.in",
+    "source_dataset_id": "TN-GOV-BREAKFAST-2026",
+    "ministry": "Government of Tamil Nadu - Social Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "NAAN-MUDHALVAN",
+    "scheme_title": "Naan Mudhalvan Skill Development Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / TNSDC",
+    "source_url": "https://www.naanmudhalvan.tn.gov.in",
+    "source_dataset_id": "TN-GOV-TNSDC-2026",
+    "ministry": "Government of Tamil Nadu - Skill Development Corporation (TNSDC)",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "MAKKALAI-THEDI",
+    "scheme_title": "Makkalai Thedi Maruthuvam (Healthcare at Doorsteps)",
+    "source_name": "Tamil Nadu Open Data Portal / Health Dept",
+    "source_url": "https://tn.gov.in",
+    "source_dataset_id": "TN-GOV-MAKKALAI-2026",
+    "ministry": "Government of Tamil Nadu - Health and Family Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "INNUYIR-KAPPON",
+    "scheme_title": "Innuyir Kappon - Nammai Kakkum 48 Emergency Care",
+    "source_name": "Tamil Nadu Open Data Portal / Health Dept",
+    "source_url": "https://cmchis.tn.gov.in",
+    "source_dataset_id": "TN-GOV-INNUYIR-2026",
+    "ministry": "Government of Tamil Nadu - Health and Family Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "MUTHULAKSHMI-REDDY",
+    "scheme_title": "Dr. Muthulakshmi Reddy Maternity Benefit Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Health Dept",
+    "source_url": "https://picme.tn.gov.in",
+    "source_dataset_id": "TN-GOV-PICME-2026",
+    "ministry": "Government of Tamil Nadu - Health and Family Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-GREEN-HOUSE",
+    "scheme_title": "Chief Minister's Solar Powered Green House Scheme (CMSPGHS)",
+    "source_name": "Tamil Nadu Open Data Portal / TNRD",
+    "source_url": "https://tnrd.tn.gov.in",
+    "source_dataset_id": "TN-GOV-TNRD-2026",
+    "ministry": "Government of Tamil Nadu - Rural Development & Panchayat Raj",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-UZHAVAR-PADHUKAPPU",
+    "scheme_title": "Chief Minister's Farmers Security Scheme (Uzhavar Padhukappu Thittam)",
+    "source_name": "Tamil Nadu Open Data Portal / Revenue Dept",
+    "source_url": "https://tn.gov.in",
+    "source_dataset_id": "TN-GOV-UZHAVAR-2026",
+    "ministry": "Government of Tamil Nadu - Revenue & Disaster Management",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-DISABLED-PENSION",
+    "scheme_title": "TN Differently Abled Maintenance Allowance Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Differently Abled Dept",
+    "source_url": "https://www.scd.tn.gov.in",
+    "source_dataset_id": "TN-GOV-SCD-2026",
+    "ministry": "Government of Tamil Nadu - Welfare of Differently Abled Persons",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "UYEGP",
+    "scheme_title": "TN Unemployed Youth Employment Generation Programme (UYEGP)",
+    "source_name": "Tamil Nadu Open Data Portal / MSME Dept",
+    "source_url": "https://msmeonline.tn.gov.in",
+    "source_dataset_id": "TN-GOV-MSME-2026",
+    "ministry": "Government of Tamil Nadu - Micro, Small and Medium Enterprises (MSME)",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "NEEDS",
+    "scheme_title": "TN New Entrepreneur-cum-Enterprise Development Scheme (NEEDS)",
+    "source_name": "Tamil Nadu Open Data Portal / MSME Dept",
+    "source_url": "https://msmeonline.tn.gov.in",
+    "source_dataset_id": "TN-GOV-NEEDS-2026",
+    "ministry": "Government of Tamil Nadu - MSME Department",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "AABCS",
+    "scheme_title": "TN Annal Ambedkar Business Champions Scheme (AABCS)",
+    "source_name": "Tamil Nadu Open Data Portal / MSME Dept",
+    "source_url": "https://msmeonline.tn.gov.in",
+    "source_dataset_id": "TN-GOV-AABCS-2026",
+    "ministry": "Government of Tamil Nadu - MSME Department",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "MOOVALUR-MARRIAGE",
+    "scheme_title": "Moovalur Ramamirtham Ammiyar Marriage Assistance Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Social Welfare",
+    "source_url": "https://tnsocialwelfare.tn.gov.in",
+    "source_dataset_id": "TN-GOV-SW-041",
+    "ministry": "Government of Tamil Nadu - Social Welfare and Women Empowerment",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "DHARMAMBAL-REMARRIAGE",
+    "scheme_title": "Dr. Dharmambal Ammaiyar Widow Remarriage Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Social Welfare",
+    "source_url": "https://tnsocialwelfare.tn.gov.in",
+    "source_dataset_id": "TN-GOV-SW-042",
+    "ministry": "Government of Tamil Nadu - Social Welfare",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "LADLI-BEHNA",
+    "scheme_title": "Mukhyamantri Ladli Behna Yojana (Madhya Pradesh)",
+    "source_name": "Open Government Data MP Portal",
+    "source_url": "https://cmladlibehna.mp.gov.in",
+    "source_dataset_id": "MP-GOV-LADLI-2026",
+    "ministry": "Government of Madhya Pradesh - Women and Child Development",
+    "state": "Madhya Pradesh",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "GRUHA-LAKSHMI-KA",
+    "scheme_title": "Gruha Lakshmi Scheme (Karnataka)",
+    "source_name": "Karnataka Open Data Portal",
+    "source_url": "https://sevasindhugs.karnataka.gov.in",
+    "source_dataset_id": "KA-GOV-GRUHA-2026",
+    "ministry": "Government of Karnataka - Women and Child Development",
+    "state": "Karnataka",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "YUVA-NIDHI-KA",
+    "scheme_title": "Yuva Nidhi Unemployment Allowance Scheme (Karnataka)",
+    "source_name": "Karnataka Open Data Portal",
+    "source_url": "https://sevasindhugs.karnataka.gov.in",
+    "source_dataset_id": "KA-GOV-YUVANIDHI-2026",
+    "ministry": "Government of Karnataka - Skill Development Corporation",
+    "state": "Karnataka",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "KANYASHREE-WB",
+    "scheme_title": "Kanyashree Prakalpa (West Bengal)",
+    "source_name": "West Bengal Open Data Portal",
+    "source_url": "https://wbkanyashree.gov.in",
+    "source_dataset_id": "WB-GOV-KANYASHREE-2026",
+    "ministry": "Government of West Bengal - Women & Child Development",
+    "state": "West Bengal",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "LAKSHMIR-BHANDAR",
+    "scheme_title": "Lakshmir Bhandar Scheme (West Bengal)",
+    "source_name": "West Bengal Open Data Portal",
+    "source_url": "https://socialsecurity.wb.gov.in",
+    "source_dataset_id": "WB-GOV-LAKSHMI-2026",
+    "ministry": "Government of West Bengal - Women and Child Development",
+    "state": "West Bengal",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SUBHADRA-ODISHA",
+    "scheme_title": "Subhadra Yojana (Odisha)",
+    "source_name": "Odisha Open Data Portal",
+    "source_url": "https://subhadra.odisha.gov.in",
+    "source_dataset_id": "OD-GOV-SUBHADRA-2026",
+    "ministry": "Government of Odisha - Women and Child Development",
+    "state": "Odisha",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "KALIA-ODISHA",
+    "scheme_title": "KALIA Scheme for Farmers (Odisha)",
+    "source_name": "Odisha Open Data Portal",
+    "source_url": "https://kalia.odisha.gov.in",
+    "source_dataset_id": "OD-GOV-KALIA-2026",
+    "ministry": "Government of Odisha - Agriculture & Farmers Empowerment",
+    "state": "Odisha",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "KANYA-SUMANGALA-UP",
+    "scheme_title": "Mukhya Mantri Kanya Sumangala Yojana (Uttar Pradesh)",
+    "source_name": "Uttar Pradesh Open Data Portal",
+    "source_url": "https://mksy.up.gov.in",
+    "source_dataset_id": "UP-GOV-MKSY-2026",
+    "ministry": "Government of Uttar Pradesh - Women and Child Development",
+    "state": "Uttar Pradesh",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "STUDENT-CREDIT-BIHAR",
+    "scheme_title": "Bihar Student Credit Card Scheme (MNSSBY)",
+    "source_name": "Bihar Open Data Portal",
+    "source_url": "https://www.7nishchay-yuvaupmission.bihar.gov.in",
+    "source_dataset_id": "BH-GOV-SCC-2026",
+    "ministry": "Government of Bihar - Education Department",
+    "state": "Bihar",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "MYSY-GUJARAT",
+    "scheme_title": "Mukhyamantri Yuva Swavalamban Yojana (MYSY Gujarat)",
+    "source_name": "Gujarat Open Data Portal",
+    "source_url": "https://mysy.guj.nic.in",
+    "source_dataset_id": "GJ-GOV-MYSY-2026",
+    "ministry": "Government of Gujarat - Education Department",
+    "state": "Gujarat",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-JANMAN",
+    "scheme_title": "PM Janjati Adivasi Nyaya Maha Abhiyan (PM-JANMAN)",
+    "source_name": "Open Government Data Platform India / MoTA",
+    "source_url": "https://tribal.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOTA-056",
+    "ministry": "Ministry of Tribal Affairs",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "NAPS",
+    "scheme_title": "National Apprenticeship Promotion Scheme (NAPS)",
+    "source_name": "Open Government Data Platform India / MSDE",
+    "source_url": "https://www.apprenticeshipindia.gov.in",
+    "source_dataset_id": "OGD-INDIA-MSDE-057",
+    "ministry": "Ministry of Skill Development and Entrepreneurship",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "CGTMSE",
+    "scheme_title": "Credit Guarantee Fund Trust for Micro and Small Enterprises (CGTMSE)",
+    "source_name": "Open Government Data Platform India / SIDBI",
+    "source_url": "https://www.cgtmse.in",
+    "source_dataset_id": "OGD-INDIA-SIDBI-058",
+    "ministry": "Ministry of Micro, Small and Medium Enterprises / SIDBI",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PM-DIALYSIS",
+    "scheme_title": "Pradhan Mantri National Dialysis Programme (PMNDP)",
+    "source_name": "Open Government Data Platform India / MoHFW",
+    "source_url": "https://nhm.gov.in",
+    "source_dataset_id": "OGD-INDIA-MOHFW-059",
+    "ministry": "Ministry of Health and Family Welfare",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "DAY-NRLM",
+    "scheme_title": "Deendayal Antyodaya Yojana - National Rural Livelihoods Mission (DAY-NRLM)",
+    "source_name": "Open Government Data Platform India / MoRD",
+    "source_url": "https://nrlm.gov.in",
+    "source_dataset_id": "OGD-INDIA-NRLM-060",
+    "ministry": "Ministry of Rural Development",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SVAMITVA",
+    "scheme_title": "PM SVAMITVA Scheme (Property Cards for Rural Abadi)",
+    "source_name": "Open Government Data Platform India / Panchayati Raj",
+    "source_url": "https://svamitva.nic.in",
+    "source_dataset_id": "OGD-INDIA-MOPR-061",
+    "ministry": "Ministry of Panchayati Raj",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "PRAGATI-SCHOLARSHIP",
+    "scheme_title": "AICTE Pragati Scholarship Scheme for Girl Students",
+    "source_name": "Open Government Data Platform India / AICTE",
+    "source_url": "https://scholarships.gov.in",
+    "source_dataset_id": "OGD-INDIA-AICTE-062",
+    "ministry": "Ministry of Education / AICTE",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SAKSHAM-SCHOLARSHIP",
+    "scheme_title": "AICTE Saksham Scholarship Scheme for Differently Abled Students",
+    "source_name": "Open Government Data Platform India / AICTE",
+    "source_url": "https://scholarships.gov.in",
+    "source_dataset_id": "OGD-INDIA-AICTE-063",
+    "ministry": "Ministry of Education / AICTE",
+    "state": "All India",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-GIRL-CHILD-PROTECTION",
+    "scheme_title": "Chief Minister's Girl Child Protection Scheme (Tamil Nadu)",
+    "source_name": "Tamil Nadu Open Data Portal / Social Welfare",
+    "source_url": "https://tnsocialwelfare.tn.gov.in",
+    "source_dataset_id": "TN-GOV-SW-064",
+    "ministry": "Government of Tamil Nadu - Social Welfare & Women Empowerment",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-TRANSGENDER-BOARD",
+    "scheme_title": "TN Transgender Welfare Board Assistance Scheme",
+    "source_name": "Tamil Nadu Open Data Portal / Social Welfare",
+    "source_url": "https://tnsocialwelfare.tn.gov.in",
+    "source_dataset_id": "TN-GOV-TG-065",
+    "ministry": "Government of Tamil Nadu - Social Welfare and Women Empowerment",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-SEWING-MACHINE",
+    "scheme_title": "TN Free Supply of Sewing Machines Scheme for Destitute Women",
+    "source_name": "Tamil Nadu Open Data Portal / Social Welfare",
+    "source_url": "https://tnsocialwelfare.tn.gov.in",
+    "source_dataset_id": "TN-GOV-SW-066",
+    "ministry": "Government of Tamil Nadu - Social Welfare and Women Empowerment",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "TN-FREE-AGRI-POWER",
+    "scheme_title": "TN Free Electricity Scheme for Agriculture (24x7 Power)",
+    "source_name": "Tamil Nadu Open Data Portal / TANGEDCO",
+    "source_url": "https://www.tangedco.gov.in",
+    "source_dataset_id": "TN-GOV-TANGEDCO-067",
+    "ministry": "Government of Tamil Nadu - Energy / TANGEDCO",
+    "state": "Tamil Nadu",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "ANNA-BHAGYA-KA",
+    "scheme_title": "Anna Bhagya Scheme (Karnataka)",
+    "source_name": "Karnataka Open Data Portal",
+    "source_url": "https://food.karnataka.gov.in",
+    "source_dataset_id": "KA-GOV-FOOD-068",
+    "ministry": "Government of Karnataka - Food & Civil Supplies",
+    "state": "Karnataka",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "SHAKTHI-FREE-BUS-KA",
+    "scheme_title": "Shakthi Free Bus Travel Scheme for Women (Karnataka)",
+    "source_name": "Karnataka Open Data Portal",
+    "source_url": "https://ksrtc.karnataka.gov.in",
+    "source_dataset_id": "KA-GOV-SHAKTHI-069",
+    "ministry": "Government of Karnataka - Transport Department",
+    "state": "Karnataka",
+    "verification_status": "VERIFIED_OFFICIAL"
+  },
+  {
+    "scheme_code": "RYTHU-BHAROSA-TS",
+    "scheme_title": "Rythu Bharosa Agriculture Support (Telangana)",
+    "source_name": "Telangana Open Data Portal",
+    "source_url": "https://rythubharosa.telangana.gov.in",
+    "source_dataset_id": "TS-GOV-RYTHU-070",
+    "ministry": "Government of Telangana - Agriculture Department",
+    "state": "Telangana",
+    "verification_status": "VERIFIED_OFFICIAL"
+  }
+]
