@@ -54,9 +54,135 @@ st.markdown("""
 # API Base URL
 API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
+
+SCHEMES_I18N = {
+    "en": {
+        "lang_name": "English",
+        "filter_by": "Filter By",
+        "reset_filters": "Reset Filters",
+        "state_ut": "State / UT",
+        "all_states": "All States / UTs",
+        "scheme_category": "Scheme Category",
+        "all_categories": "All Categories",
+        "gender": "Gender",
+        "all_genders": "All",
+        "female": "Female",
+        "male": "Male",
+        "transgender": "Transgender",
+        "age": "Age",
+        "select": "Select",
+        "caste": "Caste / Community",
+        "residence": "Residence",
+        "benefit_type": "Benefit Type",
+        "marital_status": "Marital Status",
+        "disability_pct": "Disability Percentage",
+        "employment_status": "Employment Status",
+        "occupation": "Occupation",
+        "search_schemes": "Search schemes",
+        "search_placeholder": "Search schemes",
+        "exact_match_helper": 'ⓘ For an exact match, put the words in quotes. For example: "Scheme Name".',
+        "all_schemes": "All Schemes",
+        "state_schemes": "State/UT Schemes",
+        "central_schemes": "Central Schemes",
+        "total_schemes_avail": "Total {count} schemes available",
+        "sort": "Sort",
+        "sort_relevance": "Sort : Relevance",
+        "sort_name": "Name A-Z",
+        "sort_newest": "Newest First",
+        "view_scheme": "View Scheme",
+        "check_eligibility": "Check Eligibility",
+        "back": "← Back",
+        "speak": "🎙 Speak",
+        "listening": "🎙 Listening...",
+        "sign_in": "Sign In →"
+    },
+    "ta": {
+        "lang_name": "தமிழ்",
+        "filter_by": "வடிகட்டிகள்",
+        "reset_filters": "வடிகட்டிகளை மீட்டமை",
+        "state_ut": "மாநிலம் / யூனியன் பிரதேசம்",
+        "all_states": "அனைத்து மாநிலங்கள் / யூனியன் பிரதேசங்கள்",
+        "scheme_category": "திட்ட வகை",
+        "all_categories": "அனைத்து பிரிவுகள்",
+        "gender": "பாலினம்",
+        "all_genders": "அனைத்தும்",
+        "female": "பெண்",
+        "male": "ஆண்",
+        "transgender": "மூன்றாம் பாலினத்தவர்",
+        "age": "வயது",
+        "select": "தேர்ந்தெடு",
+        "caste": "சாதி / சமூகம்",
+        "residence": "இருப்பிடம்",
+        "benefit_type": "பயன் வகை",
+        "marital_status": "திருமண நிலை",
+        "disability_pct": "மாற்றுத்திறனாளி சதவீதம்",
+        "employment_status": "வேலைவாய்ப்பு நிலை",
+        "occupation": "தொழில்",
+        "search_schemes": "திட்டங்களைத் தேடுங்கள்",
+        "search_placeholder": "திட்டங்களைத் தேடுங்கள்",
+        "exact_match_helper": 'ⓘ துல்லியமான பொருத்தத்திற்கு, சொற்களை இரட்டை மேற்கோள் குறிகளுக்குள் இடவும். உதாரணம்: "திட்டத்தின் பெயர்".',
+        "all_schemes": "அனைத்து திட்டங்கள்",
+        "state_schemes": "மாநில / யூனியன் பிரதேச திட்டங்கள்",
+        "central_schemes": "மத்திய திட்டங்கள்",
+        "total_schemes_avail": "மொத்தம் {count} திட்டங்கள் கிடைக்கின்றன",
+        "sort": "வரிசைப்படுத்து",
+        "sort_relevance": "வரிசைப்படுத்து : பொருத்தம்",
+        "sort_name": "பெயர் அ-ஹ்",
+        "sort_newest": "புதியவை முதலில்",
+        "view_scheme": "திட்டத்தைப் பார்க்கவும்",
+        "check_eligibility": "தகுதியைச் சரிபார்க்கவும்",
+        "back": "← பின்செல்",
+        "speak": "🎙 பேசுங்கள்",
+        "listening": "🎙 கேட்கிறது...",
+        "sign_in": "உள்நுழை →"
+    },
+    "hi": {
+        "lang_name": "हिन्दी",
+        "filter_by": "फ़िल्टर",
+        "reset_filters": "फ़िल्टर रीसेट करें",
+        "state_ut": "राज्य / केंद्र शासित प्रदेश",
+        "all_states": "सभी राज्य / केंद्र शासित प्रदेश",
+        "scheme_category": "योजना श्रेणी",
+        "all_categories": "सभी श्रेणियां",
+        "gender": "लिंग",
+        "all_genders": "सभी",
+        "female": "महिला",
+        "male": "पुरुष",
+        "transgender": "ट्रांसजेंडर",
+        "age": "आयु",
+        "select": "चुनें",
+        "caste": "जाति / समुदाय",
+        "residence": "निवास",
+        "benefit_type": "लाभ प्रकार",
+        "marital_status": "वैवाहिक स्थिति",
+        "disability_pct": "विकलांगता प्रतिशत",
+        "employment_status": "रोजगार स्थिति",
+        "occupation": "व्यवसाय",
+        "search_schemes": "योजनाएं खोजें",
+        "search_placeholder": "योजनाएं खोजें",
+        "exact_match_helper": 'ⓘ सटीक मिलान के लिए, शब्दों को उद्धरण चिह्नों में रखें। उदाहरण: "योजना का नाम"।',
+        "all_schemes": "सभी योजनाएं",
+        "state_schemes": "राज्य योजनाएं",
+        "central_schemes": "केंद्रीय योजनाएं",
+        "total_schemes_avail": "कुल {count} योजनाएं उपलब्ध हैं",
+        "sort": "क्रमित करें",
+        "sort_relevance": "क्रमित करें : प्रासंगिकता",
+        "sort_name": "नाम A-Z",
+        "sort_newest": "नवीनतम पहले",
+        "view_scheme": "योजना देखें",
+        "check_eligibility": "पात्रता जांचें",
+        "back": "← वापस",
+        "speak": "🎙 बोलें",
+        "listening": "🎙 सुन रहा है...",
+        "sign_in": "साइन इन करें →"
+    }
+}
+
 # Helper Navigation Function
 def navigate(page, **params):
     st.query_params["page"] = page
+    if "lang" in st.session_state:
+        st.query_params["lang"] = st.session_state["lang"]
     for k, v in params.items():
         st.query_params[k] = str(v)
     st.rerun()
@@ -360,23 +486,35 @@ def render_mfa_page():
                     st.error("Invalid TOTP code. Please enter 6 digits.")
         st.markdown("</div>", unsafe_allow_html=True)
 
+
 def render_schemes_page():
-    # 1. Fetch real schemes from FastAPI backend or dataset
-    api_schemes = None
+    # Clean scheme ID if mistakenly passed to list view
+    if "id" in st.query_params:
+        del st.query_params["id"]
+
+    # Language Management & Persistence
+    cur_lang = st.query_params.get("lang", st.session_state.get("lang", "en"))
+    if cur_lang not in SCHEMES_I18N:
+        cur_lang = "en"
+    st.session_state["lang"] = cur_lang
+
+    t = SCHEMES_I18N[cur_lang]
+    speech_lang_map = {"en": "en-IN", "ta": "ta-IN", "hi": "hi-IN"}
+    speech_lang = speech_lang_map.get(cur_lang, "en-IN")
+
+    # Fetch Real Schemes from Backend API or Fallback
+    schemes_to_show = DEFAULT_SCHEMES
     try:
         with httpx.Client(timeout=3.0) as client:
             resp = client.get(f"{API_BASE_URL}/schemes")
             if resp.status_code == 200:
-                api_schemes = resp.json()
+                schemes_to_show = resp.json()
     except Exception:
         pass
-        
-    schemes_to_show = api_schemes if api_schemes else DEFAULT_SCHEMES
 
-    # Custom CSS for myScheme Search Page Information Architecture
+    # Custom CSS
     st.markdown("""
     <style>
-        .schemes-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; }
         .filter-panel-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
         .filter-title { font-size: 16px; font-weight: 700; color: #0f172a; }
@@ -403,14 +541,32 @@ def render_schemes_page():
     with hdr_col2:
         h_a1, h_a2 = st.columns([2, 1])
         with h_a1:
-            st.selectbox("Lang", ["English", "தமிழ்", "हिन्दी"], key="schemes_lang", label_visibility="collapsed")
+            lang_options = ["English", "தமிழ்", "हिन्दी"]
+            lang_idx = 0
+            if cur_lang == "ta":
+                lang_idx = 1
+            elif cur_lang == "hi":
+                lang_idx = 2
+
+            selected_lang_name = st.selectbox("Lang", lang_options, index=lang_idx, key="schemes_lang", label_visibility="collapsed")
+            new_lang = "en"
+            if selected_lang_name == "தமிழ்":
+                new_lang = "ta"
+            elif selected_lang_name == "हिन्दी":
+                new_lang = "hi"
+
+            if new_lang != cur_lang:
+                st.session_state["lang"] = new_lang
+                st.query_params["lang"] = new_lang
+                st.rerun()
+
         with h_a2:
-            if st.button("Sign In →", key="schemes_top_signin", type="primary"):
+            if st.button(t["sign_in"], key="schemes_top_signin", type="primary"):
                 navigate("signin")
 
     # BACK NAVIGATION
     st.markdown("<div style='margin-top:6px; margin-bottom:12px;'>", unsafe_allow_html=True)
-    if st.button("← Back", key="schemes_back_btn", type="secondary"):
+    if st.button(t["back"], key="schemes_back_btn", type="secondary"):
         navigate("home")
     st.markdown("</div>", unsafe_allow_html=True)
 
@@ -419,85 +575,159 @@ def render_schemes_page():
 
     # LEFT FILTER PANEL
     with col_filter:
-        st.markdown("""
+        st.markdown(f"""
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <strong style="font-size:16px; color:#0f172a;">Filter By</strong>
+            <strong style="font-size:16px; color:#0f172a;">{t['filter_by']}</strong>
         </div>
         """, unsafe_allow_html=True)
         
-        if st.button("Reset Filters", key="reset_filters_btn", type="secondary", use_container_width=True):
-            st.session_state["f_state"] = "All States / UTs"
-            st.session_state["f_cat"] = "All Categories"
-            st.session_state["f_gender"] = "All"
-            st.session_state["f_age"] = "Select"
-            st.session_state["f_caste"] = "Select"
-            st.session_state["f_residence"] = "Select"
-            st.session_state["f_benefit"] = "Select"
-            st.session_state["f_marital"] = "Select"
-            st.session_state["f_disability"] = "Select"
-            st.session_state["f_emp"] = "Select"
-            st.session_state["f_occ"] = "Select"
+        if st.button(t["reset_filters"], key="reset_filters_btn", type="secondary", use_container_width=True):
+            st.session_state["f_state"] = t["all_states"]
+            st.session_state["f_cat"] = t["all_categories"]
+            st.session_state["f_gender"] = t["all_genders"]
+            st.session_state["f_age"] = t["select"]
+            st.session_state["f_caste"] = t["select"]
+            st.session_state["f_residence"] = t["select"]
+            st.session_state["f_benefit"] = t["select"]
+            st.session_state["f_marital"] = t["select"]
+            st.session_state["f_disability"] = t["select"]
+            st.session_state["f_emp"] = t["select"]
+            st.session_state["f_occ"] = t["select"]
+            if "search" in st.query_params:
+                del st.query_params["search"]
             st.rerun()
 
-        state_filter = st.selectbox("State/UT", ["All States / UTs", "Tamil Nadu", "Urban India", "All India"], key="f_state")
-        cat_filter = st.selectbox("Scheme Category", ["All Categories", "Housing & Urban Development", "Agriculture & Farmers Welfare", "Women & Child Development", "Healthcare & Insurance", "Education & Scholarships"], key="f_cat")
-        gender_filter = st.selectbox("Gender", ["All", "Female", "Male", "Transgender"], key="f_gender")
-        age_filter = st.selectbox("Age", ["Select", "18 - 25 Years", "26 - 40 Years", "41 - 60 Years", "60+ Years"], key="f_age")
-        caste_filter = st.selectbox("Caste / Community", ["Select", "EWS/LIG", "Farmers", "BPL", "OBC", "SC", "ST", "General"], key="f_caste")
-        residence_filter = st.selectbox("Residence", ["Select", "Urban", "Rural", "All"], key="f_residence")
-        benefit_filter = st.selectbox("Benefit Type", ["Select", "Direct Benefit Transfer (DBT)", "Subsidized Loan / Grant", "Health Coverage", "Monthly Financial Aid"], key="f_benefit")
-        marital_filter = st.selectbox("Marital Status", ["Select", "Single", "Married", "Widowed"], key="f_marital")
-        disability_filter = st.selectbox("Disability Percentage", ["Select", "None (0%)", "Benchmark Disability (40%+)"], key="f_disability")
-        emp_filter = st.selectbox("Employment Status", ["Select", "Unorganized Worker", "Farmer", "Student", "Homemaker", "Employed", "Unemployed"], key="f_emp")
-        occ_filter = st.selectbox("Occupation", ["Select", "All Citizens", "Farmer", "Homemaker / Worker", "Student"], key="f_occ")
+        state_opts = [t["all_states"], "Tamil Nadu", "Urban India", "All India"]
+        cat_opts = [t["all_categories"], "Housing & Urban Development", "Agriculture & Farmers Welfare", "Women & Child Development", "Healthcare & Insurance", "Education & Scholarships"]
+        gender_opts = [t["all_genders"], t["female"], t["male"], t["transgender"]]
+
+        state_filter = st.selectbox(t["state_ut"], state_opts, key="f_state")
+        cat_filter = st.selectbox(t["scheme_category"], cat_opts, key="f_cat")
+        gender_filter = st.selectbox(t["gender"], gender_opts, key="f_gender")
+        age_filter = st.selectbox(t["age"], [t["select"], "18 - 25 Years", "26 - 40 Years", "41 - 60 Years", "60+ Years"], key="f_age")
+        caste_filter = st.selectbox(t["caste"], [t["select"], "EWS/LIG", "Farmers", "BPL", "OBC", "SC", "ST", "General"], key="f_caste")
+        residence_filter = st.selectbox(t["residence"], [t["select"], "Urban", "Rural", "All"], key="f_residence")
+        benefit_filter = st.selectbox(t["benefit_type"], [t["select"], "Direct Benefit Transfer (DBT)", "Subsidized Loan / Grant", "Health Coverage", "Monthly Financial Aid"], key="f_benefit")
+        marital_filter = st.selectbox(t["marital_status"], [t["select"], "Single", "Married", "Widowed"], key="f_marital")
+        disability_filter = st.selectbox(t["disability_pct"], [t["select"], "None (0%)", "Benchmark Disability (40%+)"], key="f_disability")
+        emp_filter = st.selectbox(t["employment_status"], [t["select"], "Unorganized Worker", "Farmer", "Student", "Homemaker", "Employed", "Unemployed"], key="f_emp")
+        occ_filter = st.selectbox(t["occupation"], [t["select"], "All Citizens", "Farmer", "Homemaker / Worker", "Student"], key="f_occ")
 
     # RIGHT RESULTS PANEL
     with col_results:
-        # Search Box
-        s_col1, s_col2 = st.columns([5, 1])
+        # Search Box with Voice Button Integration
+        default_search = st.query_params.get("search", "")
+        s_col1, s_col2, s_col3 = st.columns([5, 1.5, 1.2])
         with s_col1:
-            search_q = st.text_input("Search schemes", placeholder="Search schemes", label_visibility="collapsed")
+            search_q = st.text_input(t["search_schemes"], value=default_search, placeholder=t["search_placeholder"], label_visibility="collapsed", key="search_text_input")
         with s_col2:
-            st.button("🔍 Search", key="search_exec_btn", type="primary", use_container_width=True)
+            import streamlit.components.v1 as components
+            voice_html = f"""
+            <div style="margin:0; padding:0;">
+              <button id="mic-btn" onclick="startSpeech()" style="width:100%; height:40px; background:#ffffff; color:#00865a; border:1px solid #cbd5e1; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:4px;">
+                {t['speak']}
+              </button>
+            </div>
+            <script>
+            function startSpeech() {{
+              const btn = document.getElementById("mic-btn");
+              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+              if (!SpeechRecognition) {{
+                alert("Speech recognition is not supported in this browser.");
+                return;
+              }}
+              const recognition = new SpeechRecognition();
+              recognition.lang = "{speech_lang}";
+              recognition.interimResults = false;
+              btn.innerHTML = "🔴 {t['listening']}";
+              btn.style.background = "#fee2e2";
+              btn.style.color = "#dc2626";
+
+              recognition.onresult = function(event) {{
+                const text = event.results[0][0].transcript;
+                btn.innerHTML = "{t['speak']}";
+                btn.style.background = "#ffffff";
+                btn.style.color = "#00865a";
+                
+                const url = new URL(window.parent.location.href);
+                url.searchParams.set("search", text);
+                window.parent.location.href = url.href;
+              }};
+
+              recognition.onerror = function() {{
+                btn.innerHTML = "{t['speak']}";
+                btn.style.background = "#ffffff";
+                btn.style.color = "#00865a";
+              }};
+
+              recognition.onend = function() {{
+                btn.innerHTML = "{t['speak']}";
+                btn.style.background = "#ffffff";
+                btn.style.color = "#00865a";
+              }};
+
+              recognition.start();
+            }}
+            </script>
+            """
+            components.html(voice_html, height=45)
+
+        with s_col3:
+            st.button("🔍", key="search_exec_btn", type="primary", use_container_width=True)
             
-        st.markdown('<p class="search-helper-text">ⓘ For an exact match, put the words in quotes. For example: "Scheme Name".</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="search-helper-text">{t["exact_match_helper"]}</p>', unsafe_allow_html=True)
 
         # Tabs: All Schemes | State/UT Schemes | Central Schemes
-        scheme_tab = st.radio("Scheme Origin", ["All Schemes", "State/UT Schemes", "Central Schemes"], horizontal=True, label_visibility="collapsed")
+        scheme_tab = st.radio("Scheme Origin", [t["all_schemes"], t["state_schemes"], t["central_schemes"]], horizontal=True, label_visibility="collapsed")
         
-        # Apply Filtering Logic to real backend data
+        # Apply REAL Filtering Logic to database backend results
         filtered = schemes_to_show
-        
-        if scheme_tab == "State/UT Schemes":
-            filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "State" in str(s.get("ministry",""))]
-        elif scheme_tab == "Central Schemes":
-            filtered = [s for s in filtered if "India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry",""))]
 
-        if cat_filter != "All Categories":
-            if "Housing" in cat_filter:
-                filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","")]
-            elif "Agriculture" in cat_filter:
+        # 1. Tab Origin Filter
+        if scheme_tab == t["state_schemes"]:
+            filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "State" in str(s.get("ministry","")) or "Government of Tamil Nadu" in str(s.get("ministry",""))]
+        elif scheme_tab == t["central_schemes"]:
+            filtered = [s for s in filtered if "All India" in str(s.get("state_district_scope","")) or "Urban India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry","")) or "National" in str(s.get("ministry",""))]
+
+        # 2. State/UT Dropdown Filter (Fixing Problem 1)
+        if state_filter != t["all_states"]:
+            if "Tamil Nadu" in state_filter:
+                filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "Tamil Nadu" in str(s.get("ministry",""))]
+            elif "Urban India" in state_filter:
+                filtered = [s for s in filtered if "Urban India" in str(s.get("state_district_scope","")) or "Urban" in str(s.get("ministry",""))]
+            elif "All India" in state_filter:
+                filtered = [s for s in filtered if "All India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry",""))]
+
+        # 3. Category Dropdown Filter
+        if cat_filter != t["all_categories"]:
+            if "Housing" in cat_filter or "வீட்டுவசதி" in cat_filter or "आवास" in cat_filter:
+                filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","") or "Awas" in s.get("title","")]
+            elif "Agriculture" in cat_filter or "வேளாண்மை" in cat_filter or "कृषि" in cat_filter:
                 filtered = [s for s in filtered if "cat_agriculture" in str(s.get("category_id","")) or "KISAN" in s.get("title","")]
-            elif "Women" in cat_filter:
+            elif "Women" in cat_filter or "மகளிர்" in cat_filter or "महिला" in cat_filter:
                 filtered = [s for s in filtered if "cat_women" in str(s.get("category_id","")) or "Magalir" in s.get("title","")]
-            elif "Healthcare" in cat_filter:
-                filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","")]
-            elif "Education" in cat_filter:
+            elif "Health" in cat_filter or "சுகாதாரம்" in cat_filter or "स्वास्थ्य" in cat_filter:
+                filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","") or "Ayushman" in s.get("title","")]
+            elif "Education" in cat_filter or "கல்வி" in cat_filter or "शिक्षा" in cat_filter:
                 filtered = [s for s in filtered if "cat_education" in str(s.get("category_id","")) or "Penn" in s.get("title","")]
 
-        if gender_filter != "All":
-            filtered = [s for s in filtered if s.get("gender_restriction") in ["All", gender_filter]]
+        # 4. Gender Filter
+        if gender_filter != t["all_genders"]:
+            g_target = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
+            filtered = [s for s in filtered if s.get("gender_restriction") in ["All", g_target, None]]
 
+        # 5. Search Text Filter (Typed or Voice)
         if search_q:
             q_clean = search_q.replace('"', '').strip().lower()
-            filtered = [s for s in filtered if q_clean in s.get("title","").lower() or q_clean in s.get("simple_summary","").lower() or q_clean in s.get("code","").lower()]
+            filtered = [s for s in filtered if q_clean in s.get("title","").lower() or q_clean in s.get("simple_summary","").lower() or q_clean in s.get("code","").lower() or q_clean in str(s.get("title_ta","")).lower() or q_clean in str(s.get("title_hi","")).lower()]
 
         # Results Count & Sort Row
         cnt_col1, cnt_col2 = st.columns([3, 1])
         with cnt_col1:
-            st.markdown(f"<div style='font-size:16px; font-weight:500; color:#475569; margin-top:8px;'>Total <strong style='color:#0f172a; font-weight:800; font-size:18px;'>{len(filtered)}</strong> schemes available</div>", unsafe_allow_html=True)
+            total_msg = t["total_schemes_avail"].format(count=len(filtered))
+            st.markdown(f"<div style='font-size:16px; font-weight:500; color:#475569; margin-top:8px;'><strong style='color:#0f172a; font-weight:800; font-size:18px;'>{total_msg}</strong></div>", unsafe_allow_html=True)
         with cnt_col2:
-            st.selectbox("Sort", ["Sort : Relevance", "Name A-Z", "Newest First"], label_visibility="collapsed")
+            st.selectbox("Sort", [t["sort_relevance"], t["sort_name"], t["sort_newest"]], label_visibility="collapsed")
 
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
 
@@ -506,9 +736,16 @@ def render_schemes_page():
             sid = s.get("id", "pmay-urban")
             code = s.get("code", "SCHEME")
             ministry = s.get("ministry", "Ministry of Social Justice")
+            
+            # Select title based on language fallback
             title = s.get("title", "Government Welfare Scheme")
+            if cur_lang == "ta" and s.get("title_ta"):
+                title = s.get("title_ta")
+            elif cur_lang == "hi" and s.get("title_hi"):
+                title = s.get("title_hi")
+
             summary = s.get("simple_summary", s.get("legal_summary", "Welfare assistance grant for eligible citizens."))
-            category_tag = "Central Scheme" if "Ministry" in ministry or "India" in str(s.get("state_district_scope","")) else "State Scheme"
+            category_tag = t["central_schemes"] if ("Ministry" in ministry or "India" in str(s.get("state_district_scope",""))) else t["state_schemes"]
             community_tag = s.get("target_community", "All Citizens")
             scope_tag = s.get("state_district_scope", "All India")
             
@@ -529,10 +766,10 @@ def render_schemes_page():
                 
                 b1, b2, b3 = st.columns([1, 1, 2])
                 with b1:
-                    if st.button("View Scheme", key=f"res_v_{sid}", use_container_width=True, type="secondary"):
+                    if st.button(t["view_scheme"], key=f"res_v_{sid}", use_container_width=True, type="secondary"):
                         navigate("scheme_detail", id=sid)
                 with b2:
-                    if st.button("Check Eligibility", key=f"res_e_{sid}", use_container_width=True, type="primary"):
+                    if st.button(t["check_eligibility"], key=f"res_e_{sid}", use_container_width=True, type="primary"):
                         navigate("eligibility", id=sid)
                 st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
