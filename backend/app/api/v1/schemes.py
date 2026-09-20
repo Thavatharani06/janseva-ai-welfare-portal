@@ -18,6 +18,7 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 async def list_schemes(
     search: Optional[str] = Query(None),
     category_id: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
     state: Optional[str] = Query(None),
     gender: Optional[str] = Query(None),
     min_age: Optional[int] = Query(None),
@@ -28,10 +29,11 @@ async def list_schemes(
     max_income: Optional[float] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
+    effective_category = category_id or category
     repo = SchemeRepository(db)
     return await repo.get_all(
         search=search,
-        category_id=category_id,
+        category_id=effective_category,
         state=state,
         gender=gender,
         min_age=min_age,

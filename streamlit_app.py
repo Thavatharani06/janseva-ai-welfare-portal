@@ -54,6 +54,174 @@ st.markdown("""
 # API Base URL
 API_BASE_URL = os.getenv("BACKEND_API_URL", "http://127.0.0.1:8000/api/v1")
 
+def ensure_sqlite_db():
+    base_dir = os.path.dirname(__file__)
+    db_path = os.path.join(base_dir, "legal_welfare.db")
+    if not os.path.exists(db_path):
+        db_path = os.path.join(base_dir, "backend", "legal_welfare.db")
+    
+    if os.path.exists(db_path):
+        try:
+            conn = sqlite3.connect(db_path)
+            c = conn.cursor()
+            cnt = c.execute("SELECT COUNT(*) FROM schemes").fetchone()[0]
+            conn.close()
+            if cnt > 0:
+                return db_path
+        except Exception:
+            pass
+
+    target_db = os.path.join(base_dir, "legal_welfare.db")
+    json_path = os.path.join(base_dir, "backend", "data", "myscheme_dataset", "schemes.json")
+    if not os.path.exists(json_path):
+        json_path = os.path.join(base_dir, "data", "myscheme_dataset", "schemes.json")
+
+    if not os.path.exists(json_path):
+        return None
+
+    conn = sqlite3.connect(target_db)
+    cursor = conn.cursor()
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS schemes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category_id INTEGER,
+        title TEXT NOT NULL,
+        title_ta TEXT,
+        code TEXT UNIQUE NOT NULL,
+        ministry TEXT NOT NULL,
+        official_website TEXT,
+        helpline_number TEXT,
+        legal_summary TEXT NOT NULL,
+        simple_summary TEXT NOT NULL,
+        eli10_summary TEXT,
+        min_age INTEGER,
+        max_age INTEGER,
+        max_income REAL,
+        gender_restriction TEXT,
+        disability_required INTEGER,
+        target_community TEXT,
+        target_occupation TEXT,
+        state_district_scope TEXT,
+        required_documents TEXT,
+        source_name TEXT,
+        source_url TEXT,
+        source_scheme_id TEXT,
+        source_last_updated TEXT,
+        imported_at TEXT,
+        verified_at TEXT,
+        data_status TEXT,
+        language_availability TEXT,
+        benefits_summary TEXT,
+        eligibility_description TEXT,
+        application_process TEXT,
+        district_scope TEXT,
+        created_at TEXT,
+        updated_at TEXT
+    )
+    ''')
+
+    with open(json_path, "r", encoding="utf-8") as f:
+        schemes_data = json.load(f)
+
+    for idx, s in enumerate(schemes_data):
+        title = s.get("title", "")
+        code = s.get("code") or (title.split("(")[-1].replace(")", "").strip() if "(" in title else f"SCH-{idx+1:04d}")
+        req_docs = s.get("required_documents", [])
+        if isinstance(req_docs, list):
+            req_docs = json.dumps(req_docs, ensure_ascii=False)
+
+        desc = s.get("description", "")
+        elig_text = s.get("eligibility_text", "")
+        benefits_text = s.get("benefits_text", "")
+
+        cursor.execute('''
+        INSERT OR IGNORE INTO schemes (
+            title, title_ta, code, ministry, official_website, helpline_number,
+            legal_summary, simple_summary, eli10_summary, min_age, max_age, max_income,
+            gender_restriction, disability_required, target_community, target_occupation,
+            state_district_scope, required_documents, source_name, source_url,
+            benefits_summary, eligibility_description, application_process
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            title, s.get("title_ta", title), code, s.get("ministry", "Ministry of Social Justice"),
+            s.get("official_url", ""), s.get("helpline", "1100"),
+            f"{desc} Eligible: {elig_text}",
+            f"This scheme helps you get {benefits_text}. To apply, you need: {req_docs}.",
+            f"If you qualify under ({elig_text}), you will receive {benefits_text}.",
+            s.get("min_age"), s.get("max_age"), s.get("max_income"),
+            s.get("gender_restriction", "All"), 1 if s.get("disability_required") else 0,
+            s.get("target_community", "All"), s.get("target_occupation", "All"),
+            s.get("state_name", "All India"), req_docs, "myScheme / India.gov.in",
+            s.get("official_url", ""), benefits_text, elig_text, "Apply online at official portal"
+        ))
+
+    conn.commit()
+    conn.close()
+    return target_db
+
+def fetch_schemes_from_sqlite_db(params):
+    db_path = ensure_sqlite_db()
+    if not db_path:
+        raise Exception("Database file not available and could not be auto-seeded.")
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    query = "SELECT * FROM schemes WHERE 1=1"
+    sql_params = []
+
+    search_q = params.get("search")
+    if search_q:
+        query += " AND (title LIKE ? OR title_ta LIKE ? OR code LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ?)"
+        term = f"%{search_q}%"
+        sql_params.extend([term, term, term, term, term])
+
+    state = params.get("state")
+    if state and state not in ["All States / UTs", "All States"]:
+        query += " AND (state_district_scope LIKE ? OR state_district_scope LIKE ? OR state_district_scope LIKE ?)"
+        sql_params.extend([f"%{state}%", "%All India%", "%Central%"])
+
+    gender = params.get("gender")
+    if gender and gender != "All":
+        query += " AND (gender_restriction = 'All' OR gender_restriction LIKE ?)"
+        sql_params.append(f"%{gender}%")
+
+    min_age = params.get("min_age")
+    if min_age is not None:
+        query += " AND (max_age >= ? OR max_age IS NULL)"
+        sql_params.append(int(min_age))
+
+    max_age = params.get("max_age")
+    if max_age is not None:
+        query += " AND (min_age <= ? OR min_age IS NULL)"
+        sql_params.append(int(max_age))
+
+    community = params.get("community")
+    if community and community != "Select":
+        query += " AND (target_community = 'All' OR target_community LIKE ?)"
+        sql_params.append(f"%{community}%")
+
+    occupation = params.get("occupation")
+    if occupation and occupation != "Select":
+        query += " AND (target_occupation = 'All' OR target_occupation LIKE ?)"
+        sql_params.append(f"%{occupation}%")
+
+    category = params.get("category")
+    if category and category not in ["All Categories", "Select"]:
+        query += " AND (legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
+        sql_params.extend([f"%{category}%", f"%{category}%", f"%{category}%"])
+
+    rows = cursor.execute(query, sql_params).fetchall()
+    results = []
+    for r in rows:
+        d = dict(r)
+        d["official_url"] = d.get("official_website") or d.get("source_url", "")
+        results.append(d)
+    conn.close()
+    return results
+
+
 
 SCHEMES_I18N = {
     "en": {
@@ -546,8 +714,23 @@ def render_schemes_page():
             api_params["search"] = search_q
         if state_filter and state_filter != t["all_states"]:
             api_params["state"] = state_filter
+        if cat_filter and cat_filter != t["all_categories"]:
+            api_params["category"] = cat_filter
         if gender_filter and gender_filter != t["all_genders"]:
             api_params["gender"] = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
+        if age_filter and age_filter != t["select"]:
+            if "18" in age_filter and "25" in age_filter:
+                api_params["min_age"] = 18
+                api_params["max_age"] = 25
+            elif "26" in age_filter and "40" in age_filter:
+                api_params["min_age"] = 26
+                api_params["max_age"] = 40
+            elif "41" in age_filter and "60" in age_filter:
+                api_params["min_age"] = 41
+                api_params["max_age"] = 60
+            elif "60+" in age_filter:
+                api_params["min_age"] = 60
+                api_params["max_age"] = 120
         if caste_filter and caste_filter != t["select"]:
             api_params["community"] = caste_filter
         if occ_filter and occ_filter != t["select"]:
@@ -555,27 +738,29 @@ def render_schemes_page():
         if disability_filter and disability_filter != t["select"]:
             api_params["disability"] = "true" if "Benchmark" in disability_filter else "false"
 
-        # Fetch Real Schemes directly from FastAPI backend
+        # Fetch Real Schemes directly from FastAPI backend / SQLite DB
         fetched_schemes = []
         api_error = False
         error_msg = ""
         try:
-            with httpx.Client(timeout=5.0) as client:
+            with httpx.Client(timeout=3.0) as client:
                 resp = client.get(f"{API_BASE_URL}/schemes", params=api_params)
                 if resp.status_code == 200:
                     fetched_schemes = resp.json()
                 else:
-                    api_error = True
-                    error_msg = f"HTTP {resp.status_code}"
-        except Exception as err:
-            api_error = True
-            error_msg = str(err)
+                    fetched_schemes = fetch_schemes_from_sqlite_db(api_params)
+        except Exception:
+            try:
+                fetched_schemes = fetch_schemes_from_sqlite_db(api_params)
+            except Exception as err:
+                api_error = True
+                error_msg = str(err)
 
         if api_error:
             st.markdown(f"""
             <div class="error-card">
                 <h3>⚠️ Unable to connect to the Government Scheme Database</h3>
-                <p>Please ensure the backend API service is running and accessible at <code>{API_BASE_URL}</code>.</p>
+                <p>Please ensure the database service or backend API is available.</p>
                 <p><small>Error details: {error_msg}</small></p>
             </div>
             """, unsafe_allow_html=True)
@@ -598,6 +783,9 @@ def render_schemes_page():
             st.selectbox("Sort", [t["sort_relevance"], t["sort_name"], t["sort_newest"]], label_visibility="collapsed")
 
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+
+        if not filtered:
+            st.info("No schemes found matching your selected criteria.")
 
         # Render Real Scheme Result Cards matching myScheme format
         for s in filtered:
