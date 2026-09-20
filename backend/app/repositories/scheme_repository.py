@@ -28,9 +28,22 @@ class SchemeRepository:
         )
         if category_id:
             query = query.where(Scheme.category_id == category_id)
-        if state and state != "All States / UTs":
-            state_term = f"%{state.strip()}%"
-            query = query.where((Scheme.state_district_scope.ilike(state_term)) | (Scheme.ministry.ilike(state_term)))
+        if state and state not in ["All", "All States / UTs"]:
+            if state == "All India" or state == "Central":
+                query = query.where(
+                    (Scheme.state_district_scope.ilike("%All India%")) | 
+                    (Scheme.state_district_scope.ilike("%Central%")) | 
+                    (Scheme.state_district_scope.is_(None))
+                )
+            else:
+                state_term = f"%{state.strip()}%"
+                query = query.where(
+                    (Scheme.state_district_scope.ilike(state_term)) | 
+                    (Scheme.state_district_scope.ilike("%All India%")) | 
+                    (Scheme.state_district_scope.ilike("%Central%")) | 
+                    (Scheme.state_district_scope.is_(None)) | 
+                    (Scheme.ministry.ilike(state_term))
+                )
         if gender and gender != "All":
             query = query.where((Scheme.gender_restriction == "All") | (Scheme.gender_restriction == gender) | (Scheme.gender_restriction.is_(None)))
         if min_age is not None:
