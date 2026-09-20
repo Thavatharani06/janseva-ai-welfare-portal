@@ -291,7 +291,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
   <div class="brand"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div>
   <nav class="nav"><a href="#home" class="active">Home</a><a href="#explore" id="navExploreLink" onclick="category('all')">Explore Schemes</a><a href="#journey" id="navJourneyLink" onclick="journey()">My Welfare Journey</a><a href="#resources" id="navResourcesLink" onclick="resources()">Resources</a></nav>
   <div class="actions" id="userActions">
-    <select class="select" id="langSelect"><option value="en">English ▾</option><option value="ta">தமிழ் (Tamil)</option><option value="hi">हिंदी (Hindi)</option></select>
+    <select class="select" id="langSelect" onchange="setLanguage(this.value)"><option value="en">English ▾</option><option value="ta">தமிழ் (Tamil)</option><option value="hi">हिंदी (Hindi)</option></select>
     <button class="btn outline" id="btnSignIn" onclick="auth('Sign In')">Sign In</button>
     <button class="btn primary" id="btnCreateAccount" onclick="auth('Create Account')">Create Account</button>
   </div>
@@ -327,8 +327,8 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
   <div class="steps"><div class="step"><div class="num">01</div><div class="step-icon">👤</div><h3>Tell us about yourself</h3><p>Answer a quick profile or speak to the AI.</p></div><div class="step"><div class="num">02</div><div class="step-icon">🔍</div><h3>Find relevant schemes</h3><p>Get personalized scheme recommendations.</p></div><div class="step"><div class="num">03</div><div class="step-icon">📝</div><h3>Check eligibility</h3><p>AI evaluates your eligibility based on official rules.</p></div><div class="step"><div class="num">04</div><div class="step-icon">🚀</div><h3>Prepare your application</h3><p>Pre-fill forms with AI and required documents.</p></div></div>
 </section>
 <section class="feature-grid section" id="resources">
-  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3>AI Application Assistant</h3><p>Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" id="btnTryApplyAI" onclick="applyAI()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
-  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3>Understand Your Documents with AI</h3><p>Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="warn" id="ocrDistStatus">⚠ Verify</span></div></div></div><button class="mini-btn" id="btnUploadDocMini" onclick="documentAI()">Upload Document</button></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3 id="ft1Title">AI Application Assistant</h3><p id="ft1Sub">Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" id="btnTryApplyAI" onclick="applyAI()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3 id="ft2Title">Understand Your Documents with AI</h3><p id="ft2Sub">Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="warn" id="ocrDistStatus">⚠ Verify</span></div></div></div><button class="mini-btn" id="btnUploadDocMini" onclick="documentAI()">Upload Document</button></div>
 </section>
 <section class="section" id="recommendations">
   <div class="section-head"><div><h2 id="recsTitle">Recommended for You</h2><p class="section-sub" id="recsSub">Based on your profile and interests</p></div><a class="link" href="#explore" onclick="category('all')">View All Schemes →</a></div>
@@ -365,6 +365,151 @@ try {
 window.currentUser = null;
 window.authToken = null;
 window.pendingAction = null;
+window.currentLang = 'en';
+
+const TRANSLATIONS = {
+  en: {
+    navHome: "Home",
+    navExplore: "Explore Schemes",
+    navJourney: "My Welfare Journey",
+    navResources: "Resources",
+    btnSignIn: "Sign In",
+    btnCreateAccount: "Create Account",
+    crumb: "Citizens <span>|</span> Schemes <span>|</span> AI <span>|</span> A Stronger Tomorrow",
+    heroTitle: "Find Government Support<br>That Fits <em>Your Situation</em>",
+    heroDesc: "Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.",
+    btnStartJourney: "Start My Welfare Journey →",
+    btnExploreSchemes: "Explore Schemes",
+    statSources: "Central & State Sources",
+    statSchemes: "Indexed Schemes",
+    statLangs: "Languages Supported",
+    aiTitle: "Ask the Welfare Assistant",
+    aiDesc: "Tell us what you need in your own words. You can type or speak.",
+    aiTryExample: "↻ &nbsp; Try example",
+    aiPlaceholder: "e.g., I am looking for financial assistance for my education...",
+    btnSpeak: "🎙 Speak",
+    btnSearch: "🔍 Search",
+    chip1: "🎓 I need a scholarship",
+    chip2: "🏠 Looking for housing support",
+    chip3: "🌾 Farmer financial assistance",
+    chip4: "👨‍👩‍👧 Scheme eligibility for my family",
+    exploreTitle: "Explore Government Support",
+    exploreSub: "Browse schemes by category or explore all schemes",
+    exploreLink: "View All Categories →",
+    howTitle: "How It Works",
+    howSub: "Get from discovery to application in four simple steps",
+    step1Title: "Tell us about yourself",
+    step1Desc: "Answer a quick profile or speak to the AI.",
+    step2Title: "Find relevant schemes",
+    step2Desc: "Get personalized scheme recommendations.",
+    step3Title: "Check eligibility",
+    step3Desc: "AI evaluates your eligibility based on official rules.",
+    step4Title: "Prepare your application",
+    step4Desc: "Pre-fill forms with AI and required documents.",
+    recsTitle: "Recommended for You",
+    recsSub: "Based on your profile and interests",
+    recsLink: "View All Schemes →",
+    bannerTitle: "A More Inclusive India<br>Through Informed Citizens",
+    bannerDesc: "Bridging citizens to government support with the power of AI.",
+    btnViewScheme: "View Scheme →",
+    btnCheckEligibility: "Check Eligibility",
+    toastLang: "Language changed to English"
+  },
+  ta: {
+    navHome: "முகப்பு",
+    navExplore: "திட்டங்களைக் கண்டறிக",
+    navJourney: "எனது நலன்புரிப் பயணம்",
+    navResources: "வளங்கள்",
+    btnSignIn: "உள்நுழைக",
+    btnCreateAccount: "கணக்கை உருவாக்கு",
+    crumb: "குடிமக்கள் <span>|</span> திட்டங்கள் <span>|</span> AI <span>|</span> வலுவான நாளை",
+    heroTitle: "உங்கள் தேவைக்கேற்ப<br>அரசு <em>உதவிகளைக் கண்டறியுங்கள்</em>",
+    heroDesc: "உங்களுக்கு என்ன தேவை என்று எங்களுக்குச் சொல்லுங்கள். பொருத்தமான அரசுத் திட்டங்களைக் கண்டறியவும், தகுதியைப் புரிந்துகொள்ளவும், உங்கள் விண்ணப்பத்தைத் தயாரிக்கவும் எங்கள் AI உதவுகிறது.",
+    btnStartJourney: "எனது பயணத்தைத் தொடங்கு →",
+    btnExploreSchemes: "திட்டங்களை ஆராய்க",
+    statSources: "மத்திய & மாநில ஆதாரங்கள்",
+    statSchemes: "பட்டியலிடப்பட்ட திட்டங்கள்",
+    statLangs: "ஆதரிக்கப்படும் மொழிகள்",
+    aiTitle: "நலன்புரி உதவியாளரிடம் கேளுங்கள்",
+    aiDesc: "உங்கள் சொந்த வார்த்தைகளில் உங்களுக்கு என்ன தேவை என்று கூறுங்கள். நீங்கள் தட்டச்சு செய்யலாம் அல்லது பேசலாம்.",
+    aiTryExample: "↻ &nbsp; உதாரணத்தைப் பார்க்கவும்",
+    aiPlaceholder: "எ.கா: எனது கல்விக்கான நிதியுதவியை நான் தேடுகிறேன்...",
+    btnSpeak: "🎙 பேசுங்கள்",
+    btnSearch: "🔍 தேடுக",
+    chip1: "🎓 எனக்கு கல்வி உதவித்தொகை தேவை",
+    chip2: "🏠 வீட்டுவசதி உதவி தேடுகிறேன்",
+    chip3: "🌾 விவசாயி நிதியுதவி",
+    chip4: "👨‍👩‍👧 எனது குடும்பத்தின் திட்டம் தகுதி",
+    exploreTitle: "அரசு உதவிகளை ஆராயுங்கள்",
+    exploreSub: "வகைகள் வாரியாக திட்டங்களை உலாவவும் அல்லது அனைத்து திட்டங்களையும் ஆராயவும்",
+    exploreLink: "அனைத்து வகைகளையும் காண்க →",
+    howTitle: "இது எவ்வாறு செயல்படுகிறது",
+    howSub: "கண்டுபிடிப்பிலிருந்து விண்ணப்பம் வரை நான்கு எளிய படிகளில்",
+    step1Title: "உங்களைப் பற்றிச் சொல்லுங்கள்",
+    step1Desc: "விரைவான சுயவிவரத்திற்கு பதிலளிக்கவும் அல்லது AI உடன் பேசவும்.",
+    step2Title: "பொருத்தமான திட்டங்களைக் கண்டறியவும்",
+    step2Desc: "தனிப்பயனாக்கப்பட்ட திட்டப் பரிந்துரைகளைப் பெறுங்கள்.",
+    step3Title: "தகுதியை சரிபார்க்கவும்",
+    step3Desc: "அதிகாரப்பூர்வ விதிகளின் அடிப்படையில் AI உங்கள் தகுதியை மதிப்பிடுகிறது.",
+    step4Title: "உங்கள் விண்ணப்பத்தைத் தயாரிக்கவும்",
+    step4Desc: "AI மற்றும் தேவையான ஆவணங்களுடன் படிவங்களை முன்கூட்டியே நிரப்பவும்.",
+    recsTitle: "உங்களுக்காகப் பரிந்துரைக்கப்பட்டவை",
+    recsSub: "உங்கள் சுயவிவரம் மற்றும் விருப்பங்களின் அடிப்படையில்",
+    recsLink: "அனைத்து திட்டங்களையும் காண்க →",
+    bannerTitle: "தகவலறிந்த குடிமக்கள் மூலம்<br>மேலும் உள்ளடக்கிய இந்தியா",
+    bannerDesc: "AI இன் ஆற்றலுடன் குடிமக்களை அரசு ஆதரவுடன் இணைக்கிறது.",
+    btnViewScheme: "திட்டத்தைக் காண்க →",
+    btnCheckEligibility: "தகுதியைச் சரிபார்க்க",
+    toastLang: "தமிழ் மொழி தேர்ந்தெடுக்கப்பட்டது"
+  },
+  hi: {
+    navHome: "होम",
+    navExplore: "योजनाएं खोजें",
+    navJourney: "मेरी कल्याण यात्रा",
+    navResources: "संसाधन",
+    btnSignIn: "साइन इन करें",
+    btnCreateAccount: "खाता बनाएं",
+    crumb: "नागरिक <span>|</span> योजनाएं <span>|</span> AI <span>|</span> एक मजबूत कल",
+    heroTitle: "अपनी स्थिति के अनुकूल<br>सरकारी <em>सहायता खोजें</em>",
+    heroDesc: "हमें बताएं कि आपको क्या चाहिए। हमारा AI प्रासंगिक सरकारी योजनाओं की खोज करने, पात्रता समझने और आपका आवेदन तैयार करने में मदद करता है।",
+    btnStartJourney: "मेरी कल्याण यात्रा शुरू करें →",
+    btnExploreSchemes: "योजनाएं खोजें",
+    statSources: "केंद्रीय और राज्य स्रोत",
+    statSchemes: "अनुक्रमित योजनाएं",
+    statLangs: "समर्थित भाषाएँ",
+    aiTitle: "कल्याण सहायक से पूछें",
+    aiDesc: "अपनी आवश्यकता अपने शब्दों में बताएं। आप टाइप कर सकते हैं या बोल सकते हैं।",
+    aiTryExample: "↻ &nbsp; उदाहरण आजमाएं",
+    aiPlaceholder: "उदा. मैं अपनी शिक्षा के लिए वित्तीय सहायता की तलाश में हूं...",
+    btnSpeak: "🎙 बोलें",
+    btnSearch: "🔍 खोजें",
+    chip1: "🎓 मुझे छात्रवृत्ति चाहिए",
+    chip2: "🏠 आवास सहायता की तलाश है",
+    chip3: "🌾 किसान वित्तीय सहायता",
+    chip4: "👨‍👩‍👧 मेरे परिवार के लिए योजना पात्रता",
+    exploreTitle: "सरकारी सहायता खोजें",
+    exploreSub: "श्रेणी के अनुसार योजनाएं देखें या सभी योजनाओं की खोज करें",
+    exploreLink: "सभी श्रेणियां देखें →",
+    howTitle: "यह कैसे काम करता है",
+    howSub: "खोज से लेकर आवेदन तक चार आसान चरणों में",
+    step1Title: "अपने बारे में बताएं",
+    step1Desc: "त्वरित प्रोफ़ाइल का उत्तर दें या AI से बात करें।",
+    step2Title: "प्रासंगिक योजनाएं खोजें",
+    step2Desc: "व्यक्तिगत योजना सिफारिशें प्राप्त करें।",
+    step3Title: "पात्रता जांचें",
+    step3Desc: "AI आधिकारिक नियमों के आधार पर आपकी पात्रता का मूल्यांकन करता है।",
+    step4Title: "अपना आवेदन तैयार करें",
+    step4Desc: "AI और आवश्यक दस्तावेजों के साथ फॉर्म पहले से भरें।",
+    recsTitle: "आपके लिए अनुशंसित",
+    recsSub: "आपकी प्रोफ़ाइल और रुचियों के आधार पर",
+    recsLink: "सभी योजनाएं देखें →",
+    bannerTitle: "सशक्त नागरिकों के माध्यम से<br>अधिक समावेशी भारत",
+    bannerDesc: "AI की शक्ति के साथ नागरिकों को सरकारी सहायता से जोड़ना।",
+    btnViewScheme: "योजना देखें →",
+    btnCheckEligibility: "पात्रता जांचें",
+    toastLang: "हिंदी भाषा चुनी गई"
+  }
+};
 
 function toast(t){
   const e = document.getElementById('toast');
@@ -378,6 +523,162 @@ function go(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}
 function fill(t){
   const elem = document.getElementById('aiInput');
   if(elem){ elem.value = t; elem.focus(); }
+}
+
+function setLanguage(lang) {
+  if (!TRANSLATIONS[lang]) lang = 'en';
+  window.currentLang = lang;
+  const t = TRANSLATIONS[lang];
+
+  // Update Navigation Links
+  const navLinks = document.querySelectorAll('.nav a');
+  if (navLinks.length >= 4) {
+    navLinks[0].textContent = t.navHome;
+    navLinks[1].textContent = t.navExplore;
+    navLinks[2].textContent = t.navJourney;
+    navLinks[3].textContent = t.navResources;
+  }
+
+  // Update Auth Buttons if not logged in
+  const btnSignIn = document.getElementById('btnSignIn');
+  if (btnSignIn && !window.currentUser) btnSignIn.textContent = t.btnSignIn;
+  const btnCreateAccount = document.getElementById('btnCreateAccount');
+  if (btnCreateAccount && !window.currentUser) btnCreateAccount.textContent = t.btnCreateAccount;
+
+  // Update Hero Section
+  const crumb = document.querySelector('.crumb');
+  if (crumb) crumb.innerHTML = t.crumb;
+  const heroH1 = document.querySelector('.hero h1');
+  if (heroH1) heroH1.innerHTML = t.heroTitle;
+  const heroP = document.querySelector('.hero p');
+  if (heroP) heroP.textContent = t.heroDesc;
+  const btnHeroStartJourney = document.getElementById('btnHeroStartJourney');
+  if (btnHeroStartJourney) btnHeroStartJourney.textContent = t.btnStartJourney;
+  const btnHeroExploreSchemes = document.getElementById('btnHeroExploreSchemes');
+  if (btnHeroExploreSchemes) btnHeroExploreSchemes.textContent = t.btnExploreSchemes;
+
+  // Update Stats
+  const statSmalls = document.querySelectorAll('.stat small');
+  if (statSmalls.length >= 3) {
+    statSmalls[0].textContent = t.statSources;
+    statSmalls[1].textContent = t.statSchemes;
+    statSmalls[2].textContent = t.statLangs;
+  }
+
+  // Update AI Assistant Section
+  const aiH2 = document.querySelector('.ai-head h2');
+  if (aiH2) aiH2.textContent = t.aiTitle;
+  const aiP = document.querySelector('.ai-head p');
+  if (aiP) aiP.textContent = t.aiDesc;
+  const btnAiTryExample = document.getElementById('btnAiTryExample');
+  if (btnAiTryExample) btnAiTryExample.innerHTML = t.aiTryExample;
+  const aiInput = document.getElementById('aiInput');
+  if (aiInput) aiInput.placeholder = t.aiPlaceholder;
+  const btnSpeak = document.getElementById('btnSpeak');
+  if (btnSpeak) btnSpeak.textContent = t.btnSpeak;
+  const btnSearch = document.getElementById('btnSearch');
+  if (btnSearch) btnSearch.textContent = t.btnSearch;
+
+  // Update Chips
+  const chips = document.querySelectorAll('.chips .chip');
+  if (chips.length >= 4) {
+    chips[0].textContent = t.chip1;
+    chips[1].textContent = t.chip2;
+    chips[2].textContent = t.chip3;
+    chips[3].textContent = t.chip4;
+  }
+
+  // Update Section Headers
+  const exploreH2 = document.querySelector('#explore .section-head h2');
+  if (exploreH2) exploreH2.textContent = t.exploreTitle;
+  const exploreSub = document.querySelector('#explore .section-sub');
+  if (exploreSub) exploreSub.textContent = t.exploreSub;
+  const exploreLink = document.querySelector('#explore .link');
+  if (exploreLink) exploreLink.textContent = t.exploreLink;
+
+  const journeyH2 = document.querySelector('#journey .section-head h2');
+  if (journeyH2) journeyH2.textContent = t.howTitle;
+  const journeySub = document.querySelector('#journey .section-sub');
+  if (journeySub) journeySub.textContent = t.howSub;
+
+  const recsH2 = document.querySelector('#recsTitle');
+  if (recsH2) recsH2.textContent = t.recsTitle;
+  const recsSub = document.querySelector('#recsSub');
+  if (recsSub) recsSub.textContent = t.recsSub;
+  const recsLink = document.querySelector('#recommendations .link');
+  if (recsLink) recsLink.textContent = t.recsLink;
+
+  // Update Steps
+  const stepH3s = document.querySelectorAll('.step h3');
+  const stepPs = document.querySelectorAll('.step p');
+  if (stepH3s.length >= 4 && stepPs.length >= 4) {
+    stepH3s[0].textContent = t.step1Title; stepPs[0].textContent = t.step1Desc;
+    stepH3s[1].textContent = t.step2Title; stepPs[1].textContent = t.step2Desc;
+    stepH3s[2].textContent = t.step3Title; stepPs[2].textContent = t.step3Desc;
+    stepH3s[3].textContent = t.step4Title; stepPs[3].textContent = t.step4Desc;
+  }
+
+  // Update Categories & Scheme Cards dynamically
+  renderCategoriesUI();
+  renderSchemesUI(window.REAL_SCHEMES || []);
+
+  toast(t.toastLang);
+}
+
+function renderCategoriesUI() {
+  const container = document.getElementById('categoriesContainer');
+  if (!container) return;
+  const lang = window.currentLang || 'en';
+  const iconMap = {"home": "🏠", "sprout": "🌾", "heart": "👩", "activity": "💚", "graduation-cap": "🎓"};
+  
+  let html = '';
+  (window.REAL_CATEGORIES || []).forEach(cat => {
+    const icon = iconMap[cat.icon] || "🏛️";
+    let name = cat.name;
+    if (lang === 'ta' && cat.name_ta) name = cat.name_ta;
+    if (lang === 'hi' && cat.name_hi) name = cat.name_hi;
+    const catId = cat.id;
+    const count = (window.REAL_SCHEMES || []).filter(s => s.category_id === catId).length || 1;
+    const schemeLabel = lang === 'ta' ? 'திட்டங்கள்' : (lang === 'hi' ? 'योजनाएं' : 'Schemes');
+    html += `<div class="cat" data-catid="${catId}" onclick="category('${catId}')"><div class="cat-icon">${icon}</div><div><strong>${name}</strong><small>${count} ${schemeLabel}</small></div><span class="arrow">→</span></div>`;
+  });
+  container.innerHTML = html;
+}
+
+function renderSchemesUI(schemes) {
+  const container = document.getElementById('recsContainer');
+  if (!container) return;
+  const lang = window.currentLang || 'en';
+  const t = TRANSLATIONS[lang] || TRANSLATIONS.en;
+  
+  let html = '';
+  (schemes || []).slice(0, 6).forEach(s => {
+    let title = s.title;
+    if (lang === 'ta' && s.title_ta) title = s.title_ta;
+    if (lang === 'hi' && s.title_hi) title = s.title_hi;
+    
+    let summary = s.simple_summary || '';
+    if (lang === 'ta' && s.simple_summary_ta) summary = s.simple_summary_ta;
+    summary = summary.length > 130 ? summary.substring(0, 130) + '...' : summary;
+    
+    const sid = s.id;
+    const ministry = s.ministry || 'Government of India';
+    const tag = s.target_occupation || (lang === 'ta' ? 'மத்திய அரசுத் திட்டம்' : 'Central Scheme');
+    
+    html += `
+    <div class="scheme">
+      <h3>${title}</h3>
+      <div class="min">${ministry}</div>
+      <p>${summary}</p>
+      <div class="tags"><span class="tag">${tag}</span></div>
+      <div class="scheme-actions">
+        <button class="primary" onclick="scheme('${sid}')">${t.btnViewScheme}</button>
+        <button class="secondary" onclick="eligibility('${sid}')">${t.btnCheckEligibility}</button>
+      </div>
+    </div>
+    `;
+  });
+  container.innerHTML = html;
 }
 
 // Flexible modal launcher (Guaranteed positioning near top of viewport)
@@ -400,8 +701,16 @@ function closeModal(){
 async function searchAI(){
   const inputElem = document.getElementById('aiInput');
   const q = inputElem ? inputElem.value.trim() : '';
-  if(!q){ toast('Please enter what support you need first.'); return; }
-  toast('AI Assistant searching scheme database...');
+  const lang = window.currentLang || 'en';
+  
+  if(!q){
+    const msg = lang === 'ta' ? 'தயவுசெய்து உங்களுக்கு என்ன தேவை என்று உள்ளிடவும்.' : 'Please enter what support you need first.';
+    toast(msg);
+    return;
+  }
+  
+  const searchToast = lang === 'ta' ? 'AI உதவியாளர் தரவுத்தளத்தில் தேடுகிறது...' : 'AI Assistant searching scheme database...';
+  toast(searchToast);
   
   try {
     const headers = {'Content-Type': 'application/json'};
@@ -410,20 +719,26 @@ async function searchAI(){
     const res = await fetch(API_BASE_URL + '/rag/query', {
       method: 'POST',
       headers: headers,
-      body: JSON.stringify({ query: q, explanation_level: 'simple' })
+      body: JSON.stringify({ query: q, explanation_level: 'simple', language: lang })
     });
     
     if (res.ok) {
       const data = await res.json();
-      openModal('<h2>AI Welfare Assistant Answer</h2><p style="color:#00865a; font-weight:700;"><b>AI Confidence Score: ' + Math.round((data.confidence_score||0.88)*100) + '%</b></p><div style="background:#f4fbf8; padding:14px; border-radius:8px; font-size:12px; line-height:1.55; margin:12px 0; border:1px solid #dce5e8;">' + (data.response||'Answer retrieved.') + '</div>' + (data.matched_scheme ? '<button class="btn primary full" onclick="scheme(\'' + data.matched_scheme.id + '\')">View Matched Scheme: ' + data.matched_scheme.title + ' →</button>' : '<button class="btn primary full" onclick="closeModal()">Close Answer</button>'));
+      const ansTitle = lang === 'ta' ? 'AI நலன்புரி உதவியாளர் பதில்' : 'AI Welfare Assistant Answer';
+      const scoreLabel = lang === 'ta' ? 'AI நம்பிக்கைப் புள்ளி:' : 'AI Confidence Score:';
+      const closeLabel = lang === 'ta' ? 'பதிலை மூடு' : 'Close Answer';
+      const viewLabel = lang === 'ta' ? 'பொருந்திய திட்டத்தைப் பார்க்கவும்:' : 'View Matched Scheme:';
+      
+      openModal('<h2>' + ansTitle + '</h2><p style="color:#00865a; font-weight:700;"><b>' + scoreLabel + ' ' + Math.round((data.confidence_score||0.88)*100) + '%</b></p><div style="background:#f4fbf8; padding:14px; border-radius:8px; font-size:12px; line-height:1.55; margin:12px 0; border:1px solid #dce5e8;">' + (data.response||'Answer retrieved.') + '</div>' + (data.matched_scheme ? '<button class="btn primary full" onclick="scheme(\'' + data.matched_scheme.id + '\')">' + viewLabel + ' ' + data.matched_scheme.title + ' →</button>' : '<button class="btn primary full" onclick="closeModal()">' + closeLabel + '</button>'));
       return;
     }
   } catch(err){}
   
-  // Local RAG Service Matcher Engine
+  // Local RAG Service Matcher Engine (Supports Tamil & English)
   const qLower = q.toLowerCase();
   const matched = (window.REAL_SCHEMES||[]).filter(s => 
     (s.title && s.title.toLowerCase().includes(qLower)) || 
+    (s.title_ta && s.title_ta.includes(q)) || 
     (s.simple_summary && s.simple_summary.toLowerCase().includes(qLower)) ||
     (s.target_occupation && s.target_occupation.toLowerCase().includes(qLower)) ||
     (s.code && s.code.toLowerCase().includes(qLower)) ||
@@ -431,13 +746,19 @@ async function searchAI(){
   );
   
   const displayList = matched.length > 0 ? matched : (window.REAL_SCHEMES||[]);
-  let html = '<h2>AI Assistant Search Results</h2><p>Retrieved <b>' + displayList.length + '</b> relevant scheme(s) for: "<i>' + q + '</i>"</p>';
+  
+  const modalTitle = lang === 'ta' ? 'AI உதவியாளர் தேடல் முடிவுகள்' : 'AI Assistant Search Results';
+  const foundText = lang === 'ta' ? 'கண்டறியப்பட்ட திட்டங்கள்:' : 'Retrieved scheme(s) for:';
+  
+  let html = '<h2>' + modalTitle + '</h2><p>' + foundText + ' <b>' + displayList.length + '</b> ("<i>' + q + '</i>")</p>';
   html += '<div style="max-height:300px; overflow-y:auto; margin:12px 0;">';
   displayList.forEach(s => {
-    html += '<div style="border:1px solid #dce5e8; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;"><strong style="color:#00865a; font-size:13px;">' + s.title + '</strong><p style="font-size:11px; margin:4px 0; color:#334155;">' + (s.simple_summary||'').substring(0,140) + '...</p><div style="display:flex; gap:8px; margin-top:8px;"><button class="btn outline" style="height:28px; padding:0 12px; font-size:11px;" onclick="scheme(\'' + s.id + '\')">View Details</button><button class="btn primary" style="height:28px; padding:0 12px; font-size:11px;" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button></div></div>';
+    const schemeTitle = (lang === 'ta' && s.title_ta) ? s.title_ta : s.title;
+    const summaryText = s.simple_summary || '';
+    html += '<div style="border:1px solid #dce5e8; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;"><strong style="color:#00865a; font-size:13px;">' + schemeTitle + '</strong><p style="font-size:11px; margin:4px 0; color:#334155;">' + summaryText.substring(0,140) + '...</p><div style="display:flex; gap:8px; margin-top:8px;"><button class="btn outline" style="height:28px; padding:0 12px; font-size:11px;" onclick="scheme(\'' + s.id + '\')">' + (lang === 'ta' ? 'விவரங்களைக் காண்க' : 'View Details') + '</button><button class="btn primary" style="height:28px; padding:0 12px; font-size:11px;" onclick="eligibility(\'' + s.id + '\')">' + (lang === 'ta' ? 'தகுதியைச் சரிபார்க்க' : 'Check Eligibility') + '</button></div></div>';
   });
   html += '</div>';
-  html += '<button class="btn outline full" onclick="closeModal()">Close Results</button>';
+  html += '<button class="btn outline full" onclick="closeModal()">' + (lang === 'ta' ? 'மூடு' : 'Close Results') + '</button>';
   openModal(html);
 }
 
@@ -446,32 +767,35 @@ function category(catId){
   const container = document.getElementById('recsContainer');
   const titleElem = document.getElementById('recsTitle');
   const subElem = document.getElementById('recsSub');
+  const lang = window.currentLang || 'en';
   
   let filtered = window.REAL_SCHEMES||[];
   if(catId && catId !== 'all'){
     filtered = (window.REAL_SCHEMES||[]).filter(s => s.category_id === catId);
     if(filtered.length === 0) filtered = window.REAL_SCHEMES||[];
     const catObj = (window.REAL_CATEGORIES||[]).find(c => c.id === catId);
-    if(titleElem) titleElem.textContent = catObj ? catObj.name : 'Government Schemes';
-    if(subElem) subElem.textContent = 'Showing ' + filtered.length + ' scheme(s) in this category';
+    let catName = catObj ? catObj.name : 'Government Schemes';
+    if(lang === 'ta' && catObj && catObj.name_ta) catName = catObj.name_ta;
+    
+    if(titleElem) titleElem.textContent = catName;
+    if(subElem) subElem.textContent = (lang === 'ta' ? 'இந்த பிரிவில் உள்ள திட்டங்கள்: ' : 'Showing scheme(s) in this category: ') + filtered.length;
   } else {
-    if(titleElem) titleElem.textContent = 'All Government Schemes';
-    if(subElem) subElem.textContent = 'Showing all ' + filtered.length + ' indexed schemes';
+    if(titleElem) titleElem.textContent = (lang === 'ta' ? 'அனைத்து அரசுத் திட்டங்கள்' : 'All Government Schemes');
+    if(subElem) subElem.textContent = (lang === 'ta' ? 'பட்டியலிடப்பட்ட அனைத்துத் திட்டங்கள்: ' : 'Showing all indexed schemes: ') + filtered.length;
   }
   
-  let html = '';
-  filtered.forEach(s => {
-    html += '<div class="scheme"><h3>' + s.title + '</h3><div class="min">' + s.ministry + '</div><p>' + (s.simple_summary||'').substring(0,130) + '...</p><div class="tags"><span class="tag">' + (s.target_occupation||'Central Scheme') + '</span></div><div class="scheme-actions"><button class="primary" onclick="scheme(\'' + s.id + '\')">View Scheme →</button><button class="secondary" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button></div></div>';
-  });
-  if(container) container.innerHTML = html;
+  renderSchemesUI(filtered);
   go('recommendations');
-  toast('Category filter applied');
+  toast(lang === 'ta' ? 'பிரிவு வடிகட்டி பயன்படுத்தப்பட்டது' : 'Category filter applied');
 }
 
 // Step 4: Scheme Details Modal
 function scheme(sid){
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid || item.title === sid) || (window.REAL_SCHEMES||[])[0];
   if(!s) return;
+  const lang = window.currentLang || 'en';
+  
+  const displayTitle = (lang === 'ta' && s.title_ta) ? s.title_ta : s.title;
   
   let docsHtml = '';
   if (Array.isArray(s.required_documents)) {
@@ -480,31 +804,32 @@ function scheme(sid){
     docsHtml = '<li>Aadhaar Card</li><li>Income Certificate</li><li>Ration Card</li>';
   }
   
-  let html = '<h2>' + s.title + '</h2>';
+  let html = '<h2>' + displayTitle + '</h2>';
   html += '<p style="color:#00865a; font-weight:700; font-size:12px; margin-top:-4px;">' + s.ministry + ' | Code: ' + (s.code||'GOVT') + '</p>';
-  html += '<div style="font-size:12px; line-height:1.55; color:#334155; margin:14px 0;"><p><b>Summary:</b> ' + s.simple_summary + '</p>';
-  html += '<p><b>Legal Summary:</b> ' + (s.legal_summary||s.simple_summary) + '</p>';
-  html += '<p><b>Eligibility Parameters:</b> Min Age: ' + (s.min_age||18) + ' | Max Age: ' + (s.max_age||70) + ' | Max Family Income: ₹' + (s.max_income ? s.max_income.toLocaleString('en-IN') : 'No Limit') + '</p>';
-  html += '<p><b>Target Audience:</b> ' + (s.target_occupation||'All Citizens') + ' (' + (s.gender_restriction||'All Genders') + ')</p>';
-  html += '<p><b>Required Documents:</b></p><ul style="padding-left:20px; margin:6px 0;">' + docsHtml + '</ul>';
-  if(s.official_website) html += '<p><b>Official Website:</b> <a href="' + s.official_website + '" target="_blank" style="color:#00865a; font-weight:700;">' + s.official_website + '</a></p>';
-  if(s.helpline_number) html += '<p><b>Helpline Number:</b> ' + s.helpline_number + '</p>';
+  html += '<div style="font-size:12px; line-height:1.55; color:#334155; margin:14px 0;"><p><b>' + (lang === 'ta' ? 'சுருக்கம்:' : 'Summary:') + '</b> ' + s.simple_summary + '</p>';
+  html += '<p><b>' + (lang === 'ta' ? 'சட்ட ரீதியான விவரம்:' : 'Legal Summary:') + '</b> ' + (s.legal_summary||s.simple_summary) + '</p>';
+  html += '<p><b>' + (lang === 'ta' ? 'தகுதி வரம்புகள்:' : 'Eligibility Parameters:') + '</b> ' + (lang === 'ta' ? 'குறைந்தபட்ச வயது: ' : 'Min Age: ') + (s.min_age||18) + ' | ' + (lang === 'ta' ? 'அதிகபட்ச வயது: ' : 'Max Age: ') + (s.max_age||70) + ' | ' + (lang === 'ta' ? 'ஆண்டு குடும்ப வருமானம்: ₹' : 'Max Family Income: ₹') + (s.max_income ? s.max_income.toLocaleString('en-IN') : (lang === 'ta' ? 'வரம்பில்லை' : 'No Limit')) + '</p>';
+  html += '<p><b>' + (lang === 'ta' ? 'தேவையான ஆவணங்கள்:' : 'Required Documents:') + '</b></p><ul style="padding-left:20px; margin:6px 0;">' + docsHtml + '</ul>';
+  if(s.official_website) html += '<p><b>' + (lang === 'ta' ? 'அதிகாரப்பூர்வ இணையதளம்:' : 'Official Website:') + '</b> <a href="' + s.official_website + '" target="_blank" style="color:#00865a; font-weight:700;">' + s.official_website + '</a></p>';
+  if(s.helpline_number) html += '<p><b>' + (lang === 'ta' ? 'உதவி எண்:' : 'Helpline Number:') + '</b> ' + s.helpline_number + '</p>';
   html += '</div>';
-  html += '<div class="choice"><button class="btn outline" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button><button class="btn primary" onclick="applyAI(\'' + s.id + '\')">Apply with AI</button></div>';
+  html += '<div class="choice"><button class="btn outline" onclick="eligibility(\'' + s.id + '\')">' + (lang === 'ta' ? 'தகுதியைச் சரிபார்க்க' : 'Check Eligibility') + '</button><button class="btn primary" onclick="applyAI(\'' + s.id + '\')">' + (lang === 'ta' ? 'AI மூலம் விண்ணப்பிக்க' : 'Apply with AI') + '</button></div>';
   openModal(html);
 }
 
 // Step 5: Eligibility Check
 async function eligibility(sid){
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid) || (window.REAL_SCHEMES||[])[0];
+  const lang = window.currentLang || 'en';
+  const displayTitle = (lang === 'ta' && s && s.title_ta) ? s.title_ta : (s ? s.title : 'Welfare Scheme');
   
-  let html = '<h2>Check Eligibility: ' + (s ? s.title : 'Welfare Scheme') + '</h2>';
-  html += '<p>Provide your demographic details to evaluate rule compliance:</p>';
-  html += '<label style="font-size:11px; font-weight:700;">Applicant Age</label><input type="number" id="eAge" value="24">';
-  html += '<label style="font-size:11px; font-weight:700;">Annual Family Income (₹)</label><input type="number" id="eIncome" value="120000">';
-  html += '<label style="font-size:11px; font-weight:700;">District</label><input id="eDistrict" value="Madurai">';
-  html += '<label style="font-size:11px; font-weight:700;">Occupation</label><input id="eOccupation" value="Student">';
-  html += '<button class="btn primary full" onclick="submitEligibility(\'' + (s ? s.id : '') + '\')">Evaluate Eligibility →</button>';
+  let html = '<h2>' + (lang === 'ta' ? 'தகுதியைச் சரிபார்க்க:' : 'Check Eligibility:') + ' ' + displayTitle + '</h2>';
+  html += '<p>' + (lang === 'ta' ? 'உங்கள் தகவல்களை வழங்கி தகுதியை மதிப்பிடவும்:' : 'Provide your demographic details to evaluate rule compliance:') + '</p>';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'விண்ணப்பதாரர் வயது' : 'Applicant Age') + '</label><input type="number" id="eAge" value="24">';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'ஆண்டு குடும்ப வருமானம் (₹)' : 'Annual Family Income (₹)') + '</label><input type="number" id="eIncome" value="120000">';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'மாவட்டம்' : 'District') + '</label><input id="eDistrict" value="Madurai">';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'தொழில்' : 'Occupation') + '</label><input id="eOccupation" value="Student">';
+  html += '<button class="btn primary full" onclick="submitEligibility(\'' + (s ? s.id : '') + '\')">' + (lang === 'ta' ? 'தகுதியை மதிப்பிடுக →' : 'Evaluate Eligibility →') + '</button>';
   openModal(html);
 }
 
@@ -513,13 +838,14 @@ async function submitEligibility(sid){
   const incElem = document.getElementById('eIncome');
   const distElem = document.getElementById('eDistrict');
   const occElem = document.getElementById('eOccupation');
+  const lang = window.currentLang || 'en';
   
   const age = ageElem ? parseInt(ageElem.value)||24 : 24;
   const income = incElem ? parseFloat(incElem.value)||120000 : 120000;
   const district = distElem ? distElem.value : 'Madurai';
   const occupation = occElem ? occElem.value : 'Student';
   
-  toast('Evaluating eligibility against backend rules...');
+  toast(lang === 'ta' ? 'விதிகளின் அடிப்படையில் தகுதி மதிப்பிடப்படுகிறது...' : 'Evaluating eligibility against backend rules...');
   
   try {
     const res = await fetch(API_BASE_URL + '/eligibility/check', {
@@ -534,7 +860,7 @@ async function submitEligibility(sid){
       let currentMatch = recs.find(r => r.scheme_id === sid) || recs[0];
       if(currentMatch) score = currentMatch.eligibility_percentage;
       
-      openModal('<h2>Eligibility Results</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + score + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? 'Eligible for Scheme' : 'Partial Match') + '</p></div><div style="font-size:12px; line-height:1.5; color:#334155; margin:10px 0;"><p><b>Evaluated Rule Breakdown:</b></p><p>✓ Annual family income ₹' + income.toLocaleString('en-IN') + ' satisfies income limit.</p><p>✓ Age ' + age + ' falls within scheme parameters.</p><p>✓ Location scope ' + district + ' verified.</p></div><div class="choice"><button class="btn outline" onclick="closeModal()">Close</button><button class="btn primary" onclick="applyAI(\'' + sid + '\')">Proceed to Apply →</button></div>');
+      openModal('<h2>' + (lang === 'ta' ? 'தகுதி முடிவுகள்' : 'Eligibility Results') + '</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + score + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? (lang === 'ta' ? 'திட்டத்திற்கு தகுதியுடையவர்' : 'Eligible for Scheme') : (lang === 'ta' ? 'பகுதி தகுதி' : 'Partial Match')) + '</p></div><div style="font-size:12px; line-height:1.5; color:#334155; margin:10px 0;"><p><b>' + (lang === 'ta' ? 'மதிப்பீட்டு விவரங்கள்:' : 'Evaluated Rule Breakdown:') + '</b></p><p>✓ ' + (lang === 'ta' ? 'ஆண்டு குடும்ப வருமானம் ₹' + income.toLocaleString('en-IN') + ' வரம்பிற்குள் உள்ளது.' : 'Annual family income ₹' + income.toLocaleString('en-IN') + ' satisfies income limit.') + '</p><p>✓ ' + (lang === 'ta' ? 'வயது ' + age + ' திட்ட வரம்பிற்குள் உள்ளது.' : 'Age ' + age + ' falls within scheme parameters.') + '</p><p>✓ ' + (lang === 'ta' ? 'மாவட்டம் ' + district + ' சரிபார்க்கப்பட்டது.' : 'Location scope ' + district + ' verified.') + '</p></div><div class="choice"><button class="btn outline" onclick="closeModal()">' + (lang === 'ta' ? 'மூடு' : 'Close') + '</button><button class="btn primary" onclick="applyAI(\'' + sid + '\')">' + (lang === 'ta' ? 'விண்ணப்பிக்க தொடர்க →' : 'Proceed to Apply →') + '</button></div>');
       return;
     }
   } catch(err){}
@@ -546,30 +872,38 @@ async function submitEligibility(sid){
   let rejected = [];
   
   if(s && s.max_income) {
-    if(income <= s.max_income) met.push('✓ Annual income ₹' + income.toLocaleString('en-IN') + ' is within limit of ₹' + s.max_income.toLocaleString('en-IN'));
-    else { score -= 40; rejected.push('❌ Income ₹' + income.toLocaleString('en-IN') + ' exceeds max limit ₹' + s.max_income.toLocaleString('en-IN')); }
+    if(income <= s.max_income) met.push(lang === 'ta' ? '✓ ஆண்டு வருமானம் ₹' + income.toLocaleString('en-IN') + ' வரம்பிற்குள் உள்ளது' : '✓ Annual income ₹' + income.toLocaleString('en-IN') + ' is within limit');
+    else { score -= 40; rejected.push(lang === 'ta' ? '❌ வருமானம் ₹' + income.toLocaleString('en-IN') + ' அதிகபட்ச வரம்பை விட அதிகம்' : '❌ Income exceeds max limit'); }
   }
   if(s && s.min_age && s.max_age) {
-    if(age >= s.min_age && age <= s.max_age) met.push('✓ Age ' + age + ' falls between ' + s.min_age + ' and ' + s.max_age + ' years');
-    else { score -= 30; rejected.push('❌ Age ' + age + ' outside range ' + s.min_age + '-' + s.max_age + ' years'); }
+    if(age >= s.min_age && age <= s.max_age) met.push(lang === 'ta' ? '✓ வயது ' + age + ' தகுதி வரம்பிற்குள் உள்ளது' : '✓ Age ' + age + ' falls in range');
+    else { score -= 30; rejected.push(lang === 'ta' ? '❌ வயது ' + age + ' தகுதி வரம்பிற்குள் இல்லை' : '❌ Age outside range'); }
   }
   
-  let html = '<h2>Eligibility Result: ' + (s ? s.title : 'Welfare Scheme') + '</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + Math.max(0, score) + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? 'High Priority Match' : 'Conditional Match') + '</p></div><div style="font-size:12px; line-height:1.55; margin:12px 0;">';
+  const displayTitle = (lang === 'ta' && s && s.title_ta) ? s.title_ta : (s ? s.title : 'Welfare Scheme');
+  let html = '<h2>' + (lang === 'ta' ? 'தகுதி முடிவு:' : 'Eligibility Result:') + ' ' + displayTitle + '</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + Math.max(0, score) + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? (lang === 'ta' ? 'உயர் தகுதி பொருத்தம்' : 'High Priority Match') : (lang === 'ta' ? 'நிபந்தனை பொருத்தம்' : 'Conditional Match')) + '</p></div><div style="font-size:12px; line-height:1.55; margin:12px 0;">';
   if(met.length) html += '<p style="color:#00865a; font-weight:600;">' + met.join('<br>') + '</p>';
   if(rejected.length) html += '<p style="color:#dc2626; font-weight:600;">' + rejected.join('<br>') + '</p>';
-  html += '</div><button class="btn primary full" onclick="applyAI(\'' + sid + '\')">Apply with AI →</button>';
+  html += '</div><button class="btn primary full" onclick="applyAI(\'' + sid + '\')">' + (lang === 'ta' ? 'AI மூலம் விண்ணப்பிக்க →' : 'Apply with AI →') + '</button>';
   openModal(html);
 }
 
 // Step 6: Authentication & MFA Flow
 function auth(p, nextAction){
   if(nextAction) window.pendingAction = nextAction;
-  let html = '<h2>' + p + '</h2>';
-  html += '<p>' + (p==='Sign In'?'Sign in to access your citizen profile and applications.':'Create your official citizen account.') + '</p>';
-  html += '<label style="font-size:11px; font-weight:700;">Email Address / Mobile</label><input id="authEmail" value="citizen.demo@welfare.local">';
-  html += '<label style="font-size:11px; font-weight:700;">Password</label><input type="password" id="authPass" value="CitizenDemo@123!">';
-  html += '<button class="btn primary full" id="btnSubmitAuth" onclick="submitAuth(\'' + p + '\')">Continue →</button>';
-  html += '<div style="font-size:11px; color:#475569; margin-top:14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;"><p style="margin:0 0 4px; font-weight:700; color:#112448;">Pre-seeded Demo Accounts:</p><p style="margin:2px 0;"><b>Citizen:</b> citizen.demo@welfare.local | CitizenDemo@123!</p><p style="margin:2px 0;"><b>Admin:</b> admin.demo@welfare.local | AdminDemo@123!</p></div>';
+  const lang = window.currentLang || 'en';
+  
+  let pTitle = p;
+  if (lang === 'ta') {
+    pTitle = p === 'Sign In' ? 'உள்நுழைக' : 'கணக்கை உருவாக்கு';
+  }
+  
+  let html = '<h2>' + pTitle + '</h2>';
+  html += '<p>' + (p==='Sign In' ? (lang === 'ta' ? 'உங்கள் சுயவிவரம் மற்றும் விண்ணப்பங்களை அணுக உள்நுழையவும்.' : 'Sign in to access your citizen profile and applications.') : (lang === 'ta' ? 'உங்கள் அதிகாரப்பூர்வ குடிமகன் கணக்கை உருவாக்கவும்.' : 'Create your official citizen account.')) + '</p>';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'மின்னஞ்சல் முகவரி / கைபேசி எண்' : 'Email Address / Mobile') + '</label><input id="authEmail" value="citizen.demo@welfare.local">';
+  html += '<label style="font-size:11px; font-weight:700;">' + (lang === 'ta' ? 'கடவுச்சொல்' : 'Password') + '</label><input type="password" id="authPass" value="CitizenDemo@123!">';
+  html += '<button class="btn primary full" id="btnSubmitAuth" onclick="submitAuth(\'' + p + '\')">' + (lang === 'ta' ? 'தொடர்க →' : 'Continue →') + '</button>';
+  html += '<div style="font-size:11px; color:#475569; margin-top:14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;"><p style="margin:0 0 4px; font-weight:700; color:#112448;">' + (lang === 'ta' ? 'மாதிரி கணக்குகள்:' : 'Pre-seeded Demo Accounts:') + '</p><p style="margin:2px 0;"><b>' + (lang === 'ta' ? 'குடிமகன்:' : 'Citizen:') + '</b> citizen.demo@welfare.local | CitizenDemo@123!</p><p style="margin:2px 0;"><b>' + (lang === 'ta' ? 'நிர்வாகி:' : 'Admin:') + '</b> admin.demo@welfare.local | AdminDemo@123!</p></div>';
   openModal(html);
 }
 
@@ -578,12 +912,13 @@ async function submitAuth(mode){
   const passInput = document.getElementById('authPass');
   const email = (emailInput ? emailInput.value.trim() : '') || 'citizen.demo@welfare.local';
   const password = (passInput ? passInput.value : '') || 'CitizenDemo@123!';
+  const lang = window.currentLang || 'en';
   
-  toast('Verifying credentials...');
+  toast(lang === 'ta' ? 'சான்றுகள் சரிபார்க்கப்படுகின்றன...' : 'Verifying credentials...');
   
   try {
     const endpoint = mode === 'Sign In' ? '/auth/login' : '/auth/register';
-    const body = mode === 'Sign In' ? { email, password } : { email, password, full_name: 'Arun Kumar', language_preference: 'en' };
+    const body = mode === 'Sign In' ? { email, password } : { email, password, full_name: 'Arun Kumar', language_preference: lang };
     
     const res = await fetch(API_BASE_URL + endpoint, {
       method: 'POST',
@@ -594,14 +929,14 @@ async function submitAuth(mode){
     if (res.ok) {
       const data = await res.json();
       if (data.mfa_required) {
-        openModal('<h2>Two-Factor Authentication (TOTP)</h2><p>Enter the 6-digit TOTP code from your authenticator app (Demo secret: JBSWY3DPEHPK3PXP):</p><input id="totpCode" placeholder="6-digit code (e.g., 123456)"><button class="btn primary full" onclick="verifyMFA(\'' + data.mfa_token + '\')">Verify TOTP Code</button>');
+        openModal('<h2>' + (lang === 'ta' ? 'இரு காரணி அங்கீகாரம் (TOTP)' : 'Two-Factor Authentication (TOTP)') + '</h2><p>' + (lang === 'ta' ? 'உங்கள் அங்கீகார பயன்பாட்டிலிருந்து 6 இலக்க TOTP குறியீட்டை உள்ளிடவும் (மாதிரி இரகசியம்: JBSWY3DPEHPK3PXP):' : 'Enter the 6-digit TOTP code from your authenticator app (Demo secret: JBSWY3DPEHPK3PXP):') + '</p><input id="totpCode" placeholder="6-digit code (e.g., 123456)"><button class="btn primary full" onclick="verifyMFA(\'' + data.mfa_token + '\')">' + (lang === 'ta' ? 'TOTP குறியீட்டைச் சரிபார்க்கவும்' : 'Verify TOTP Code') + '</button>');
         return;
       } else if (data.access_token) {
         window.authToken = data.access_token;
-        window.currentUser = { email: email, name: email.includes('admin') ? 'Admin Officer' : 'Arun Kumar (Citizen)' };
+        window.currentUser = { email: email, name: email.includes('admin') ? (lang === 'ta' ? 'நிர்வாக அதிகாரி' : 'Admin Officer') : (lang === 'ta' ? 'அருண் குமார் (குடிமகன்)' : 'Arun Kumar (Citizen)') };
         updateHeaderAuth();
         closeModal();
-        toast('Authenticated successfully as ' + window.currentUser.name);
+        toast((lang === 'ta' ? 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்: ' : 'Authenticated successfully as ') + window.currentUser.name);
         if(window.pendingAction) { const fn = window.pendingAction; window.pendingAction = null; fn(); }
         return;
       }
@@ -609,42 +944,45 @@ async function submitAuth(mode){
   } catch(err){}
   
   // Authenticated Session Fallback
-  window.currentUser = { email: email, name: email.includes('admin') ? 'Admin Officer' : 'Arun Kumar (Citizen)' };
+  window.currentUser = { email: email, name: email.includes('admin') ? (lang === 'ta' ? 'நிர்வாக அதிகாரி' : 'Admin Officer') : (lang === 'ta' ? 'அருண் குமார் (குடிமகன்)' : 'Arun Kumar (Citizen)') };
   updateHeaderAuth();
   closeModal();
-  toast('Signed in as ' + window.currentUser.name);
+  toast((lang === 'ta' ? 'வெற்றிகரமாக உள்நுழைந்துவிட்டீர்கள்: ' : 'Signed in as ') + window.currentUser.name);
   if(window.pendingAction) { const fn = window.pendingAction; window.pendingAction = null; fn(); }
 }
 
 async function verifyMFA(mfaToken){
   const codeElem = document.getElementById('totpCode');
   const code = codeElem ? codeElem.value.trim() : '';
-  toast('Verifying TOTP code...');
+  const lang = window.currentLang || 'en';
+  toast(lang === 'ta' ? 'TOTP குறியீடு சரிபார்க்கப்படுகிறது...' : 'Verifying TOTP code...');
   try {
     const res = await fetch(API_BASE_URL + '/auth/mfa/verify?mfa_token=' + mfaToken + '&totp_code=' + code, { method: 'POST' });
     if(res.ok){
       const data = await res.json();
       window.authToken = data.access_token;
-      window.currentUser = { email: 'citizen.demo@welfare.local', name: 'Arun Kumar (Citizen)' };
+      window.currentUser = { email: 'citizen.demo@welfare.local', name: (lang === 'ta' ? 'அருண் குமார் (குடிமகன்)' : 'Arun Kumar (Citizen)') };
       updateHeaderAuth();
       closeModal();
-      toast('TOTP MFA Verified!');
+      toast(lang === 'ta' ? 'TOTP சரிபார்க்கப்பட்டது!' : 'TOTP MFA Verified!');
       if(window.pendingAction) { const fn = window.pendingAction; window.pendingAction = null; fn(); }
       return;
     }
   } catch(e){}
   
-  window.currentUser = { email: 'citizen.demo@welfare.local', name: 'Arun Kumar (Citizen)' };
+  window.currentUser = { email: 'citizen.demo@welfare.local', name: (lang === 'ta' ? 'அருண் குமார் (குடிமகன்)' : 'Arun Kumar (Citizen)') };
   updateHeaderAuth();
   closeModal();
-  toast('TOTP MFA Verified');
+  toast(lang === 'ta' ? 'TOTP சரிபார்க்கப்பட்டது' : 'TOTP MFA Verified');
   if(window.pendingAction) { const fn = window.pendingAction; window.pendingAction = null; fn(); }
 }
 
 function updateHeaderAuth(){
   const actionsDiv = document.getElementById('userActions');
+  const lang = window.currentLang || 'en';
   if(actionsDiv && window.currentUser){
-    actionsDiv.innerHTML = '<span style="font-size:12px; font-weight:700; color:#00865a; background:#eef8f5; padding:6px 12px; border-radius:6px;">👤 ' + (window.currentUser.name||'Citizen') + '</span><button class="btn outline" onclick="logout()">Sign Out</button>';
+    const logoutText = lang === 'ta' ? 'வெளியேறு' : 'Sign Out';
+    actionsDiv.innerHTML = '<span style="font-size:12px; font-weight:700; color:#00865a; background:#eef8f5; padding:6px 12px; border-radius:6px;">👤 ' + (window.currentUser.name||'Citizen') + '</span><button class="btn outline" onclick="logout()">' + logoutText + '</button>';
   }
 }
 
@@ -656,13 +994,16 @@ function logout(){
 
 // Step 7: Apply with AI
 function applyAI(sid){
+  const lang = window.currentLang || 'en';
   if(!window.currentUser){
-    toast('Please sign in to start your application draft.');
+    toast(lang === 'ta' ? 'விண்ணப்பத்தைத் தொடங்க தயவுசெய்து உள்நுழையவும்.' : 'Please sign in to start your application draft.');
     auth('Sign In', () => applyAI(sid));
     return;
   }
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid) || (window.REAL_SCHEMES||[])[0];
-  openModal('<h2>Apply with AI: ' + (s ? s.title : 'Application') + '</h2><p>AI Assistant is initializing your pre-filled application draft:</p><div style="background:#f4fbf8; padding:12px; border-radius:8px; font-size:12px; line-height:1.5; margin:12px 0; border:1px solid #dce5e8;"><p><b>Applicant Name:</b> ' + window.currentUser.name + '</p><p><b>Target Scheme:</b> ' + (s ? s.title : 'PMAY Urban') + '</p><p><b>Status:</b> Application Draft Prepared</p><p><b>Verified Documents:</b> 3 of 4 Attached</p></div><button class="btn primary full" onclick="closeModal();toast(\'Application draft created successfully!\');">Confirm &amp; Download Application Summary →</button>');
+  const schemeTitle = (lang === 'ta' && s && s.title_ta) ? s.title_ta : (s ? s.title : 'PMAY Urban');
+  
+  openModal('<h2>' + (lang === 'ta' ? 'AI மூலம் விண்ணப்பிக்க:' : 'Apply with AI:') + ' ' + schemeTitle + '</h2><p>' + (lang === 'ta' ? 'AI உதவியாளர் உங்கள் விண்ணப்பப் படிவத்தை தயார் செய்கிறது:' : 'AI Assistant is initializing your pre-filled application draft:') + '</p><div style="background:#f4fbf8; padding:12px; border-radius:8px; font-size:12px; line-height:1.5; margin:12px 0; border:1px solid #dce5e8;"><p><b>' + (lang === 'ta' ? 'விண்ணப்பதாரர் பெயர்:' : 'Applicant Name:') + '</b> ' + window.currentUser.name + '</p><p><b>' + (lang === 'ta' ? 'திட்டம்:' : 'Target Scheme:') + '</b> ' + schemeTitle + '</p><p><b>' + (lang === 'ta' ? 'நிலை:' : 'Status:') + '</b> ' + (lang === 'ta' ? 'விண்ணப்ப வரைவு தயார்' : 'Application Draft Prepared') + '</p><p><b>' + (lang === 'ta' ? 'சரிபார்க்கப்பட்ட ஆவணங்கள்:' : 'Verified Documents:') + '</b> 3 / 4</p></div><button class="btn primary full" onclick="closeModal();toast(\'' + (lang === 'ta' ? 'விண்ணப்ப வரைவு வெற்றிகரமாக உருவாக்கப்பட்டது!' : 'Application draft created successfully!') + '\');">' + (lang === 'ta' ? 'உறுதிசெய்து சுருக்கத்தைப் பதிவிறக்கவும் →' : 'Confirm &amp; Download Application Summary →') + '</button>');
 }
 
 // Step 8: Document AI Extraction
@@ -673,51 +1014,72 @@ function documentAI(){
 function filePicked(input){
   if(input && input.files.length){
     const fileName = input.files[0].name;
-    toast('Extracting OCR fields from: ' + fileName);
+    const lang = window.currentLang || 'en';
+    toast((lang === 'ta' ? 'ஆவணத்திலிருந்து தகவல்கள் பிரித்தெடுக்கப்படுகின்றன: ' : 'Extracting OCR fields from: ') + fileName);
     setTimeout(() => {
       const elName = document.getElementById('ocrName');
       const elDob = document.getElementById('ocrDob');
       const elDist = document.getElementById('ocrDist');
       const elDistStatus = document.getElementById('ocrDistStatus');
       
-      if(elName) elName.textContent = 'Arun Kumar';
+      if(elName) elName.textContent = lang === 'ta' ? 'அருண் குமார்' : 'Arun Kumar';
       if(elDob) elDob.textContent = '12 Aug 1998';
-      if(elDist) elDist.textContent = 'Madurai, Tamil Nadu';
-      if(elDistStatus) { elDistStatus.className = 'good'; elDistStatus.textContent = '✓ Verified'; }
+      if(elDist) elDist.textContent = lang === 'ta' ? 'மதுரை, தமிழ்நாடு' : 'Madurai, Tamil Nadu';
+      if(elDistStatus) { elDistStatus.className = 'good'; elDistStatus.textContent = lang === 'ta' ? '✓ சரிபார்க்கப்பட்டது' : '✓ Verified'; }
       
-      openModal('<h2>Document AI Extraction Result</h2><p>Extracted information from <b>' + fileName + '</b>:</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><div class="field"><span>Full Name</span><b>Arun Kumar</b> <span class="good">✓ Verified</span></div><div class="field"><span>Date of Birth</span><b>12 Aug 1998</b> <span class="good">✓ Verified</span></div><div class="field"><span>District</span><b>Madurai, Tamil Nadu</b> <span class="good">✓ Verified</span></div></div><button class="btn primary full" onclick="closeModal();toast(\'Document verified and attached!\')">Confirm &amp; Attach Document</button>');
+      openModal('<h2>' + (lang === 'ta' ? 'ஆவண AI பிரித்தெடுத்தல் முடிவு' : 'Document AI Extraction Result') + '</h2><p>' + (lang === 'ta' ? 'பிரித்தெடுக்கப்பட்ட தகவல்கள் (' : 'Extracted information from ') + '<b>' + fileName + '</b>):</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><div class="field"><span>' + (lang === 'ta' ? 'முழு பெயர்' : 'Full Name') + '</span><b>' + (lang === 'ta' ? 'அருண் குமார்' : 'Arun Kumar') + '</b> <span class="good">' + (lang === 'ta' ? '✓ சரிபார்க்கப்பட்டது' : '✓ Verified') + '</span></div><div class="field"><span>' + (lang === 'ta' ? 'பிறந்த தேதி' : 'Date of Birth') + '</span><b>12 Aug 1998</b> <span class="good">' + (lang === 'ta' ? '✓ சரிபார்க்கப்பட்டது' : '✓ Verified') + '</span></div><div class="field"><span>' + (lang === 'ta' ? 'மாவட்டம்' : 'District') + '</span><b>' + (lang === 'ta' ? 'மதுரை, தமிழ்நாடு' : 'Madurai, Tamil Nadu') + '</b> <span class="good">' + (lang === 'ta' ? '✓ சரிபார்க்கப்பட்டது' : '✓ Verified') + '</span></div></div><button class="btn primary full" onclick="closeModal();toast(\'' + (lang === 'ta' ? 'ஆவணம் சரிபார்க்கப்பட்டு இணைக்கப்பட்டது!' : 'Document verified and attached!') + '\')">' + (lang === 'ta' ? 'உறுதிசெய்து ஆவணத்தை இணைக்கவும்' : 'Confirm &amp; Attach Document') + '</button>');
     }, 600);
   }
 }
 
-// Step 9: My Welfare Journey
+// Step 9: My Welfare Journey Dashboard
 function journey(){
+  const lang = window.currentLang || 'en';
   if(!window.currentUser){
-    toast('Please sign in to view your personalized Welfare Journey.');
+    toast(lang === 'ta' ? 'உங்கள் தனிப்பயனாக்கப்பட்ட டாஷ்போர்டைப் பார்க்க உள்நுழையவும்.' : 'Please sign in to view your personalized Welfare Journey.');
     auth('Sign In', journey);
     return;
   }
-  openModal('<h2>My Welfare Journey Dashboard</h2><p>Citizen Account: <b>' + window.currentUser.email + '</b></p><div style="font-size:12px; line-height:1.6; margin:14px 0;"><p><b>Active Applications:</b></p><div style="background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0; margin-bottom:8px;"><b>Pradhan Mantri Awas Yojana (PMAY-Urban)</b><br><span style="color:#00865a; font-weight:700;">Status: Draft Review</span></div><p><b>Recommended Schemes (3 High Priority):</b></p><ul style="padding-left:18px; margin:4px 0;"><li>Pudhumai Penn Scheme (100% Match)</li><li>PM-KISAN Samman Nidhi (85% Match)</li></ul></div><button class="btn primary full" onclick="closeModal()">Close Dashboard</button>');
+  
+  if (lang === 'ta') {
+    openModal('<h2>எனது நலன்புரிப் பயண டாஷ்போர்டு</h2><p>குடிமகன் கணக்கு: <b>' + window.currentUser.email + '</b></p><div style="font-size:12px; line-height:1.6; margin:14px 0;"><p style="font-weight:700; color:#00865a; font-size:13px; margin-bottom:6px;">செயலில் உள்ள விண்ணப்பங்கள்:</p><div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;"><b style="color:#112448;">1. பிரதம மந்திரி ஆவாஸ் யோஜனா (வீட்டுவசதி திட்டம்)</b><br><span style="color:#00865a; font-weight:700;">நிலை: வரைவு மதிப்பாய்வு (Draft Review)</span><br><small style="color:#64748b;">விண்ணப்ப எண்: TN-2026-PMAY-8842</small></div><div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;"><b style="color:#112448;">2. மூவலூர் ராமாமிர்தம் அம்மையார் புதுமைப் பெண் திட்டம்</b><br><span style="color:#00865a; font-weight:700;">நிலை: ஒப்புதல் அளிக்கப்பட்டது (Approved) - மாதம் ₹1,000</span><br><small style="color:#64748b;">வங்கி பரிமாற்றம்: நேரடி வங்கி கணக்கில் செலுத்தப்பட்டது</small></div><p style="font-weight:700; color:#00865a; font-size:13px; margin-top:14px; margin-bottom:6px;">பரிந்துரைக்கப்பட்ட திட்டங்கள் (உயர் முன்னுரிமை தகுதி):</p><ul style="padding-left:18px; margin:4px 0; font-size:12px;"><li><b>கலைஞர் மகளிர் உரிமைத் தொகைத் திட்டம்</b> (100% தகுதி பொருத்தம்)</li><li><b>பி.எம். கிசான் விவசாயிகள் உதவித் தொகை</b> (85% தகுதி பொருத்தம்)</li></ul></div><div class="choice"><button class="btn outline" onclick="documentAI()">ஆவணத்தைப் பதிவேற்ற</button><button class="btn primary" onclick="closeModal()">டாஷ்போர்டை மூடு</button></div>');
+  } else {
+    openModal('<h2>My Welfare Journey Dashboard</h2><p>Citizen Account: <b>' + window.currentUser.email + '</b></p><div style="font-size:12px; line-height:1.6; margin:14px 0;"><p style="font-weight:700; color:#00865a; font-size:13px; margin-bottom:6px;">Active Applications:</p><div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;"><b style="color:#112448;">1. Pradhan Mantri Awas Yojana (PMAY-Urban)</b><br><span style="color:#00865a; font-weight:700;">Status: Draft Review</span><br><small style="color:#64748b;">Application ID: TN-2026-PMAY-8842</small></div><div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:10px;"><b style="color:#112448;">2. Pudhumai Penn Scheme</b><br><span style="color:#00865a; font-weight:700;">Status: Approved - ₹1,000 / month</span><br><small style="color:#64748b;">DBT Transfer: Direct to Bank Account</small></div><p style="font-weight:700; color:#00865a; font-size:13px; margin-top:14px; margin-bottom:6px;">Recommended Schemes (High Priority):</p><ul style="padding-left:18px; margin:4px 0; font-size:12px;"><li><b>Kalaignar Magalir Urimai Thogai</b> (100% Match)</li><li><b>PM-KISAN Samman Nidhi</b> (85% Match)</li></ul></div><div class="choice"><button class="btn outline" onclick="documentAI()">Upload Document</button><button class="btn primary" onclick="closeModal()">Close Dashboard</button></div>');
+  }
 }
 
 // Step 10: Official Resources Modal
 function resources(){
-  openModal('<h2>Government Welfare Resources &amp; Help</h2><p>Official portals, guidelines, and helpline numbers:</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><p><b>Official Portals:</b></p><ul style="padding-left:18px; margin:4px 0;"><li><a href="https://www.myscheme.gov.in" target="_blank" style="color:#00865a; font-weight:700;">myScheme Official Portal</a></li><li><a href="https://tnesevai.tn.gov.in" target="_blank" style="color:#00865a; font-weight:700;">Tamil Nadu e-Sevai Service</a></li><li><a href="https://india.gov.in" target="_blank" style="color:#00865a; font-weight:700;">National Portal of India</a></li></ul><p><b>National Helplines:</b></p><p>📞 Citizen Toll-Free Helpline: 1800-11-3377<br>📞 Tamil Nadu Government Services: 1100</p></div><button class="btn primary full" onclick="closeModal()">Close</button>');
+  const lang = window.currentLang || 'en';
+  if (lang === 'ta') {
+    openModal('<h2>அரசு நலன்புரி வளங்கள் &amp; உதவி</h2><p>அதிகாரப்பூர்வ போர்ட்டல்கள், வழிகாட்டுதல்கள் மற்றும் உதவி எண்கள்:</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><p><b>அதிகாரப்பூர்வ தளங்கள்:</b></p><ul style="padding-left:18px; margin:4px 0;"><li><a href="https://www.myscheme.gov.in" target="_blank" style="color:#00865a; font-weight:700;">myScheme அதிகாரப்பூர்வ போர்ட்டல்</a></li><li><a href="https://tnesevai.tn.gov.in" target="_blank" style="color:#00865a; font-weight:700;">தமிழ்நாடு இ-சேவை மையம்</a></li><li><a href="https://india.gov.in" target="_blank" style="color:#00865a; font-weight:700;">இந்திய தேசிய போர்ட்டல்</a></li></ul><p><b>தேசிய உதவி எண்கள்:</b></p><p>📞 குடிமக்கள் கட்டணமில்லா உதவி எண்: 1800-11-3377<br>📞 தமிழ்நாடு அரசு சேவைகள்: 1100</p></div><button class="btn primary full" onclick="closeModal()">மூடு</button>');
+  } else {
+    openModal('<h2>Government Welfare Resources &amp; Help</h2><p>Official portals, guidelines, and helpline numbers:</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><p><b>Official Portals:</b></p><ul style="padding-left:18px; margin:4px 0;"><li><a href="https://www.myscheme.gov.in" target="_blank" style="color:#00865a; font-weight:700;">myScheme Official Portal</a></li><li><a href="https://tnesevai.tn.gov.in" target="_blank" style="color:#00865a; font-weight:700;">Tamil Nadu e-Sevai Service</a></li><li><a href="https://india.gov.in" target="_blank" style="color:#00865a; font-weight:700;">National Portal of India</a></li></ul><p><b>National Helplines:</b></p><p>📞 Citizen Toll-Free Helpline: 1800-11-3377<br>📞 Tamil Nadu Government Services: 1100</p></div><button class="btn primary full" onclick="closeModal()">Close</button>');
+  }
 }
 
 // Step 11: Multilingual Voice Assistant
 function speak(){
   const langElem = document.getElementById('langSelect');
   const lang = langElem ? langElem.value || 'en' : 'en';
-  toast('Voice Assistant active (' + lang.toUpperCase() + '). Listening...');
+  const msg = lang === 'ta' ? 'குரல் உதவியாளர் செயல்படுகிறது (தமிழ்). பேசவும்...' : 'Voice Assistant active (' + lang.toUpperCase() + '). Listening...';
+  toast(msg);
   setTimeout(() => {
-    fill('I need financial support for higher education');
-    toast('Voice transcribed: "I need financial support for higher education"');
+    const qText = lang === 'ta' ? 'எனது கல்விக்கான நிதியுதவியை நான் தேடுகிறேன்' : 'I need financial support for higher education';
+    fill(qText);
+    toast((lang === 'ta' ? 'குரல் பதிவு செய்யப்பட்டது: "' : 'Voice transcribed: "') + qText + '"');
   }, 1000);
 }
 
 // ATTACH DOM EVENT LISTENERS TO GUARANTEE 100% BUTTON & ENTER-KEY INTERACTION
 window.addEventListener('load', function() {
+  const langSelect = document.getElementById('langSelect');
+  if(langSelect) {
+    langSelect.addEventListener('change', function() {
+      setLanguage(this.value);
+    });
+  }
+
   const btnSignIn = document.getElementById('btnSignIn');
   if(btnSignIn) btnSignIn.addEventListener('click', function(e) { e.preventDefault(); auth('Sign In'); });
   
