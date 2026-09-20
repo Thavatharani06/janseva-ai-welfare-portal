@@ -51,7 +51,16 @@ async def seed_initial_welfare_data(db: AsyncSession):
         db.add(demo_admin)
         await db.commit()
 
-    # 3. Check if categories exist
+    # 3. Ingest Authentic myScheme Dataset (200+ verified schemes)
+    from app.services.ingestion_service import IngestionService
+    import os
+
+    json_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "data", "myscheme_dataset", "schemes.json")
+    if os.path.exists(json_path):
+        ingestion_svc = IngestionService(db)
+        await ingestion_svc.ingest_myscheme_dataset(json_path)
+
+    # Check if categories exist
     cat_result = await db.execute(select(SchemeCategory))
     categories = cat_result.scalars().all()
     if categories:

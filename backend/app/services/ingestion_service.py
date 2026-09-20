@@ -104,7 +104,7 @@ class IngestionService:
             "rag_chunks_created": 0
         }
 
-        for item in raw_schemes:
+        for idx, item in enumerate(raw_schemes):
             title = item.get("title")
             category_name = item.get("category", "General Welfare")
             ministry = item.get("ministry", "Ministry of Social Justice")
@@ -131,8 +131,8 @@ class IngestionService:
                 await self.db.flush()
                 stats["categories_created"] += 1
 
-            # 2. Derive scheme code
-            code = title.split("(")[-1].replace(")", "").strip() if "(" in title else title[:10].upper()
+            # 2. Scheme code
+            code = item.get("code") or (title.split("(")[-1].replace(")", "").strip() if "(" in title else f"SCH-{idx+1:04d}")
 
             # 3. Check if scheme already exists, if so update/skip
             scheme_query = await self.db.execute(select(Scheme).where(Scheme.code == code))
