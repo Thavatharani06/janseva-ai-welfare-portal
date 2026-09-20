@@ -347,42 +347,78 @@ def t(key: str) -> str:
     lang = st.session_state.get("language", "en")
     return I18N.get(lang, I18N["en"]).get(key, I18N["en"].get(key, key))
 
-# MYSCHEME 3.0 EXACT GOVTECH STYLING SYSTEM (EMERALD GREEN, SLATE CHARCOAL, NO EMOJI UI)
+# MYSCHEME 3.0 EXACT GOVTECH LIGHT THEME OVERRIDES (ABSOLUTE OVERRIDE OF DARK MODE)
 st.markdown("""
 <style>
     section[data-testid="stSidebar"] { display: none !important; }
     
-    .stApp {
+    /* FORCE CLEAN LIGHT THEME GLOBALLY */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
         background-color: #f8fafc !important;
         color: #0f172a !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* Prevent text truncation on Streamlit buttons & force full label visibility */
-    .stButton>button {
+    /* PREVENT ALL BUTTON TRUNCATION & BLACK BOXES */
+    .stButton > button {
+        background-color: #059669 !important;
+        color: #ffffff !important;
+        border: 1px solid #047857 !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        padding: 8px 18px !important;
+        font-size: 0.9rem !important;
         white-space: nowrap !important;
         word-break: normal !important;
         overflow: visible !important;
         text-overflow: clip !important;
+        min-width: max-content !important;
+        box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2) !important;
+    }
+
+    .stButton > button:hover {
+        background-color: #047857 !important;
+        color: #ffffff !important;
+    }
+
+    .stButton > button p, .stButton > button span {
+        color: #ffffff !important;
         font-weight: 700 !important;
+        white-space: nowrap !important;
+    }
+
+    /* HEADER & SECONDARY BUTTON OVERRIDES */
+    button[key*="hdr_n_"], button[key*="nav_"], button[key="hdr_signin_btn"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
+        box-shadow: none !important;
+    }
+
+    button[key*="hdr_n_"] p, button[key*="nav_"] p, button[key="hdr_signin_btn"] p {
+        color: #0f172a !important;
+    }
+
+    button[key*="hero_explore"], button[key="try_doc_btn"], button[key="try_copilot_btn"], button[key*="rec_elig_"] {
+        background-color: #ffffff !important;
+        color: #059669 !important;
+        border: 1px solid #059669 !important;
+        box-shadow: none !important;
+    }
+
+    button[key*="hero_explore"] p, button[key="try_doc_btn"] p, button[key="try_copilot_btn"] p, button[key*="rec_elig_"] p {
+        color: #059669 !important;
+    }
+
+    /* Text Inputs and Selectboxes */
+    .stTextInput input, .stSelectbox select, div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+        color: #0f172a !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
-        padding: 8px 16px !important;
-        font-size: 0.9rem !important;
-        min-width: max-content !important;
     }
 
-    .stButton>button p {
-        white-space: nowrap !important;
-        overflow: visible !important;
-        text-overflow: clip !important;
-    }
-
-    div[data-testid="column"] button {
-        white-space: nowrap !important;
-        min-width: max-content !important;
-    }
-    
-    /* Top Header Bar */
+    /* Top Navbar */
     .brand-title-text {
         font-size: 1.35rem !important;
         font-weight: 900 !important;
@@ -495,19 +531,6 @@ st.markdown("""
         box-shadow: 0 4px 12px rgba(5, 150, 105, 0.08) !important;
     }
 
-    .cat-card-title {
-        color: #0f172a !important;
-        font-weight: 800 !important;
-        font-size: 0.95rem !important;
-        margin-bottom: 4px !important;
-    }
-
-    .cat-card-count {
-        color: #64748b !important;
-        font-size: 0.82rem !important;
-    }
-
-    /* Scheme Card */
     .scheme-card-box {
         background-color: #ffffff !important;
         border: 1px solid #e2e8f0 !important;
@@ -563,6 +586,17 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+# BASE64 HERO IMAGE HELPER
+def get_hero_image_base64() -> str:
+    p = os.path.join(os.path.dirname(__file__), "hero_family.jpg")
+    if os.path.exists(p):
+        try:
+            with open(p, "rb") as f:
+                return f"data:image/jpeg;base64,{base64.b64encode(f.read()).decode()}"
+        except Exception:
+            pass
+    return ""
 
 # QR CODE BASE64 HELPER
 def generate_qr_code_base64(uri: str) -> str:
@@ -802,16 +836,22 @@ def listen_voice_input(language_code="en-IN"):
 
 # MYSCHEME 3.0 EXACT HEADER & NAVIGATION BAR
 def render_header():
-    # Brand logo SVG emblem + Title + Language + Auth Controls (Top Row)
+    # OFFICIAL STATE EMBLEM OF INDIA (ASHOKA LIONS) SVG + BRAND TITLE + LANGUAGE & AUTH CONTROLS
     c_brand, c_controls = st.columns([7, 5])
     with c_brand:
         st.markdown("""
-        <div style="display:flex; align-items:center; gap:12px; padding-bottom:6px;">
-            <svg width="34" height="42" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M50 5L90 25V65L50 115L10 65V25L50 5Z" fill="#065f46" stroke="#047857" stroke-width="4"/>
-                <circle cx="50" cy="50" r="22" fill="#ffffff"/>
-                <circle cx="50" cy="50" r="14" fill="#059669"/>
-                <path d="M50 38V62M38 50H62" stroke="#ffffff" stroke-width="3"/>
+        <div style="display:flex; align-items:center; gap:14px; padding-bottom:6px;">
+            <svg width="36" height="46" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Ashoka Emblem Lions Silhouette -->
+                <path d="M50 5 C 40 5, 30 15, 30 30 C 30 45, 40 50, 50 50 C 60 50, 70 45, 70 30 C 70 15, 60 5, 50 5 Z" fill="#334155"/>
+                <path d="M25 35 C 18 35, 12 42, 14 55 C 16 68, 28 72, 38 68 C 34 60, 32 50, 35 40 Z" fill="#475569"/>
+                <path d="M75 35 C 82 35, 88 42, 86 55 C 84 68, 72 72, 62 68 C 66 60, 68 50, 65 40 Z" fill="#475569"/>
+                <!-- Abacus & Ashoka Chakra Wheel -->
+                <rect x="18" y="74" width="64" height="12" rx="3" fill="#065f46"/>
+                <circle cx="50" cy="80" r="5" fill="#ffffff"/>
+                <!-- Base Pedestal -->
+                <path d="M22 88 L78 88 L70 110 L30 110 Z" fill="#334155"/>
+                <text x="50" y="104" text-anchor="middle" fill="#ffffff" font-size="8" font-weight="900" font-family="serif">सत्यमेव जयते</text>
             </svg>
             <div>
                 <div class="brand-title-text">Government Welfare Assistant <span class="beta-badge">Beta 3.0</span></div>
@@ -888,7 +928,7 @@ def render_header():
 def render_homepage():
     render_header()
     
-    # HERO CONTAINER (2-COLUMN COMPOSITION)
+    # HERO CONTAINER (2-COLUMN COMPOSITION WITH REAL INDIAN FAMILY ILLUSTRATION)
     c_hero_left, c_hero_right = st.columns([7, 5])
     
     with c_hero_left:
@@ -925,28 +965,46 @@ def render_homepage():
             st.markdown(f"<div class='stat-pill'><span>🌐</span> {t('hero_stat_3')}</div>", unsafe_allow_html=True)
 
     with c_hero_right:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:1px solid #d1fae5; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
-            <div style="position:relative; width:100%; height:230px; background:#065f46; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                <svg width="100%" height="100%" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="600" height="300" fill="#065f46"/>
-                    <path d="M0 200 C 150 120, 350 240, 600 160 L 600 300 L 0 300 Z" fill="#059669" opacity="0.6"/>
-                    <circle cx="300" cy="120" r="70" fill="#ffffff" opacity="0.15"/>
-                    <path d="M260 140 C 260 100, 340 100, 340 140 V 220 H 260 Z" fill="#ffffff" opacity="0.25"/>
-                    <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="22" font-weight="900" font-family="sans-serif">Government Welfare Assistant</text>
-                    <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#dcfce7" font-size="14" font-weight="700" font-family="sans-serif">Sabka Saath • Sabka Vikas • Sabka Vishwas</text>
-                </svg>
-            </div>
-            <div class="ai-float-card" style="margin-top:16px;">
-                <div class="ai-float-header">{t('ai_float_title')}</div>
-                <div class="ai-float-list">
-                    <div>{t('ai_float_item1')}</div>
-                    <div>{t('ai_float_item2')}</div>
-                    <div>{t('ai_float_item3')}</div>
+        hero_img_b64 = get_hero_image_base64()
+        if hero_img_b64:
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:1px solid #d1fae5; border-radius:16px; padding:16px; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+                <div style="width:100%; height:230px; border-radius:12px; overflow:hidden;">
+                    <img src="{hero_img_b64}" style="width:100%; height:100%; object-fit:cover; border-radius:12px;" alt="Indian Citizen Family using Government Assistant Portal" />
+                </div>
+                <div class="ai-float-card" style="margin-top:14px;">
+                    <div class="ai-float-header">{t('ai_float_title')}</div>
+                    <div class="ai-float-list">
+                        <div>{t('ai_float_item1')}</div>
+                        <div>{t('ai_float_item2')}</div>
+                        <div>{t('ai_float_item3')}</div>
+                    </div>
                 </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:1px solid #d1fae5; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+                <div style="position:relative; width:100%; height:230px; background:#065f46; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                    <svg width="100%" height="100%" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect width="600" height="300" fill="#065f46"/>
+                        <path d="M0 200 C 150 120, 350 240, 600 160 L 600 300 L 0 300 Z" fill="#059669" opacity="0.6"/>
+                        <circle cx="300" cy="120" r="70" fill="#ffffff" opacity="0.15"/>
+                        <path d="M260 140 C 260 100, 340 100, 340 140 V 220 H 260 Z" fill="#ffffff" opacity="0.25"/>
+                        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="22" font-weight="900" font-family="sans-serif">Government Welfare Assistant</text>
+                        <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#dcfce7" font-size="14" font-weight="700" font-family="sans-serif">Sabka Saath • Sabka Vikas • Sabka Vishwas</text>
+                    </svg>
+                </div>
+                <div class="ai-float-card" style="margin-top:16px;">
+                    <div class="ai-float-header">{t('ai_float_title')}</div>
+                    <div class="ai-float-list">
+                        <div>{t('ai_float_item1')}</div>
+                        <div>{t('ai_float_item2')}</div>
+                        <div>{t('ai_float_item3')}</div>
+                    </div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
