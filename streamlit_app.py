@@ -211,7 +211,7 @@ def render_categories_html(categories):
         cat_id = cat.get("id", "")
         count = len([s for s in schemes_data if s.get("category_id") == cat_id])
         if count == 0: count = 1
-        html_items.append(f'<div class="cat" onclick="category(\'{cat_id}\')"><div class="cat-icon">{icon}</div><div><strong>{name}</strong><small>{count} Schemes</small></div><span class="arrow">→</span></div>')
+        html_items.append(f'<div class="cat" data-catid="{cat_id}" onclick="category(\'{cat_id}\')"><div class="cat-icon">{icon}</div><div><strong>{name}</strong><small>{count} Schemes</small></div><span class="arrow">→</span></div>')
     return "".join(html_items)
 
 def render_schemes_html(schemes):
@@ -244,7 +244,7 @@ categories_rendered_html = render_categories_html(categories_data)
 schemes_rendered_html = render_schemes_html(schemes_data)
 schemes_count_str = f"{len(schemes_data)}+" if schemes_data else "120+"
 
-# EXACT APPROVED UI HTML TEMPLATE WITH TOP-POSITIONED FLEXIBLE MODALS & FULL DESKTOP PROPORTIONS
+# EXACT APPROVED UI HTML TEMPLATE WITH TOP-LEVEL MODALS & DUAL EVENT LISTENERS
 USER_UI_HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -254,7 +254,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 <style>
 @page{size:1024px 1536px;margin:0}
 :root{--green:#00865a;--green2:#0a9b68;--navy:#112448;--muted:#5e6f86;--line:#dce5e8;--soft:#f4fbf8;--gold:#e9b84f;--ai:#7770e8;--max:1380px}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{zoom:.95;margin:0;background:#fff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--navy);font-size:13px}button,input{font:inherit}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#fff;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--navy);font-size:13px}button,input{font:inherit}
 .page{max-width:var(--max);width:min(var(--max),calc(100% - 48px));margin:auto;padding:0 0 32px}
 .top{height:62px;border-bottom:1px solid #e9eeee;display:grid;grid-template-columns:260px 1fr 300px;align-items:center;gap:16px;padding:0}
 .brand{display:flex;align-items:center;gap:10px}.brand img{height:44px;max-width:260px;display:block;object-fit:contain;object-position:left center}
@@ -271,30 +271,34 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 .banner{margin:24px 0 12px;background:#e9f8f0;min-height:100px;border-radius:12px;display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:center;padding:22px 32px;position:relative;overflow:hidden}.banner h2{font-size:20px;margin:0 0 6px;font-weight:900}.banner p{font-size:12px;color:#527064;margin:0}.banner-art{position:absolute;left:0;right:38%;bottom:-16px;height:68px;opacity:.45;background:linear-gradient(90deg,transparent,#cfe7d7,transparent);border-radius:50%}.banner-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}.bstat{background:#fff;border:1px solid #e4e9e8;border-radius:6px;text-align:center;padding:12px 6px}.bstat strong{display:block;color:#006e4e;font-size:15px;font-weight:800}.bstat small{font-size:9px;color:#66768a}
 .footer{border-top:1px solid #e4e8eb;padding:20px 0 0;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px}.footbrand{display:flex;align-items:center;gap:8px}.footbrand img{height:40px}.footlinks{display:flex;gap:20px;font-size:11px;font-weight:600}.footlinks a{color:#43536a;text-decoration:none}.copyright{grid-column:1/-1;border-top:1px solid #edf0f2;padding-top:12px;margin-top:12px;color:#718096;font-size:10px;display:flex;justify-content:space-between}
 
-/* FIXED MODAL POSITIONING (POPS UP AT TOP OF VIEWPORT FOR EASY VIEWING) */
-.modal-backdrop{position:fixed;inset:0;background:rgba(11,30,52,.55);display:none;align-items:flex-start;justify-content:center;padding-top:60px;z-index:999999;overflow-y:auto}
+/* HIGH-PRIORITY TOP FIXED MODAL CONTAINER (ALWAYS IN VIEWPORT) */
+.modal-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(11,30,52,.65);display:none;align-items:flex-start;justify-content:center;padding-top:40px;z-index:2147483647 !important;overflow-y:auto}
 .modal-backdrop.open{display:flex !important}
-.modal{width:min(540px,calc(100vw - 32px));background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(17,36,72,.3);padding:26px;position:relative;max-height:85vh;overflow-y:auto;z-index:1000000;margin-bottom:60px}
+.modal{width:min(540px,calc(100vw - 32px));background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(17,36,72,.35);padding:26px;position:relative;max-height:85vh;overflow-y:auto;z-index:2147483647 !important;margin-bottom:60px}
 .modal-close{position:absolute;right:16px;top:12px;border:0;background:none;font-size:24px;color:#607086;cursor:pointer}.modal h2{margin:0 0 8px;font-size:22px;font-weight:800}.modal p{color:#63738a;font-size:12px;line-height:1.5}.modal input,.modal select{width:100%;height:40px;border:1px solid #ccd9df;border-radius:8px;padding:0 14px;margin:6px 0 14px;font-size:12px}.modal .full{width:100%;margin-top:10px;height:40px;font-size:12px}.modal .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.toast{position:fixed;right:24px;bottom:24px;background:#10243c;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:2000000}.toast.show{opacity:1;transform:none}
+.toast{position:fixed;right:24px;bottom:24px;background:#10243c;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:2147483647 !important}.toast.show{opacity:1;transform:none}
 @media(max-width:1100px){.categories{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:850px){.top{height:auto;padding:10px 0;flex-wrap:wrap}.brand img{max-width:220px}.nav{order:3;width:100%;justify-content:center;gap:15px}.hero{grid-template-columns:1fr;padding-top:20px}.hero-img{max-height:300px;object-fit:cover}.categories{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:1fr}.recs{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}.step:not(:last-child):after{display:none}.page{padding:0 16px}}
 </style>
 </head>
 <body>
+
+<!-- TOP-LEVEL MODAL CONTAINER (PLACED AT TOP OF BODY) -->
+<div class="modal-backdrop" id="modal"><div class="modal"><button class="modal-close" id="modalCloseBtn" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
+
 <div class="page" id="home">
 <header class="top">
   <div class="brand"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div>
-  <nav class="nav"><a href="#home" class="active">Home</a><a href="#explore" onclick="category('all')">Explore Schemes</a><a href="#journey" onclick="journey()">My Welfare Journey</a><a href="#resources" onclick="resources()">Resources</a></nav>
+  <nav class="nav"><a href="#home" class="active">Home</a><a href="#explore" id="navExploreLink" onclick="category('all')">Explore Schemes</a><a href="#journey" id="navJourneyLink" onclick="journey()">My Welfare Journey</a><a href="#resources" id="navResourcesLink" onclick="resources()">Resources</a></nav>
   <div class="actions" id="userActions">
     <select class="select" id="langSelect"><option value="en">English ▾</option><option value="ta">தமிழ் (Tamil)</option><option value="hi">हिंदी (Hindi)</option></select>
-    <button class="btn outline" onclick="auth('Sign In')">Sign In</button>
-    <button class="btn primary" onclick="auth('Create Account')">Create Account</button>
+    <button class="btn outline" id="btnSignIn" onclick="auth('Sign In')">Sign In</button>
+    <button class="btn primary" id="btnCreateAccount" onclick="auth('Create Account')">Create Account</button>
   </div>
 </header>
 <main>
 <section class="hero">
- <div><div class="crumb">Citizens <span>|</span> Schemes <span>|</span> AI <span>|</span> A Stronger Tomorrow</div><h1>Find Government Support<br>That Fits <em>Your Situation</em></h1><p>Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.</p><div class="hero-actions"><button class="btn primary" onclick="journey()">Start My Welfare Journey →</button><button class="btn outline" onclick="go('explore')">Explore Schemes</button></div></div>
+ <div><div class="crumb">Citizens <span>|</span> Schemes <span>|</span> AI <span>|</span> A Stronger Tomorrow</div><h1>Find Government Support<br>That Fits <em>Your Situation</em></h1><p>Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.</p><div class="hero-actions"><button class="btn primary" id="btnHeroStartJourney" onclick="journey()">Start My Welfare Journey →</button><button class="btn outline" id="btnHeroExploreSchemes" onclick="category('all')">Explore Schemes</button></div></div>
  <div><img class="hero-img" src="__HERO_B64__" alt="Family using Government Welfare Assistant"></div>
 </section>
 <section class="stats">
@@ -303,8 +307,8 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
   <div class="stat"><div class="stat-icon">🌐</div><div><strong>3</strong><small>Languages Supported</small></div></div>
 </section>
 <section class="ai-box" id="assistant">
-  <div class="ai-head"><div class="ai-badge">AI</div><div><h2>Ask the Welfare Assistant</h2><p>Tell us what you need in your own words. You can type or speak.</p></div><div class="ai-top" onclick="fill('I need financial support for higher education')">↻ &nbsp; Try example</div></div>
-  <div class="ai-input-row"><input id="aiInput" class="ai-input" placeholder="e.g., I am looking for financial assistance for my education..."><button class="btn outline" onclick="speak()">🎙 Speak</button><button class="btn primary" onclick="searchAI()">🔍 Search</button></div>
+  <div class="ai-head"><div class="ai-badge">AI</div><div><h2>Ask the Welfare Assistant</h2><p>Tell us what you need in your own words. You can type or speak.</p></div><div class="ai-top" id="btnAiTryExample" onclick="fill('I need financial support for higher education')">↻ &nbsp; Try example</div></div>
+  <div class="ai-input-row"><input id="aiInput" class="ai-input" placeholder="e.g., I am looking for financial assistance for my education..."><button class="btn outline" id="btnSpeak" onclick="speak()">🎙 Speak</button><button class="btn primary" id="btnSearch" onclick="searchAI()">🔍 Search</button></div>
   <div class="chips">
     <button class="chip" onclick="fill('I need a scholarship')">🎓 I need a scholarship</button>
     <button class="chip" onclick="fill('Looking for housing support')">🏠 Looking for housing support</button>
@@ -323,8 +327,8 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
   <div class="steps"><div class="step"><div class="num">01</div><div class="step-icon">👤</div><h3>Tell us about yourself</h3><p>Answer a quick profile or speak to the AI.</p></div><div class="step"><div class="num">02</div><div class="step-icon">🔍</div><h3>Find relevant schemes</h3><p>Get personalized scheme recommendations.</p></div><div class="step"><div class="num">03</div><div class="step-icon">📝</div><h3>Check eligibility</h3><p>AI evaluates your eligibility based on official rules.</p></div><div class="step"><div class="num">04</div><div class="step-icon">🚀</div><h3>Prepare your application</h3><p>Pre-fill forms with AI and required documents.</p></div></div>
 </section>
 <section class="feature-grid section" id="resources">
-  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3>AI Application Assistant</h3><p>Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" onclick="applyAI()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
-  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3>Understand Your Documents with AI</h3><p>Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="warn" id="ocrDistStatus">⚠ Verify</span></div></div></div><button class="mini-btn" onclick="documentAI()">Upload Document</button></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3>AI Application Assistant</h3><p>Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" id="btnTryApplyAI" onclick="applyAI()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3>Understand Your Documents with AI</h3><p>Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="warn" id="ocrDistStatus">⚠ Verify</span></div></div></div><button class="mini-btn" id="btnUploadDocMini" onclick="documentAI()">Upload Document</button></div>
 </section>
 <section class="section" id="recommendations">
   <div class="section-head"><div><h2 id="recsTitle">Recommended for You</h2><p class="section-sub" id="recsSub">Based on your profile and interests</p></div><a class="link" href="#explore" onclick="category('all')">View All Schemes →</a></div>
@@ -336,7 +340,6 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 </main>
 <footer class="footer"><div class="footbrand"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div><div class="footlinks"><a href="#home">About</a><a href="#journey" onclick="journey()">How it works</a><a href="#explore" onclick="category('all')">Explore Schemes</a><a href="#resources" onclick="resources()">Privacy</a><a href="#resources" onclick="resources()">Security</a><a href="#resources" onclick="resources()">Accessibility</a><a href="#resources" onclick="resources()">Contact</a></div><div class="copyright"><span>© 2024 Government Welfare Assistant. All rights reserved.</span><span>Built with AI for a Better Tomorrow →</span></div></footer>
 </div>
-<div class="modal-backdrop" id="modal"><div class="modal"><button class="modal-close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="filePicked(this)">
 <div class="toast" id="toast"></div>
 
@@ -363,11 +366,21 @@ window.currentUser = null;
 window.authToken = null;
 window.pendingAction = null;
 
-function toast(t){const e=document.getElementById('toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>e.classList.remove('show'),2500)}
-function go(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
-function fill(t){const elem=document.getElementById('aiInput');if(elem){elem.value=t;elem.focus();}}
+function toast(t){
+  const e = document.getElementById('toast');
+  if(!e) return;
+  e.textContent = t;
+  e.classList.add('show');
+  clearTimeout(window.__t);
+  window.__t = setTimeout(() => e.classList.remove('show'), 2500);
+}
+function go(id){ document.getElementById(id)?.scrollIntoView({behavior:'smooth'}); }
+function fill(t){
+  const elem = document.getElementById('aiInput');
+  if(elem){ elem.value = t; elem.focus(); }
+}
 
-// Flexible modal launcher (Scrolls into view near top of viewport)
+// Flexible modal launcher (Guaranteed positioning near top of viewport)
 function openModal(html){
   const modalContent = document.getElementById('modalContent');
   const modal = document.getElementById('modal');
@@ -375,10 +388,9 @@ function openModal(html){
   modalContent.innerHTML = html;
   modal.classList.add('open');
   modal.scrollTop = 0;
-  try {
-    modal.scrollIntoView({behavior: 'smooth', block: 'start'});
-  } catch(e){}
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
+
 function closeModal(){
   const modal = document.getElementById('modal');
   if(modal) modal.classList.remove('open');
@@ -556,7 +568,7 @@ function auth(p, nextAction){
   html += '<p>' + (p==='Sign In'?'Sign in to access your citizen profile and applications.':'Create your official citizen account.') + '</p>';
   html += '<label style="font-size:11px; font-weight:700;">Email Address / Mobile</label><input id="authEmail" value="citizen.demo@welfare.local">';
   html += '<label style="font-size:11px; font-weight:700;">Password</label><input type="password" id="authPass" value="CitizenDemo@123!">';
-  html += '<button class="btn primary full" onclick="submitAuth(\'' + p + '\')">Continue →</button>';
+  html += '<button class="btn primary full" id="btnSubmitAuth" onclick="submitAuth(\'' + p + '\')">Continue →</button>';
   html += '<div style="font-size:11px; color:#475569; margin-top:14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;"><p style="margin:0 0 4px; font-weight:700; color:#112448;">Pre-seeded Demo Accounts:</p><p style="margin:2px 0;"><b>Citizen:</b> citizen.demo@welfare.local | CitizenDemo@123!</p><p style="margin:2px 0;"><b>Admin:</b> admin.demo@welfare.local | AdminDemo@123!</p></div>';
   openModal(html);
 }
@@ -703,6 +715,37 @@ function speak(){
     toast('Voice transcribed: "I need financial support for higher education"');
   }, 1000);
 }
+
+// ATTACH DOM EVENT LISTENERS TO GUARANTEE 100% BUTTON & ENTER-KEY INTERACTION
+window.addEventListener('load', function() {
+  const btnSignIn = document.getElementById('btnSignIn');
+  if(btnSignIn) btnSignIn.addEventListener('click', function(e) { e.preventDefault(); auth('Sign In'); });
+  
+  const btnCreateAccount = document.getElementById('btnCreateAccount');
+  if(btnCreateAccount) btnCreateAccount.addEventListener('click', function(e) { e.preventDefault(); auth('Create Account'); });
+  
+  const btnHeroStartJourney = document.getElementById('btnHeroStartJourney');
+  if(btnHeroStartJourney) btnHeroStartJourney.addEventListener('click', function(e) { e.preventDefault(); journey(); });
+  
+  const btnHeroExploreSchemes = document.getElementById('btnHeroExploreSchemes');
+  if(btnHeroExploreSchemes) btnHeroExploreSchemes.addEventListener('click', function(e) { e.preventDefault(); category('all'); });
+  
+  const btnSearch = document.getElementById('btnSearch');
+  if(btnSearch) btnSearch.addEventListener('click', function(e) { e.preventDefault(); searchAI(); });
+  
+  const btnSpeak = document.getElementById('btnSpeak');
+  if(btnSpeak) btnSpeak.addEventListener('click', function(e) { e.preventDefault(); speak(); });
+  
+  const aiInput = document.getElementById('aiInput');
+  if(aiInput) {
+    aiInput.addEventListener('keydown', function(e) {
+      if(e.key === 'Enter') {
+        e.preventDefault();
+        searchAI();
+      }
+    });
+  }
+});
 </script>
 </body>
 </html>"""
