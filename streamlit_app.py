@@ -237,7 +237,6 @@ def render_signin_page():
             
             if submit:
                 if email and password:
-                    # Authenticate via FastAPI Backend /api/v1/auth/login
                     try:
                         with httpx.Client(timeout=5.0) as client:
                             resp = client.post(f"{API_BASE_URL}/auth/login", json={"email": email, "password": password})
@@ -260,7 +259,7 @@ def render_signin_page():
                 else:
                     st.error("Please enter valid credentials.")
                     
-        st.markdown("<div style='text-align:center; margin-top:15px;'><a href='?page=register' target='_top' style='color:#00865a; font-weight:600; text-decoration:none;'>Don't have an account? Create Citizen Account →</a></div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; margin-top:15px;'><a href='/?page=register' target='_top' style='color:#00865a; font-weight:600; text-decoration:none;'>Don't have an account? Create Citizen Account →</a></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 def render_register_page():
@@ -290,7 +289,6 @@ def render_register_page():
             submit = st.form_submit_button("Register & Setup MFA →", use_container_width=True, type="primary")
             
             if submit:
-                # Register via FastAPI Backend /api/v1/auth/register
                 reg_payload = {
                     "email": email,
                     "password": password,
@@ -345,7 +343,6 @@ def render_mfa_page():
 def render_schemes_page():
     render_functional_header("Explore Government Schemes Catalogue", "அரசுத் திட்டங்கள் உலாவி", "Search, filter, and discover all Central and State welfare assistance programs.")
     
-    # Attempt to fetch real schemes from FastAPI /api/v1/schemes
     api_schemes = None
     try:
         with httpx.Client(timeout=3.0) as client:
@@ -419,7 +416,6 @@ def render_schemes_page():
 def render_scheme_detail_page(scheme_id):
     scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
     
-    # Try fetching exact scheme from FastAPI
     try:
         with httpx.Client(timeout=3.0) as client:
             resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
@@ -501,7 +497,6 @@ def render_eligibility_page(scheme_id):
         submit = st.form_submit_button("Evaluate Criteria against G.O. Rules →", use_container_width=True, type="primary")
         
     if submit or True:
-        # Evaluate via FastAPI /api/v1/eligibility/evaluate
         eval_payload = {
             "age": int(age),
             "gender": gender.lower(),
@@ -580,7 +575,6 @@ def render_apply_page(scheme_id):
         submit = st.form_submit_button("Submit Application Draft & Generate PDF Receipt →", use_container_width=True, type="primary")
         
         if submit:
-            # Post to FastAPI /api/v1/applications if token exists
             token = st.session_state.get("token")
             if token:
                 try:
@@ -639,7 +633,6 @@ def render_voice_page():
         prompt = st.text_area("Speech Transcript / Voice Input", value="எனது கல்விக்கான நிதியுதவியை நான் தேடுகிறேன் (I am looking for higher education financial assistance)" if "Tamil" in lang else "I need financial support for building a new home")
         
         if st.button("Transcribe & Search Schemes with Voice AI →", type="primary", use_container_width=True):
-            # Call FastAPI /api/v1/voice/process
             try:
                 lang_code = "ta" if "Tamil" in lang else ("hi" if "Hindi" in lang else "en")
                 with httpx.Client(timeout=4.0) as client:
@@ -727,7 +720,7 @@ elif current_page == "voice":
 elif current_page == "dashboard":
     render_dashboard_page()
 else:
-    # RENDER APPROVED HOMEPAGE HTML WITH SAFEST _top NAVIGATION
+    # RENDER APPROVED HOMEPAGE HTML WITH NATIVE ABSOLUTE ROOT TARGET_TOP ANCHORS
     USER_UI_HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -746,7 +739,7 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
 .nav-links a { text-decoration: none; color: #475569; font-weight: 500; font-size: 14px; cursor: pointer; transition: color 0.2s; }
 .nav-links a:hover, .nav-links a.active { color: #00865a; font-weight: 600; }
 .actions { display: flex; gap: 12px; align-items: center; }
-.btn { border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
+.btn { border: none; padding: 8px 18px; border-radius: 8px; font-weight: 600; font-size: 14px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
 .btn.outline { background: transparent; border: 1px solid #cbd5e1; color: #00865a; }
 .btn.outline:hover { border-color: #00865a; background: #f0fdf4; }
 .btn.primary { background: #00865a; color: #ffffff; }
@@ -771,11 +764,11 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
 .assistant-input-wrapper { display: flex; gap: 12px; }
 .assistant-input { flex: 1; border: 1px solid #cbd5e1; border-radius: 10px; padding: 12px 16px; font-size: 15px; outline: none; }
 .chips { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-.chip { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #475569; cursor: pointer; }
+.chip { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 20px; font-size: 13px; color: #475569; cursor: pointer; text-decoration: none; display: inline-block; }
 .chip:hover { background: #e2e8f0; }
 .section-title { font-size: 22px; font-weight: 700; color: #0f172a; margin-bottom: 20px; }
 .categories-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 40px; }
-.cat { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; }
+.cat { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; text-decoration: none; color: inherit; }
 .cat:hover { border-color: #00865a; box-shadow: 0 4px 12px rgba(0,134,90,0.08); }
 .cat-icon { width: 40px; height: 40px; background: #eef8f5; color: #00865a; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; }
 .schemes-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
@@ -784,7 +777,7 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
 .scheme-card h3 { font-size: 16px; font-weight: 700; color: #0f172a; margin: 8px 0; }
 .scheme-card p { font-size: 13px; color: #64748b; margin-bottom: 16px; flex: 1; }
 .scheme-actions { display: flex; gap: 8px; }
-.scheme-actions button { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; border: none; }
+.scheme-actions a { flex: 1; padding: 8px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; text-decoration: none; }
 .scheme-actions .primary { background: #00865a; color: white; }
 .scheme-actions .secondary { background: #f1f5f9; color: #475569; }
 .footer { border-top: 1px solid #e2e8f0; padding: 32px; background: #ffffff; display: flex; justify-content: space-between; align-items: center; margin-top: auto; }
@@ -801,10 +794,10 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
     <img src="__LOGO_B64__" alt="Government Welfare Assistant Logo">
   </div>
   <nav class="nav-links">
-    <a href="?page=home" target="_top" class="active">Home</a>
-    <a href="?page=schemes" target="_top">Explore Schemes</a>
-    <a href="?page=dashboard" target="_top">My Welfare Journey</a>
-    <a href="?page=ocr" target="_top">Document AI</a>
+    <a href="/?page=home" target="_top" class="active">Home</a>
+    <a href="/?page=schemes" target="_top">Explore Schemes</a>
+    <a href="/?page=dashboard" target="_top">My Welfare Journey</a>
+    <a href="/?page=ocr" target="_top">Document AI</a>
   </nav>
   <div class="actions">
     <select class="lang-select" id="langSelect">
@@ -812,8 +805,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
       <option value="ta">தமிழ் (Tamil)</option>
       <option value="hi">हिन्दी (Hindi)</option>
     </select>
-    <a href="?page=signin" target="_top" class="btn outline" style="text-decoration:none;">Sign In</a>
-    <a href="?page=register" target="_top" class="btn primary" style="text-decoration:none;">Create Account</a>
+    <a href="/?page=signin" target="_top" class="btn outline">Sign In</a>
+    <a href="/?page=register" target="_top" class="btn primary">Create Account</a>
   </div>
 </header>
 
@@ -826,8 +819,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
       <h1 class="hero-title">Find Government Support That Fits <span>Your Situation</span></h1>
       <p class="hero-subtitle">Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility, and prepare your application.</p>
       <div class="hero-cta">
-        <a href="?page=dashboard" target="_top" class="btn primary" style="padding:12px 24px; font-size:15px; text-decoration:none;">Start My Welfare Journey →</a>
-        <a href="?page=schemes" target="_top" class="btn outline" style="padding:12px 24px; font-size:15px; text-decoration:none;">Explore Schemes</a>
+        <a href="/?page=dashboard" target="_top" class="btn primary" style="padding:12px 24px; font-size:15px;">Start My Welfare Journey →</a>
+        <a href="/?page=schemes" target="_top" class="btn outline" style="padding:12px 24px; font-size:15px;">Explore Schemes</a>
       </div>
       <div class="hero-metrics">
         <div class="metric-item"><span class="metric-num">46+</span><span class="metric-label">Central &amp; State Sources</span></div>
@@ -850,23 +843,23 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
     </div>
     <div class="assistant-input-wrapper">
       <input type="text" class="assistant-input" id="aiInput" placeholder="e.g., I am looking for financial assistance for my education...">
-      <a href="?page=voice" target="_top" class="btn outline" style="text-decoration:none;">🎙 Speak</a>
-      <a href="?page=schemes" target="_top" class="btn primary" style="text-decoration:none;">🔍 Search</a>
+      <a href="/?page=voice" target="_top" class="btn outline">🎙 Speak</a>
+      <a href="/?page=schemes" target="_top" class="btn primary">🔍 Search</a>
     </div>
     <div class="chips">
-      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🎓 I need a scholarship</a>
-      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🏠 Looking for housing support</a>
-      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🌾 Farmer financial assistance</a>
-      <a href="?page=eligibility" target="_top" class="chip" style="text-decoration:none;">👨‍👩‍👧 Scheme eligibility for my family</a>
+      <a href="/?page=schemes" target="_top" class="chip">🎓 I need a scholarship</a>
+      <a href="/?page=schemes" target="_top" class="chip">🏠 Looking for housing support</a>
+      <a href="/?page=schemes" target="_top" class="chip">🌾 Farmer financial assistance</a>
+      <a href="/?page=eligibility&id=pmay-urban" target="_top" class="chip">👨‍👩‍👧 Scheme eligibility for my family</a>
     </div>
   </div>
 
   <h2 class="section-title">Browse Schemes by Category</h2>
   <div class="categories-grid">
-    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Housing &amp; Urban</strong><br><small>Subsidies &amp; Aid</small></div><span style="color:#00865a;">→</span></a>
-    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Agriculture &amp; Farmers</strong><br><small>Direct Income Support</small></div><span style="color:#00865a;">→</span></a>
-    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Women &amp; Child</strong><br><small>Monthly Grants</small></div><span style="color:#00865a;">→</span></a>
-    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Healthcare &amp; Insurance</strong><br><small>Cashless Coverage</small></div><span style="color:#00865a;">→</span></a>
+    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Housing &amp; Urban</strong><br><small>Subsidies &amp; Aid</small></div><span style="color:#00865a;">→</span></a>
+    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Agriculture &amp; Farmers</strong><br><small>Direct Income Support</small></div><span style="color:#00865a;">→</span></a>
+    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Women &amp; Child</strong><br><small>Monthly Grants</small></div><span style="color:#00865a;">→</span></a>
+    <a href="/?page=schemes" target="_top" class="cat"><div><strong>Healthcare &amp; Insurance</strong><br><small>Cashless Coverage</small></div><span style="color:#00865a;">→</span></a>
   </div>
 
   <h2 class="section-title">Recommended Schemes</h2>
@@ -878,8 +871,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Interest subsidy up to ₹2.67 Lakhs on housing loans for EWS/LIG families building their first home.</p>
       </div>
       <div class="scheme-actions">
-        <a href="?page=scheme_detail&id=pmay-urban" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
-        <a href="?page=eligibility&id=pmay-urban" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
+        <a href="/?page=scheme_detail&id=pmay-urban" target="_top" class="primary">View Details</a>
+        <a href="/?page=eligibility&id=pmay-urban" target="_top" class="secondary">Check Eligibility</a>
       </div>
     </div>
     <div class="scheme-card">
@@ -889,8 +882,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Direct annual income support of ₹6,000 for land-holding farmer families transferred in 3 equal quarterly installments.</p>
       </div>
       <div class="scheme-actions">
-        <a href="?page=scheme_detail&id=pm-kisan" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
-        <a href="?page=eligibility&id=pm-kisan" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
+        <a href="/?page=scheme_detail&id=pm-kisan" target="_top" class="primary">View Details</a>
+        <a href="/?page=eligibility&id=pm-kisan" target="_top" class="secondary">Check Eligibility</a>
       </div>
     </div>
     <div class="scheme-card">
@@ -900,8 +893,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Monthly financial assistance grant of ₹1,000 directly transferred to eligible female heads of households in Tamil Nadu.</p>
       </div>
       <div class="scheme-actions">
-        <a href="?page=scheme_detail&id=kalaignar-magalir" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
-        <a href="?page=eligibility&id=kalaignar-magalir" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
+        <a href="/?page=scheme_detail&id=kalaignar-magalir" target="_top" class="primary">View Details</a>
+        <a href="/?page=eligibility&id=kalaignar-magalir" target="_top" class="secondary">Check Eligibility</a>
       </div>
     </div>
   </div>
@@ -910,9 +903,9 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
 <footer class="footer">
   <div class="footbrand"><img src="__LOGO_B64__" alt="Logo"></div>
   <div class="footlinks">
-    <a href="?page=home" target="_top">Home</a>
-    <a href="?page=schemes" target="_top">Explore Schemes</a>
-    <a href="?page=dashboard" target="_top">My Journey</a>
+    <a href="/?page=home" target="_top">Home</a>
+    <a href="/?page=schemes" target="_top">Explore Schemes</a>
+    <a href="/?page=dashboard" target="_top">My Journey</a>
   </div>
   <div class="copyright">© 2026 Government Welfare Assistant. All rights reserved.</div>
 </footer>
