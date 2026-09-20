@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class UserBase(BaseModel):
@@ -18,6 +18,8 @@ class UserBase(BaseModel):
     education_level: Optional[str] = None
     family_members_count: Optional[int] = 1
     property_owner: Optional[bool] = False
+    is_mfa_enabled: bool = False
+    is_onboarded: bool = False
 
 class UserCreate(UserBase):
     password: str
@@ -40,6 +42,7 @@ class UserUpdate(BaseModel):
     education_level: Optional[str] = None
     family_members_count: Optional[int] = None
     property_owner: Optional[bool] = None
+    is_onboarded: Optional[bool] = None
 
 class UserResponse(UserBase):
     id: str
@@ -53,3 +56,23 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
+
+class MFASetupResponse(BaseModel):
+    temp_token: str
+    secret: str
+    qr_code_url: str
+    recovery_codes: List[str]
+
+class MFAVerifyRequest(BaseModel):
+    temp_token: str
+    totp_code: str
+
+class MFALoginResponse(BaseModel):
+    mfa_required: bool = False
+    mfa_token: Optional[str] = None
+    access_token: Optional[str] = None
+    user: Optional[UserResponse] = None
+
+class PasswordResetRequest(BaseModel):
+    email: EmailStr
+

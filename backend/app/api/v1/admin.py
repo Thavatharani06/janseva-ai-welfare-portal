@@ -92,11 +92,14 @@ async def ingest_pdf_document(
     )
 
 @router.post("/update-schemes")
+@router.post("/trigger-myscheme-sync")
+@router.post("/sync-myscheme")
 async def trigger_myscheme_sync(
+    admin_user: User = Depends(get_current_admin),
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Trigger the myScheme Ingestion Engine:
+    Trigger the myScheme Ingestion Engine (ADMIN RESTRICTED):
     - Reads and parses the myScheme catalog JSON dataset.
     - Resolves and populates relational database tables (Categories, Schemes, EligibilityRules, Aliases).
     - Chunk-embeds description metadata into DocumentEmbedding tables for instant RAG search availability.
@@ -109,11 +112,3 @@ async def trigger_myscheme_sync(
         "message": "Government welfare schemes updated and synchronized with myScheme portal knowledge base successfully!",
         "metrics": result
     }
-
-@router.post("/trigger-myscheme-sync")
-@router.post("/sync-myscheme")
-async def trigger_myscheme_sync_alias(
-    db: AsyncSession = Depends(get_db)
-):
-    return await trigger_myscheme_sync(db=db)
-

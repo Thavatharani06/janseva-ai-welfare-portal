@@ -27,6 +27,12 @@ class User(Base):
     family_members_count = Column(Integer, default=1)
     property_owner = Column(Boolean, default=False)
 
+    # Security & MFA & Journey State
+    mfa_secret = Column(String(255), nullable=True)
+    is_mfa_enabled = Column(Boolean, default=False, nullable=False)
+    mfa_recovery_codes = Column(Text, nullable=True)
+    is_onboarded = Column(Boolean, default=False, nullable=False)
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
