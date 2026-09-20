@@ -16,7 +16,7 @@ API_BASE = "http://127.0.0.1:8000/api/v1"
 
 # Page Configuration
 st.set_page_config(
-    page_title="Government Welfare Assistant | MyScheme 3.0 AI",
+    page_title="Government Welfare Assistant | myScheme 3.0 Portal",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -31,6 +31,8 @@ if "language" not in st.session_state:
     st.session_state["language"] = "en"  # "en", "ta", "hi"
 if "current_nav" not in st.session_state:
     st.session_state["current_nav"] = "home"
+if "redirect_after_auth" not in st.session_state:
+    st.session_state["redirect_after_auth"] = None
 if "mfa_pending_token" not in st.session_state:
     st.session_state["mfa_pending_token"] = None
 if "mfa_qr_url" not in st.session_state:
@@ -349,16 +351,25 @@ st.markdown("""
         color: #0f172a !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
+
+    /* Prevent text truncation on Streamlit buttons */
+    .stButton>button {
+        white-space: nowrap !important;
+        word-break: normal !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        padding: 8px 16px !important;
+        font-size: 0.9rem !important;
+    }
     
     /* Top Header Bar */
-    .top-navbar {
+    .top-navbar-container {
         background-color: #ffffff !important;
         border-bottom: 2px solid #059669 !important;
-        padding: 10px 32px !important;
-        margin-bottom: 20px !important;
-        display: flex !important;
-        justify-content: space-between !important;
-        align-items: center !important;
+        padding: 12px 24px !important;
+        margin-bottom: 24px !important;
         box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     }
 
@@ -384,6 +395,7 @@ st.markdown("""
         padding: 2px 8px !important;
         border-radius: 4px !important;
         font-size: 0.75rem !important;
+        margin-left: 6px !important;
     }
 
     /* Hero Section */
@@ -429,9 +441,10 @@ st.markdown("""
         display: flex !important;
         align-items: center !important;
         gap: 10px !important;
-        font-size: 0.9rem !important;
-        font-weight: 800 !important;
+        font-size: 0.88rem !important;
+        font-weight: 700 !important;
         color: #0f172a !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02) !important;
     }
 
     /* Floating AI Card */
@@ -482,22 +495,6 @@ st.markdown("""
     .cat-card-count {
         color: #64748b !important;
         font-size: 0.82rem !important;
-    }
-
-    /* Buttons */
-    .stButton>button {
-        background-color: #059669 !important;
-        color: #ffffff !important;
-        font-weight: 800 !important;
-        border-radius: 8px !important;
-        border: none !important;
-        padding: 10px 22px !important;
-        font-size: 0.95rem !important;
-        box-shadow: 0 2px 4px rgba(5, 150, 105, 0.2) !important;
-    }
-
-    .stButton>button:hover {
-        background-color: #047857 !important;
     }
 
     /* Scheme Card */
@@ -795,71 +792,86 @@ def listen_voice_input(language_code="en-IN"):
 
 # MYSCHEME 3.0 EXACT HEADER & NAVIGATION BAR
 def render_header():
-    c_brand, c_nav, c_right = st.columns([4.5, 4, 3.5])
-    with c_brand:
-        st.markdown(f"""
-        <div>
-            <div class="brand-title-text">{t('brand_name')} <span class="beta-badge">Beta 3.0</span></div>
-            <div class="brand-subtitle-text">{t('brand_tag')}</div>
+    # Brand logo SVG emblem + Title + Links + Language + Auth Controls
+    st.markdown("""
+    <div style="background:#ffffff; border-bottom:2px solid #059669; padding:8px 16px; margin-bottom:16px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+            <div style="display:flex; align-items:center; gap:12px;">
+                <svg width="34" height="42" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5L90 25V65L50 115L10 65V25L50 5Z" fill="#065f46" stroke="#047857" stroke-width="4"/>
+                    <circle cx="50" cy="50" r="22" fill="#ffffff"/>
+                    <circle cx="50" cy="50" r="14" fill="#059669"/>
+                    <path d="M50 38V62M38 50H62" stroke="#ffffff" stroke-width="3"/>
+                </svg>
+                <div>
+                    <div class="brand-title-text">Government Welfare Assistant <span class="beta-badge">Beta 3.0</span></div>
+                    <div class="brand-subtitle-text">Your Gateway to Government Schemes</div>
+                </div>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
-        
-    with c_nav:
-        n1, n2, n3, n4 = st.columns(4)
-        with n1:
-            if st.button(t("nav_home"), key="nav_h_btn"):
-                st.session_state["current_nav"] = "home"
-                st.session_state["auth_mode"] = "none"
-                st.rerun()
-        with n2:
-            if st.button(t("nav_explore"), key="nav_e_btn"):
-                st.session_state["current_nav"] = "explore"
-                st.rerun()
-        with n3:
-            if st.button(t("nav_journey"), key="nav_j_btn"):
-                if st.session_state["access_token"]:
-                    st.session_state["current_nav"] = "home"
-                else:
-                    st.session_state["auth_mode"] = "login"
-                st.rerun()
-        with n4:
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Clean Row for Navigation Tabs & Controls
+    c_nav1, c_nav2, c_nav3, c_nav4, c_nav_space, c_lang, c_auth = st.columns([1.5, 2.2, 2.2, 1.8, 1, 2.2, 3])
+    with c_nav1:
+        if st.button(t("nav_home"), key="hdr_n_home"):
+            st.session_state["current_nav"] = "home"
+            st.session_state["auth_mode"] = "none"
+            st.rerun()
+    with c_nav2:
+        if st.button(t("nav_explore"), key="hdr_n_explore"):
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
+    with c_nav3:
+        if st.button(t("nav_journey"), key="hdr_n_journey"):
             if st.session_state["access_token"]:
-                if st.button(t("nav_profile"), key="nav_p_btn"):
+                st.session_state["current_nav"] = "home"
+            else:
+                st.session_state["redirect_after_auth"] = "home"
+                st.session_state["auth_mode"] = "login"
+            st.rerun()
+    with c_nav4:
+        if st.button(t("nav_resources"), key="hdr_n_resources"):
+            st.session_state["current_nav"] = "resources"
+            st.rerun()
+
+    with c_lang:
+        lang_choice = st.selectbox(
+            "Language",
+            ["English", "தமிழ்", "हिन्दी"],
+            index=0 if st.session_state["language"] == "en" else (1 if st.session_state["language"] == "ta" else 2),
+            key="hdr_lang_sel",
+            label_visibility="collapsed"
+        )
+        new_lang = "en" if "English" in lang_choice else ("ta" if "தமிழ்" in lang_choice else "hi")
+        if new_lang != st.session_state["language"]:
+            st.session_state["language"] = new_lang
+            st.rerun()
+
+    with c_auth:
+        if not st.session_state["access_token"]:
+            a1, a2 = st.columns(2)
+            with a1:
+                if st.button(t("btn_signin"), key="hdr_signin_btn"):
+                    st.session_state["auth_mode"] = "login"
+                    st.rerun()
+            with a2:
+                if st.button(t("btn_create"), key="hdr_create_btn"):
+                    st.session_state["auth_mode"] = "register"
+                    st.rerun()
+        else:
+            a1, a2 = st.columns(2)
+            with a1:
+                if st.button(t("nav_profile"), key="hdr_profile_btn"):
                     st.session_state["current_nav"] = "profile"
                     st.rerun()
-
-    with c_right:
-        c_lang, c_signin, c_create = st.columns([2.5, 2, 2.5])
-        with c_lang:
-            lang_choice = st.selectbox(
-                "Language",
-                ["English", "தமிழ்", "हिन्दी"],
-                index=0 if st.session_state["language"] == "en" else (1 if st.session_state["language"] == "ta" else 2),
-                key="header_lang_select",
-                label_visibility="collapsed"
-            )
-            new_lang = "en" if "English" in lang_choice else ("ta" if "தமிழ்" in lang_choice else "hi")
-            if new_lang != st.session_state["language"]:
-                st.session_state["language"] = new_lang
-                st.rerun()
-
-        with c_signin:
-            if not st.session_state["access_token"]:
-                if st.button(t("btn_signin"), key="header_signin_btn"):
-                    st.session_state["auth_mode"] = "login"
-                    st.rerun()
-            else:
-                if st.button(t("nav_logout"), key="header_logout_btn"):
+            with a2:
+                if st.button(t("nav_logout"), key="hdr_logout_btn"):
                     st.session_state["access_token"] = None
                     st.session_state["user"] = None
                     st.session_state["current_nav"] = "home"
                     st.session_state["auth_mode"] = "none"
-                    st.rerun()
-
-        with c_create:
-            if not st.session_state["access_token"]:
-                if st.button(t("btn_create"), key="header_create_btn"):
-                    st.session_state["auth_mode"] = "register"
                     st.rerun()
 
 # ----------------------------------------------------
@@ -868,37 +880,65 @@ def render_header():
 def render_homepage():
     render_header()
     
-    # HERO CONTAINER
-    st.markdown(f"""
-    <div class="hero-container">
-        <div class="hero-tag">{t('hero_tag')}</div>
-        <div class="hero-heading">{t('hero_title')}</div>
-        <div class="hero-sub">{t('hero_subtitle')}</div>
-    </div>
-    """, unsafe_allow_html=True)
+    # HERO CONTAINER (2-COLUMN COMPOSITION)
+    c_hero_left, c_hero_right = st.columns([7, 5])
+    
+    with c_hero_left:
+        st.markdown(f"""
+        <div class="hero-container">
+            <div class="hero-tag">{t('hero_tag')}</div>
+            <div class="hero-heading">{t('hero_title')}</div>
+            <div class="hero-sub">{t('hero_subtitle')}</div>
+        </div>
+        """, unsafe_allow_html=True)
 
-    h_btn1, h_btn2, h_space = st.columns([3, 2.5, 6.5])
-    with h_btn1:
-        if st.button(t("btn_start_journey"), key="hero_start_btn"):
-            if st.session_state["access_token"]:
-                st.session_state["current_nav"] = "home"
-            else:
-                st.session_state["auth_mode"] = "register"
-            st.rerun()
-    with h_btn2:
-        if st.button(t("btn_explore_schemes"), key="hero_explore_btn"):
-            st.session_state["current_nav"] = "explore"
-            st.rerun()
+        h_btn1, h_btn2 = st.columns([4, 4])
+        with h_btn1:
+            if st.button(t("btn_start_journey"), key="hero_start_btn"):
+                if st.session_state["access_token"]:
+                    st.session_state["current_nav"] = "home"
+                else:
+                    st.session_state["redirect_after_auth"] = "home"
+                    st.session_state["auth_mode"] = "register"
+                st.rerun()
+        with h_btn2:
+            if st.button(t("btn_explore_schemes"), key="hero_explore_btn"):
+                st.session_state["current_nav"] = "explore"
+                st.rerun()
 
-    # Hero Stat Pills
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-    p1, p2, p3, p_empty = st.columns([3, 3, 3, 3])
-    with p1:
-        st.markdown(f"<div class='stat-pill'><span>🏛️</span> {t('hero_stat_1')}</div>", unsafe_allow_html=True)
-    with p2:
-        st.markdown(f"<div class='stat-pill'><span>📑</span> {t('hero_stat_2')}</div>", unsafe_allow_html=True)
-    with p3:
-        st.markdown(f"<div class='stat-pill'><span>🌐</span> {t('hero_stat_3')}</div>", unsafe_allow_html=True)
+        # Hero Stat Pills
+        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
+        p1, p2, p3 = st.columns(3)
+        with p1:
+            st.markdown(f"<div class='stat-pill'><span>🏛️</span> {t('hero_stat_1')}</div>", unsafe_allow_html=True)
+        with p2:
+            st.markdown(f"<div class='stat-pill'><span>📑</span> {t('hero_stat_2')}</div>", unsafe_allow_html=True)
+        with p3:
+            st.markdown(f"<div class='stat-pill'><span>🌐</span> {t('hero_stat_3')}</div>", unsafe_allow_html=True)
+
+    with c_hero_right:
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:1px solid #d1fae5; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
+            <div style="position:relative; width:100%; height:230px; background:#e2e8f0; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+                <svg width="100%" height="100%" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="600" height="300" fill="#047857"/>
+                    <path d="M0 200 C 150 120, 350 240, 600 160 L 600 300 L 0 300 Z" fill="#059669" opacity="0.6"/>
+                    <circle cx="300" cy="120" r="70" fill="#ffffff" opacity="0.15"/>
+                    <path d="M260 140 C 260 100, 340 100, 340 140 V 220 H 260 Z" fill="#ffffff" opacity="0.25"/>
+                    <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#ffffff" font-size="22" font-weight="900" font-family="sans-serif">Government Welfare Assistant</text>
+                    <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#dcfce7" font-size="14" font-weight="700" font-family="sans-serif">Sabka Saath • Sabka Vikas • Sabka Vishwas</text>
+                </svg>
+            </div>
+            <div class="ai-float-card" style="margin-top:16px;">
+                <div class="ai-float-header">{t('ai_float_title')}</div>
+                <div class="ai-float-list">
+                    <div>{t('ai_float_item1')}</div>
+                    <div>{t('ai_float_item2')}</div>
+                    <div>{t('ai_float_item3')}</div>
+                </div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
 
@@ -911,17 +951,28 @@ def render_homepage():
     with chip_cols[0]:
         if st.button(t("chip1"), key="c1_btn"):
             st.session_state["ai_prompt_input"] = "I am a student looking for a scholarship"
+            st.session_state["selected_category"] = "Education"
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
     with chip_cols[1]:
         if st.button(t("chip2"), key="c2_btn"):
             st.session_state["ai_prompt_input"] = "I need housing construction support"
+            st.session_state["selected_category"] = "Housing"
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
     with chip_cols[2]:
         if st.button(t("chip3"), key="c3_btn"):
             st.session_state["ai_prompt_input"] = "I am a farmer looking for financial assistance"
+            st.session_state["selected_category"] = "Agriculture"
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
     with chip_cols[3]:
         if st.button(t("chip4"), key="c4_btn"):
             st.session_state["ai_prompt_input"] = "What schemes does my family qualify for?"
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
 
-    c_input, c_speak, c_search = st.columns([5, 1.2, 1.2])
+    c_input, c_speak, c_search = st.columns([6, 1.5, 1.5])
     with c_input:
         prompt_val = st.text_input("Prompt", value=st.session_state["ai_prompt_input"], placeholder=t("ai_prompt_placeholder"), key="main_ai_prompt", label_visibility="collapsed")
     with c_speak:
@@ -944,6 +995,7 @@ def render_homepage():
         st.markdown(f"### {t('categories_title')}\n*{t('categories_sub')}*")
     with c_view_all:
         if st.button(t("view_all_cat"), key="view_all_cat_btn"):
+            st.session_state["selected_category"] = None
             st.session_state["current_nav"] = "explore"
             st.rerun()
 
@@ -1060,7 +1112,11 @@ def render_homepage():
         </div>
         """, unsafe_allow_html=True)
         if st.button("Try Apply with AI ➔", key="try_copilot_btn"):
-            st.session_state["current_nav"] = "explore"
+            if st.session_state["access_token"]:
+                st.session_state["current_nav"] = "copilot"
+            else:
+                st.session_state["redirect_after_auth"] = "copilot"
+                st.session_state["auth_mode"] = "login"
             st.rerun()
 
     with col_preview2:
@@ -1083,7 +1139,11 @@ def render_homepage():
         </div>
         """, unsafe_allow_html=True)
         if st.button("Test Document Extraction ➔", key="try_doc_btn"):
-            st.session_state["current_nav"] = "explore"
+            if st.session_state["access_token"]:
+                st.session_state["current_nav"] = "copilot"
+            else:
+                st.session_state["redirect_after_auth"] = "copilot"
+                st.session_state["auth_mode"] = "login"
             st.rerun()
 
     st.markdown("<div style='height: 35px;'></div>", unsafe_allow_html=True)
@@ -1094,6 +1154,7 @@ def render_homepage():
         st.markdown(f"### {t('rec_title')}\n*{t('rec_sub')}*")
     with r_view:
         if st.button(t("view_all_schemes"), key="view_all_rec_btn"):
+            st.session_state["selected_category"] = None
             st.session_state["current_nav"] = "explore"
             st.rerun()
 
@@ -1107,7 +1168,7 @@ def render_homepage():
                 <div class="scheme-ministry">{s.get('ministry', 'Government Portal')}</div>
                 <div class="scheme-benefit">{s['benefit_summary']}</div>
                 <div>
-                    <span class="tag-pill">Housing</span>
+                    <span class="tag-pill">{s.get('category_name', 'General')}</span>
                     <span class="tag-pill">Central Scheme</span>
                 </div>
             </div>
@@ -1129,6 +1190,15 @@ def render_homepage():
     <div class="banner-box">
         <h3 style="color:#065f46; margin:0 0 6px 0;">{t('banner_title')}</h3>
         <p style="color:#047857; margin:0;">{t('banner_sub')}</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="background:#ffffff; border-top:1px solid #e2e8f0; padding:24px 0; margin-top:20px;">
+        <div style="display:flex; justify-content:space-between; flex-wrap:wrap; font-size:0.88rem; color:#64748b;">
+            <div>© 2026 Government Welfare Assistant. All rights reserved.</div>
+            <div>Built with AI for a Better Tomorrow</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -1154,8 +1224,6 @@ def render_auth_screens():
             email = st.text_input(t("email_label"), value=st.session_state["login_email_input"], key="auth_email")
             password = st.text_input(t("password_label"), value=st.session_state["login_pass_input"], type="password", key="auth_pass")
             
-            st.caption(f"{t('trust_badge')}")
-            
             col_b1, col_b2 = st.columns(2)
             with col_b1:
                 if st.button(t("btn_signin"), key="submit_login_btn"):
@@ -1172,11 +1240,13 @@ def render_auth_screens():
                                 st.session_state["access_token"] = res["access_token"]
                                 st.session_state["user"] = res["user"]
                                 st.session_state["auth_mode"] = "none"
+                                target = st.session_state.get("redirect_after_auth") or "home"
+                                st.session_state["current_nav"] = target
                                 st.rerun()
                         else:
                             st.error(res.get("detail", "Invalid login credentials."))
             with col_b2:
-                if st.button(t("create_account"), key="switch_to_reg"):
+                if st.button(t("btn_create"), key="switch_to_reg"):
                     st.session_state["auth_mode"] = "register"
                     st.rerun()
 
@@ -1208,7 +1278,7 @@ def render_auth_screens():
         elif mode == "register":
             st.markdown(f"""
             <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-                <h2 style="color:#065f46; margin-top:0;">{t('create_account')}</h2>
+                <h2 style="color:#065f46; margin-top:0;">Create your account</h2>
                 <p style="color:#64748b;">Start your personalized welfare journey</p>
             </div>
             """, unsafe_allow_html=True)
@@ -1220,7 +1290,7 @@ def render_auth_screens():
             
             c1, c2 = st.columns(2)
             with c1:
-                if st.button(t("create_account"), key="submit_reg_btn"):
+                if st.button(t("btn_create"), key="submit_reg_btn"):
                     if not fn or not em or not pw:
                         st.error("All fields are required.")
                     elif pw != cp:
@@ -1261,6 +1331,8 @@ def render_auth_screens():
                     st.session_state["access_token"] = res["access_token"]
                     st.session_state["user"] = res["user"]
                     st.session_state["auth_mode"] = "none"
+                    target = st.session_state.get("redirect_after_auth") or "home"
+                    st.session_state["current_nav"] = target
                     st.rerun()
                 else:
                     st.error(res.get("detail", "Invalid TOTP code."))
@@ -1287,6 +1359,8 @@ def render_auth_screens():
                     st.session_state["access_token"] = res["access_token"]
                     st.session_state["user"] = res["user"]
                     st.session_state["auth_mode"] = "none"
+                    target = st.session_state.get("redirect_after_auth") or "home"
+                    st.session_state["current_nav"] = target
                     st.rerun()
                 else:
                     st.error(res.get("detail", "Invalid MFA verification code."))
@@ -1403,6 +1477,10 @@ def render_explore_schemes():
         c_act1, c_act2 = st.columns([3, 3])
         with c_act1:
             if st.button(t("apply_with_ai"), key="detail_apply_ai_btn"):
+                if not st.session_state["access_token"]:
+                    st.session_state["redirect_after_auth"] = "copilot"
+                    st.session_state["auth_mode"] = "login"
+                    st.rerun()
                 code, res = api_post("/applications", {"scheme_id": s["id"]})
                 if code == 200:
                     st.session_state["copilot_app_id"] = res["id"]
@@ -1468,7 +1546,11 @@ def render_explore_schemes():
                     with b_c2:
                         if st.button(t("apply_with_ai"), key=f"app_{s['id']}"):
                             st.session_state["selected_scheme"] = s
-                            st.session_state["current_nav"] = "copilot"
+                            if not st.session_state["access_token"]:
+                                st.session_state["redirect_after_auth"] = "copilot"
+                                st.session_state["auth_mode"] = "login"
+                            else:
+                                st.session_state["current_nav"] = "copilot"
                             st.rerun()
                 idx += 1
 
@@ -1514,7 +1596,11 @@ def render_eligibility_engine():
         e_act1, e_act2 = st.columns(2)
         with e_act1:
             if st.button(t("apply_with_ai"), key="elig_apply_ai_btn"):
-                st.session_state["current_nav"] = "copilot"
+                if not st.session_state["access_token"]:
+                    st.session_state["redirect_after_auth"] = "copilot"
+                    st.session_state["auth_mode"] = "login"
+                else:
+                    st.session_state["current_nav"] = "copilot"
                 st.rerun()
         with e_act2:
             if st.button("Reset Eligibility Check", key="elig_reset_btn"):
@@ -1531,8 +1617,8 @@ def render_ai_copilot():
     
     st.markdown(f"""
     <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:22px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-        <h2 style="color:#065f46; margin-top:0;">{t('copilot_title')} — {s['title']}</h2>
-        <p style="color:#64748b;">{t('copilot_sub')}</p>
+        <h2 style="color:#065f46; margin-top:0;">AI Application Assistant — {s['title']}</h2>
+        <p style="color:#64748b;">Get step-by-step help to complete your application draft.</p>
     </div>
     """, unsafe_allow_html=True)
     
@@ -1549,7 +1635,7 @@ def render_ai_copilot():
     
     tab1, tab2, tab3 = st.tabs(["Voice / Text Input", "Document AI", "Review & Submit"])
     with tab1:
-        if st.button(t("voice_speak_btn"), key="record_voice_copilot"):
+        if st.button("🎙 Speak Answer", key="record_voice_copilot"):
             transcribed = listen_voice_input()
             if transcribed:
                 st.session_state["copilot_form_data"]["full_name"] = transcribed
@@ -1565,13 +1651,50 @@ def render_ai_copilot():
         """)
         
     with tab3:
-        st.caption(t("disclaimer_no_auto_submit"))
-        if st.button(t("btn_official_apply"), key="final_app_btn"):
+        st.caption("Notice: AI assists in draft preparation. Final confirmation is required before submission.")
+        if st.button("Proceed to Official Government Portal", key="final_app_btn"):
             st.success("Pre-filled application draft ready!")
             st.markdown(f"👉 **[Proceed to Official Government Portal]({s.get('official_url', 'https://myscheme.gov.in')})**")
 
 # ----------------------------------------------------
-# 8. ADMIN PORTAL
+# 8. RESOURCES / KNOWLEDGE CENTER VIEW
+# ----------------------------------------------------
+def render_resources_page():
+    render_header()
+    st.markdown("""
+    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; margin-bottom:20px;">
+        <h2 style="color:#065f46; margin-top:0;">Welfare Resources & Knowledge Center</h2>
+        <p style="color:#64748b;">Comprehensive guides, government policy documentation, and frequently asked questions.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    r_tab1, r_tab2, r_tab3 = st.tabs(["Frequently Asked Questions", "Document Checklist Guide", "Help & Official Contact"])
+    with r_tab1:
+        st.markdown("### Frequently Asked Questions (FAQs)")
+        with st.expander("What is Government Welfare Assistant?"):
+            st.write("It is an AI-powered portal designed to help Indian citizens discover government schemes, calculate eligibility, and prepare applications.")
+        with st.expander("How does the AI determine scheme eligibility?"):
+            st.write("The system compares citizen demographic parameters (income, age, location, community) against statutory Government Orders (G.O.) and official rules.")
+        with st.expander("Is Multi-Factor Authentication (MFA) required?"):
+            st.write("Yes, to protect sensitive personal and financial data, 2FA via Google Authenticator or Authy is required for all user accounts.")
+    with r_tab2:
+        st.markdown("### Essential Document Checklist")
+        st.markdown("""
+        - **Proof of Identity**: Aadhaar Card, Voter ID, Passport
+        - **Proof of Residence**: Smart Ration Card, Electricity Bill
+        - **Proof of Income**: Income Certificate issued by Revenue Officer / Tahsildar
+        - **Bank Account Details**: First page of Bank Passbook showing IFSC & Account Number
+        """)
+    with r_tab3:
+        st.markdown("### Official Support & Links")
+        st.markdown("""
+        - **Official myScheme Portal**: [myscheme.gov.in](https://www.myscheme.gov.in/)
+        - **Helpline**: 1800-11-0001 (Toll-Free)
+        - **Email Support**: support@welfare.gov.in
+        """)
+
+# ----------------------------------------------------
+# 9. ADMIN PORTAL
 # ----------------------------------------------------
 def render_admin_portal():
     render_header()
@@ -1602,7 +1725,14 @@ def render_admin_portal():
 def main():
     if not st.session_state["access_token"]:
         if st.session_state["auth_mode"] == "none":
-            render_homepage()
+            if st.session_state["current_nav"] == "resources":
+                render_resources_page()
+            elif st.session_state["current_nav"] == "explore":
+                render_explore_schemes()
+            elif st.session_state["current_nav"] == "eligibility":
+                render_eligibility_engine()
+            else:
+                render_homepage()
         else:
             render_auth_screens()
     else:
@@ -1621,6 +1751,8 @@ def main():
                 render_eligibility_engine()
             elif nav == "copilot":
                 render_ai_copilot()
+            elif nav == "resources":
+                render_resources_page()
             elif nav == "profile":
                 render_header()
                 st.markdown("### Citizen Welfare Profile")
