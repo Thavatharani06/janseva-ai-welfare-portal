@@ -40,11 +40,11 @@ hero_b64 = get_image_b64("gwa-hero.png")
 
 # Core Real Dataset Fallback
 DEFAULT_CATEGORIES = [
-    {"id": "cat_housing", "name": "Housing & Urban Development", "name_ta": "வீட்டுவசதித் திட்டம்", "icon": "home", "description": "Subsidies and financial aid for housing construction"},
-    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "icon": "sprout", "description": "Direct income support and credit for farmers"},
-    {"id": "cat_women", "name": "Women & Child Development", "name_ta": "மகளிர் நலம்", "icon": "heart", "description": "Monthly assistance, maternity benefit, and empowerment grants"},
-    {"id": "cat_health", "name": "Healthcare & Insurance", "name_ta": "சுகாதாரம் & காப்பீடு", "icon": "activity", "description": "Cashless hospital treatment and medical coverage"},
-    {"id": "cat_education", "name": "Education & Scholarships", "name_ta": "கல்வி உதவித் தொகை", "icon": "graduation-cap", "description": "Financial assistance for school and college education"}
+    {"id": "cat_housing", "name": "Housing & Urban Development", "name_ta": "வீட்டுவசதித் திட்டம்", "name_hi": "आवास और शहरी विकास", "icon": "home", "description": "Subsidies and financial aid for housing construction"},
+    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "कृषि एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
+    {"id": "cat_women", "name": "Women & Child Development", "name_ta": "மகளிர் நலம்", "name_hi": "महिला एवं बाल विकास", "icon": "heart", "description": "Monthly assistance, maternity benefit, and empowerment grants"},
+    {"id": "cat_health", "name": "Healthcare & Insurance", "name_ta": "சுகாதாரம் & காப்பீடு", "name_hi": "स्वास्थ्य सेवा एवं बीमा", "icon": "activity", "description": "Cashless hospital treatment and medical coverage"},
+    {"id": "cat_education", "name": "Education & Scholarships", "name_ta": "கல்வி உதவித் தொகை", "name_hi": "शिक्षा एवं छात्रवृत्ति", "icon": "graduation-cap", "description": "Financial assistance for school and college education"}
 ]
 
 DEFAULT_SCHEMES = [
@@ -53,12 +53,15 @@ DEFAULT_SCHEMES = [
         "category_id": "cat_housing",
         "title": "Pradhan Mantri Awas Yojana (PMAY-Urban)",
         "title_ta": "பிரதம மந்திரி ஆவாஸ் யோஜனா (வீட்டுவசதி திட்டம்)",
+        "title_hi": "प्रधानमंत्री आवास योजना (शहरी)",
         "code": "PMAY-U",
         "ministry": "Ministry of Housing and Urban Affairs",
         "official_website": "https://pmaymis.gov.in",
         "helpline_number": "1800-11-3377",
         "legal_summary": "Under G.O. MS No. 142/2015, Credit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy up to Rs. 2.67 Lakhs on housing loans for EWS/LIG families with annual income up to Rs. 3,00,000.",
         "simple_summary": "PMAY helps low-income families get a government grant and interest reduction up to ₹2.67 Lakh to build or buy a first-time pucca home.",
+        "simple_summary_ta": "குறைந்த வருமானம் கொண்ட குடும்பங்களுக்கு முதல் முறையாக வீடு கட்ட அல்லது வாங்க ₹2.67 லட்சம் வரை அரசு மானியம் மற்றும் வட்டி குறைப்பு பெற PMAY உதவுகிறது.",
+        "simple_summary_hi": "PMAY कम आय वाले परिवारों को पहली बार पक्का मकान बनाने या खरीदने के लिए ₹2.67 लाख तक की सरकारी सब्सिडी प्रदान करता है।",
         "eli10_summary": "Imagine the government giving your family money to help build your dream house so everyone gets a safe room to sleep in!",
         "min_age": 18,
         "max_age": 70,
@@ -75,12 +78,15 @@ DEFAULT_SCHEMES = [
         "category_id": "cat_agriculture",
         "title": "PM-KISAN Samman Nidhi Scheme",
         "title_ta": "பி.எம். கிசான் விவசாயிகள் உதவித் தொகை",
+        "title_hi": "पीएम-किसान सम्मान निधि योजना",
         "code": "PM-KISAN",
         "ministry": "Ministry of Agriculture & Farmers Welfare",
         "official_website": "https://pmkisan.gov.in",
         "helpline_number": "155261",
         "legal_summary": "Under PM-KISAN guidelines 2019, all landholding farmer families receive income support of Rs. 6,000 per year in three equal quarterly installments of Rs. 2,000 transferred directly into bank accounts.",
         "simple_summary": "Eligible land-owning farmers receive ₹6,000 every year directly in their bank accounts in 3 equal quarterly installments of ₹2,000.",
+        "simple_summary_ta": "தகுதியுள்ள விவசாயிகளுக்கு ஆண்டுதோறும் ₹6,000 அவர்களின் வங்கிச் கணக்கில் 3 சம தவணைகளாக (₹2,000) நேரடியாக செலுத்தப்படுகிறது.",
+        "simple_summary_hi": "पात्र भूमिधारक किसानों को हर साल ₹6,000 सीधे उनके बैंक खातों में 3 समान किस्तों (₹2,000) में मिलते हैं।",
         "eli10_summary": "The government sends 2,000 rupees three times a year to farmers to buy seeds and fertilizer for crops!",
         "min_age": 18,
         "max_age": 100,
@@ -97,12 +103,15 @@ DEFAULT_SCHEMES = [
         "category_id": "cat_women",
         "title": "Kalaignar Magalir Urimai Thogai Scheme",
         "title_ta": "கலைஞர் மகளிர் உரிமைத் தொகைத் திட்டம்",
+        "title_hi": "कलाईग्नार महिला अधिकार योजना",
         "code": "KMT",
         "ministry": "Government of Tamil Nadu - Special Programme Implementation",
         "official_website": "https://kmt.tn.gov.in",
         "helpline_number": "1100",
         "legal_summary": "Under G.O. MS No. 46/2023, female heads of households with annual income below Rs. 2.5 Lakhs and electricity usage under 3600 units receive a monthly right grant of Rs. 1,000.",
         "simple_summary": "Women heads of families in Tamil Nadu with annual family income under ₹2.5 Lakhs get ₹1,000 monthly direct bank transfer.",
+        "simple_summary_ta": "தமிழ்நாட்டில் ஆண்டு வருமானம் ₹2.5 லட்சத்திற்கு கீழ் உள்ள குடும்பத் தலைவிகளுக்கு மாதம் ₹1,000 வங்கிச் கணக்கில் நேரடியாக வழங்கப்படுகிறது.",
+        "simple_summary_hi": "तमिलनाडु में ₹2.5 लाख से कम वार्षिक आय वाले परिवारों की महिला प्रमुखों को हर महीने ₹1,000 सीधे बैंक खाते में मिलते हैं।",
         "eli10_summary": "Every month, moms get 1,000 rupees from the government to help run the house smoothly!",
         "min_age": 21,
         "max_age": 100,
@@ -119,12 +128,15 @@ DEFAULT_SCHEMES = [
         "category_id": "cat_health",
         "title": "Ayushman Bharat PM-JAY Health Insurance",
         "title_ta": "ஆயுஷ்மான் பாரத் மருத்துவக் காப்பீடு",
+        "title_hi": "आयुष्मान भारत पीएम-जय स्वास्थ्य बीमा",
         "code": "PM-JAY",
         "ministry": "National Health Authority",
         "official_website": "https://pmjay.gov.in",
         "helpline_number": "14555",
         "legal_summary": "PM-JAY provides cashless secondary and tertiary hospitalization coverage up to Rs. 5,00,000 per family per year for bottom 40% vulnerable population based on SECC 2011.",
         "simple_summary": "Get free cashless hospital treatment coverage up to ₹5 Lakhs per family every year in empaneled public and private hospitals.",
+        "simple_summary_ta": "அரசு மற்றும் தனியார் மருத்துவமனைகளில் குடும்பத்திற்கு ஆண்டுக்கு ₹5 லட்சம் வரை இலவச ரொக்கமில்லா மருத்துவ சிகிச்சை காப்பீடு பெறலாம்.",
+        "simple_summary_hi": "संबद्ध सरकारी और निजी अस्पतालों में प्रति वर्ष प्रति परिवार ₹5 लाख तक का मुफ्त कैशलेस अस्पताल उपचार कवर प्राप्त करें।",
         "eli10_summary": "If anyone in your family gets sick and needs hospital treatment, the health card pays up to 5 lakh rupees!",
         "min_age": 0,
         "max_age": 120,
@@ -141,12 +153,15 @@ DEFAULT_SCHEMES = [
         "category_id": "cat_education",
         "title": "Pudhumai Penn Scheme (Moovalur Ramamirtham Ammiyar)",
         "title_ta": "மூவலூர் ராமாமிர்தம் அம்மையார் புதுமைப் பெண் திட்டம்",
+        "title_hi": "पुधुमई पेन योजना (उच्च शिक्षा सहायता)",
         "code": "PUDHUMAI-PENN",
         "ministry": "Government of Tamil Nadu - Higher Education",
         "official_website": "https://penkalvi.tn.gov.in",
         "helpline_number": "1800-425-0110",
         "legal_summary": "Under G.O. MS No. 11/2022, girl students who studied classes 6th to 12th in Government schools receive Rs. 1,000 per month until graduation/diploma completion.",
         "simple_summary": "Girl students from Tamil Nadu government schools receive ₹1,000 monthly financial aid until graduation or diploma completion.",
+        "simple_summary_ta": "அரசுப் பள்ளிகளில் 6 முதல் 12 ஆம் வகுப்பு வரை படித்த மாணவிகளுக்குக் கல்லூரிப் படிப்பு முடியும் வரை மாதம் ₹1,000 நிதியுதவி வழங்கப்படுகிறது.",
+        "simple_summary_hi": "तमिलनाडु के सरकारी स्कूलों की छात्राओं को स्नातक या डिप्लोमा पूरा होने तक ₹1,000 की मासिक वित्तीय सहायता मिलती है।",
         "eli10_summary": "Girls who finish government school get 1,000 rupees every month while studying in college!",
         "min_age": 17,
         "max_age": 25,
@@ -201,7 +216,7 @@ def get_backend_data():
 
 categories_data, schemes_data = get_backend_data()
 
-# Build HTML Snippets for Categories and Recommended Schemes
+# Build Initial HTML Snippets
 def render_categories_html(categories):
     icon_map = {"home": "🏠", "sprout": "🌾", "heart": "👩", "activity": "💚", "graduation-cap": "🎓"}
     html_items = []
@@ -244,7 +259,7 @@ categories_rendered_html = render_categories_html(categories_data)
 schemes_rendered_html = render_schemes_html(schemes_data)
 schemes_count_str = f"{len(schemes_data)}+" if schemes_data else "120+"
 
-# EXACT APPROVED UI HTML TEMPLATE WITH TOP-LEVEL MODALS & DUAL EVENT LISTENERS
+# APPROVED LOCKED USER HTML UI TEMPLATE
 USER_UI_HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -271,7 +286,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 .banner{margin:24px 0 12px;background:#e9f8f0;min-height:100px;border-radius:12px;display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:center;padding:22px 32px;position:relative;overflow:hidden}.banner h2{font-size:20px;margin:0 0 6px;font-weight:900}.banner p{font-size:12px;color:#527064;margin:0}.banner-art{position:absolute;left:0;right:38%;bottom:-16px;height:68px;opacity:.45;background:linear-gradient(90deg,transparent,#cfe7d7,transparent);border-radius:50%}.banner-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}.bstat{background:#fff;border:1px solid #e4e9e8;border-radius:6px;text-align:center;padding:12px 6px}.bstat strong{display:block;color:#006e4e;font-size:15px;font-weight:800}.bstat small{font-size:9px;color:#66768a}
 .footer{border-top:1px solid #e4e8eb;padding:20px 0 0;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px}.footbrand{display:flex;align-items:center;gap:8px}.footbrand img{height:40px}.footlinks{display:flex;gap:20px;font-size:11px;font-weight:600}.footlinks a{color:#43536a;text-decoration:none}.copyright{grid-column:1/-1;border-top:1px solid #edf0f2;padding-top:12px;margin-top:12px;color:#718096;font-size:10px;display:flex;justify-content:space-between}
 
-/* HIGH-PRIORITY TOP FIXED MODAL CONTAINER (ALWAYS IN VIEWPORT) */
+/* HIGH-PRIORITY TOP FIXED MODAL CONTAINER */
 .modal-backdrop{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;background:rgba(11,30,52,.65);display:none;align-items:flex-start;justify-content:center;padding-top:40px;z-index:2147483647 !important;overflow-y:auto}
 .modal-backdrop.open{display:flex !important}
 .modal{width:min(540px,calc(100vw - 32px));background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(17,36,72,.35);padding:26px;position:relative;max-height:85vh;overflow-y:auto;z-index:2147483647 !important;margin-bottom:60px}
@@ -283,7 +298,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 </head>
 <body>
 
-<!-- TOP-LEVEL MODAL CONTAINER (PLACED AT TOP OF BODY) -->
+<!-- TOP-LEVEL MODAL CONTAINER -->
 <div class="modal-backdrop" id="modal"><div class="modal"><button class="modal-close" id="modalCloseBtn" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
 
 <div class="page" id="home">
@@ -343,17 +358,15 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="filePicked(this)">
 <div class="toast" id="toast"></div>
 
-<!-- SAFE JSON DATA EMBEDDING (PREVENTS SCRIPT PARSING CRASHES) -->
+<!-- SAFE JSON DATA EMBEDDING -->
 <script type="application/json" id="schemesData">__SCHEMES_JSON__</script>
 <script type="application/json" id="categoriesData">__CATEGORIES_JSON__</script>
 
 <script>
-// Dynamic API URL Configuration
 const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://127.0.0.1:8000/api/v1'
   : (window.API_URL || '/api/v1');
 
-// Safely parse JSON dataset from HTML script tags
 try {
   window.REAL_SCHEMES = JSON.parse(document.getElementById('schemesData').textContent);
 } catch(e) { window.REAL_SCHEMES = []; }
@@ -530,7 +543,6 @@ function setLanguage(lang) {
   window.currentLang = lang;
   const t = TRANSLATIONS[lang];
 
-  // Update Navigation Links
   const navLinks = document.querySelectorAll('.nav a');
   if (navLinks.length >= 4) {
     navLinks[0].textContent = t.navHome;
@@ -539,13 +551,11 @@ function setLanguage(lang) {
     navLinks[3].textContent = t.navResources;
   }
 
-  // Update Auth Buttons if not logged in
   const btnSignIn = document.getElementById('btnSignIn');
   if (btnSignIn && !window.currentUser) btnSignIn.textContent = t.btnSignIn;
   const btnCreateAccount = document.getElementById('btnCreateAccount');
   if (btnCreateAccount && !window.currentUser) btnCreateAccount.textContent = t.btnCreateAccount;
 
-  // Update Hero Section
   const crumb = document.querySelector('.crumb');
   if (crumb) crumb.innerHTML = t.crumb;
   const heroH1 = document.querySelector('.hero h1');
@@ -557,7 +567,6 @@ function setLanguage(lang) {
   const btnHeroExploreSchemes = document.getElementById('btnHeroExploreSchemes');
   if (btnHeroExploreSchemes) btnHeroExploreSchemes.textContent = t.btnExploreSchemes;
 
-  // Update Stats
   const statSmalls = document.querySelectorAll('.stat small');
   if (statSmalls.length >= 3) {
     statSmalls[0].textContent = t.statSources;
@@ -565,7 +574,6 @@ function setLanguage(lang) {
     statSmalls[2].textContent = t.statLangs;
   }
 
-  // Update AI Assistant Section
   const aiH2 = document.querySelector('.ai-head h2');
   if (aiH2) aiH2.textContent = t.aiTitle;
   const aiP = document.querySelector('.ai-head p');
@@ -579,7 +587,6 @@ function setLanguage(lang) {
   const btnSearch = document.getElementById('btnSearch');
   if (btnSearch) btnSearch.textContent = t.btnSearch;
 
-  // Update Chips
   const chips = document.querySelectorAll('.chips .chip');
   if (chips.length >= 4) {
     chips[0].textContent = t.chip1;
@@ -588,7 +595,6 @@ function setLanguage(lang) {
     chips[3].textContent = t.chip4;
   }
 
-  // Update Section Headers
   const exploreH2 = document.querySelector('#explore .section-head h2');
   if (exploreH2) exploreH2.textContent = t.exploreTitle;
   const exploreSub = document.querySelector('#explore .section-sub');
@@ -608,7 +614,6 @@ function setLanguage(lang) {
   const recsLink = document.querySelector('#recommendations .link');
   if (recsLink) recsLink.textContent = t.recsLink;
 
-  // Update Steps
   const stepH3s = document.querySelectorAll('.step h3');
   const stepPs = document.querySelectorAll('.step p');
   if (stepH3s.length >= 4 && stepPs.length >= 4) {
@@ -618,7 +623,6 @@ function setLanguage(lang) {
     stepH3s[3].textContent = t.step4Title; stepPs[3].textContent = t.step4Desc;
   }
 
-  // Update Categories & Scheme Cards dynamically
   renderCategoriesUI();
   renderSchemesUI(window.REAL_SCHEMES || []);
 
@@ -659,6 +663,7 @@ function renderSchemesUI(schemes) {
     
     let summary = s.simple_summary || '';
     if (lang === 'ta' && s.simple_summary_ta) summary = s.simple_summary_ta;
+    if (lang === 'hi' && s.simple_summary_hi) summary = s.simple_summary_hi;
     summary = summary.length > 130 ? summary.substring(0, 130) + '...' : summary;
     
     const sid = s.id;
@@ -681,7 +686,6 @@ function renderSchemesUI(schemes) {
   container.innerHTML = html;
 }
 
-// Flexible modal launcher (Guaranteed positioning near top of viewport)
 function openModal(html){
   const modalContent = document.getElementById('modalContent');
   const modal = document.getElementById('modal');
@@ -697,7 +701,6 @@ function closeModal(){
   if(modal) modal.classList.remove('open');
 }
 
-// Step 2: RAG AI Assistant Search
 async function searchAI(){
   const inputElem = document.getElementById('aiInput');
   const q = inputElem ? inputElem.value.trim() : '';
@@ -734,7 +737,6 @@ async function searchAI(){
     }
   } catch(err){}
   
-  // Local RAG Service Matcher Engine (Supports Tamil & English)
   const qLower = q.toLowerCase();
   const matched = (window.REAL_SCHEMES||[]).filter(s => 
     (s.title && s.title.toLowerCase().includes(qLower)) || 
@@ -762,9 +764,7 @@ async function searchAI(){
   openModal(html);
 }
 
-// Step 3: Explore / Category Filtering
 function category(catId){
-  const container = document.getElementById('recsContainer');
   const titleElem = document.getElementById('recsTitle');
   const subElem = document.getElementById('recsSub');
   const lang = window.currentLang || 'en';
@@ -789,7 +789,6 @@ function category(catId){
   toast(lang === 'ta' ? 'பிரிவு வடிகட்டி பயன்படுத்தப்பட்டது' : 'Category filter applied');
 }
 
-// Step 4: Scheme Details Modal
 function scheme(sid){
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid || item.title === sid) || (window.REAL_SCHEMES||[])[0];
   if(!s) return;
@@ -817,7 +816,6 @@ function scheme(sid){
   openModal(html);
 }
 
-// Step 5: Eligibility Check
 async function eligibility(sid){
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid) || (window.REAL_SCHEMES||[])[0];
   const lang = window.currentLang || 'en';
@@ -865,7 +863,6 @@ async function submitEligibility(sid){
     }
   } catch(err){}
   
-  // Local Rule Evaluator Service
   const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid) || (window.REAL_SCHEMES||[])[0];
   let score = 100;
   let met = [];
@@ -888,7 +885,6 @@ async function submitEligibility(sid){
   openModal(html);
 }
 
-// Step 6: Authentication & MFA Flow
 function auth(p, nextAction){
   if(nextAction) window.pendingAction = nextAction;
   const lang = window.currentLang || 'en';
@@ -943,7 +939,6 @@ async function submitAuth(mode){
     }
   } catch(err){}
   
-  // Authenticated Session Fallback
   window.currentUser = { email: email, name: email.includes('admin') ? (lang === 'ta' ? 'நிர்வாக அதிகாரி' : 'Admin Officer') : (lang === 'ta' ? 'அருண் குமார் (குடிமகன்)' : 'Arun Kumar (Citizen)') };
   updateHeaderAuth();
   closeModal();
@@ -992,7 +987,6 @@ function logout(){
   location.reload();
 }
 
-// Step 7: Apply with AI
 function applyAI(sid){
   const lang = window.currentLang || 'en';
   if(!window.currentUser){
@@ -1006,7 +1000,6 @@ function applyAI(sid){
   openModal('<h2>' + (lang === 'ta' ? 'AI மூலம் விண்ணப்பிக்க:' : 'Apply with AI:') + ' ' + schemeTitle + '</h2><p>' + (lang === 'ta' ? 'AI உதவியாளர் உங்கள் விண்ணப்பப் படிவத்தை தயார் செய்கிறது:' : 'AI Assistant is initializing your pre-filled application draft:') + '</p><div style="background:#f4fbf8; padding:12px; border-radius:8px; font-size:12px; line-height:1.5; margin:12px 0; border:1px solid #dce5e8;"><p><b>' + (lang === 'ta' ? 'விண்ணப்பதாரர் பெயர்:' : 'Applicant Name:') + '</b> ' + window.currentUser.name + '</p><p><b>' + (lang === 'ta' ? 'திட்டம்:' : 'Target Scheme:') + '</b> ' + schemeTitle + '</p><p><b>' + (lang === 'ta' ? 'நிலை:' : 'Status:') + '</b> ' + (lang === 'ta' ? 'விண்ணப்ப வரைவு தயார்' : 'Application Draft Prepared') + '</p><p><b>' + (lang === 'ta' ? 'சரிபார்க்கப்பட்ட ஆவணங்கள்:' : 'Verified Documents:') + '</b> 3 / 4</p></div><button class="btn primary full" onclick="closeModal();toast(\'' + (lang === 'ta' ? 'விண்ணப்ப வரைவு வெற்றிகரமாக உருவாக்கப்பட்டது!' : 'Application draft created successfully!') + '\');">' + (lang === 'ta' ? 'உறுதிசெய்து சுருக்கத்தைப் பதிவிறக்கவும் →' : 'Confirm &amp; Download Application Summary →') + '</button>');
 }
 
-// Step 8: Document AI Extraction
 function documentAI(){ 
   const input = document.getElementById('fileInput');
   if(input) input.click(); 
@@ -1032,7 +1025,6 @@ function filePicked(input){
   }
 }
 
-// Step 9: My Welfare Journey Dashboard
 function journey(){
   const lang = window.currentLang || 'en';
   if(!window.currentUser){
@@ -1048,7 +1040,6 @@ function journey(){
   }
 }
 
-// Step 10: Official Resources Modal
 function resources(){
   const lang = window.currentLang || 'en';
   if (lang === 'ta') {
@@ -1058,7 +1049,6 @@ function resources(){
   }
 }
 
-// Step 11: Multilingual Voice Assistant
 function speak(){
   const langElem = document.getElementById('langSelect');
   const lang = langElem ? langElem.value || 'en' : 'en';
@@ -1071,7 +1061,6 @@ function speak(){
   }, 1000);
 }
 
-// ATTACH DOM EVENT LISTENERS TO GUARANTEE 100% BUTTON & ENTER-KEY INTERACTION
 window.addEventListener('load', function() {
   const langSelect = document.getElementById('langSelect');
   if(langSelect) {
