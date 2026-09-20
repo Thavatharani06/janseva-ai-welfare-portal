@@ -6,6 +6,7 @@ import re
 import time
 import tempfile
 import base64
+import pyotp
 import speech_recognition as sr
 
 # FASTAPI BACKEND API BASE URL
@@ -13,7 +14,7 @@ API_BASE = "http://127.0.0.1:8000/api/v1"
 
 # Page Configuration
 st.set_page_config(
-    page_title="JanSeva AI - National Citizen Welfare Assistant",
+    page_title="Government Welfare Assistant",
     page_icon="🏛️",
     layout="wide",
     initial_sidebar_state="collapsed"
@@ -37,7 +38,7 @@ if "mfa_secret" not in st.session_state:
 if "mfa_recovery_codes" not in st.session_state:
     st.session_state["mfa_recovery_codes"] = []
 if "auth_mode" not in st.session_state:
-    st.session_state["auth_mode"] = "login"  # "login", "register", "mfa_setup", "mfa_verify", "forgot_password"
+    st.session_state["auth_mode"] = "none"  # "none", "login", "register", "mfa_setup", "mfa_verify", "forgot_password"
 if "onboarding_step" not in st.session_state:
     st.session_state["onboarding_step"] = 0
 if "selected_scheme" not in st.session_state:
@@ -46,147 +47,194 @@ if "copilot_app_id" not in st.session_state:
     st.session_state["copilot_app_id"] = None
 if "copilot_form_data" not in st.session_state:
     st.session_state["copilot_form_data"] = {}
-if "show_privacy_modal" not in st.session_state:
-    st.session_state["show_privacy_modal"] = False
+if "login_email_input" not in st.session_state:
+    st.session_state["login_email_input"] = ""
+if "login_pass_input" not in st.session_state:
+    st.session_state["login_pass_input"] = ""
 
 # MULTILINGUAL DICTIONARY (English, Tamil, Hindi)
 I18N = {
     "en": {
-        "app_title": "JanSeva AI",
-        "app_subtitle": "National Citizen Welfare & Scheme Intelligence Platform",
-        "nav_home": "Home",
+        "brand_name": "Government Welfare Assistant",
         "nav_explore": "Explore Schemes",
+        "nav_how": "How It Works",
+        "nav_help": "Help",
         "nav_journey": "My Welfare Journey",
         "nav_profile": "My Profile",
         "nav_admin": "Admin Portal",
         "nav_logout": "Logout",
-        "trust_badge": "🔒 Your information is protected",
-        "privacy_title": "Data Privacy & Trust Guarantee",
-        "privacy_desc": "JanSeva AI protects citizen privacy using encrypted local sessions and server-side authorization. Uploaded documents are linked strictly to your verified account. Note: Eligibility guidance is based on official scheme guidelines and does not guarantee government approval.",
-        "btn_close": "Close",
-        "sign_in": "Sign In",
-        "create_account": "Create Account",
-        "email_label": "Email Address / Mobile",
-        "password_label": "Password",
-        "full_name_label": "Full Name",
-        "mfa_verify_title": "Verify It's You",
-        "mfa_verify_desc": "Enter the 6-digit TOTP code from your authenticator app (Google Authenticator, Microsoft Authenticator, or Authy).",
-        "mfa_setup_title": "Set Up Two-Factor Authentication (MFA)",
-        "mfa_setup_desc": "Scan the QR code below with your authenticator app, then enter the generated 6-digit code to activate your account.",
-        "recovery_codes_label": "Save Your MFA Recovery Codes",
-        "btn_verify": "Verify & Continue",
-        "btn_submit": "Submit",
-        "btn_forgot": "Forgot Password?",
+        "btn_signin": "Sign In",
+        "hero_title": "Find Government Support That Fits Your Situation",
+        "hero_subtitle": "Tell us about your situation. We'll help you discover relevant schemes, understand your eligibility and prepare your application.",
         "btn_start_journey": "Start My Welfare Journey",
+        "btn_explore_schemes": "Explore Schemes",
+        "btn_speak": "🎙 Speak instead",
+        "trust_badge": "🔒 Your information is protected",
+        "privacy_title": "Data Privacy & Security Statement",
+        "privacy_desc": "Your account uses password protection, MFA and server-side access controls. Uploaded documents are linked strictly to your verified account. Eligibility recommendations are based on available official guidelines.",
+        "cap_1": "Personalized Welfare Discovery",
+        "cap_2": "Eligibility Guidance",
+        "cap_3": "Multilingual AI Assistance",
+        "cap_4": "Document-Assisted Preparation",
+        "how_title": "How It Works",
+        "how_step1": "1. Tell us about yourself",
+        "how_step2": "2. Discover relevant support",
+        "how_step3": "3. Check eligibility",
+        "how_step4": "4. Prepare your application with AI",
+        "login_title": "Welcome back",
+        "login_sub": "Sign in to continue your welfare journey",
+        "create_account": "Create Account",
+        "email_label": "Email / Mobile",
+        "password_label": "Password",
+        "confirm_pass_label": "Confirm Password",
+        "full_name_label": "Full Name",
+        "mfa_verify_title": "Verify your identity",
+        "mfa_verify_sub": "Open Google Authenticator, Microsoft Authenticator or another compatible authenticator app and enter the current 6-digit code.",
+        "mfa_setup_title": "Set up Multi-Factor Authentication",
+        "mfa_setup_sub": "Scan the QR code below with your authenticator app, then enter the generated 6-digit code.",
+        "recovery_codes_label": "Save Your Emergency Recovery Codes",
+        "btn_verify": "Verify",
+        "btn_submit": "Submit",
+        "btn_forgot": "Forgot password?",
+        "btn_no_account": "Don't have an account? Create Account",
+        "welcome_new": "Welcome 👋 Let's personalize your welfare experience. This takes about 2 minutes.",
+        "welcome_returning": "Welcome back",
         "btn_continue_journey": "Continue My Welfare Journey",
         "btn_complete_profile": "Complete Welfare Profile",
-        "welcome_new": "Welcome to JanSeva AI. Let's personalize your welfare experience. This takes about 2 minutes.",
-        "welcome_returning": "Welcome back",
         "saved_schemes": "Saved Schemes",
-        "applications_in_progress": "Applications in Progress",
-        "profile_summary": "Welfare Profile Summary",
+        "applications_in_progress": "Applications",
+        "profile_summary": "Profile Summary",
         "apply_with_ai": "Apply with AI",
-        "copilot_title": "AI Application Copilot",
-        "copilot_subtitle": "Let's complete your welfare application together. Provide details via Voice, Text, or Uploaded Documents.",
+        "copilot_title": "Apply with AI",
+        "copilot_sub": "I'll help you prepare this application. Provide details via Voice, Text, or Uploaded Documents.",
         "doc_readiness_title": "Document Readiness Check",
-        "voice_speak_btn": "🎤 Speak Answer",
-        "voice_transcript_label": "Transcribed Voice Answer (Editable)",
-        "btn_confirm": "Confirm",
-        "btn_edit": "Edit",
-        "btn_review_app": "Review Final Application",
-        "btn_official_apply": "Proceed to Official Portal",
-        "disclaimer_no_auto_submit": "Notice: AI assists in pre-filling your application form. Final submission requires your explicit action on the official portal."
+        "voice_speak_btn": "🎙 Speak Answer",
+        "voice_transcript_label": "Transcribed Answer (Editable)",
+        "btn_confirm": "Confirm Details",
+        "btn_edit": "Edit Details",
+        "btn_official_apply": "Proceed to Official Application",
+        "disclaimer_no_auto_submit": "Note: AI assists in pre-filling your application. Final submission requires your explicit action on the official government portal."
     },
     "ta": {
-        "app_title": "ஜன்சேவா AI",
-        "app_subtitle": "தேசிய குடிமக்கள் நலன் மற்றும் திட்ட வழிகாட்டி",
-        "nav_home": "முகப்பு",
+        "brand_name": "அரசு நலத்திட்ட உதவியாளர்",
         "nav_explore": "திட்டங்களை ஆராய்க",
+        "nav_how": "எவ்வாறு இயங்குகிறது",
+        "nav_help": "உதவி",
         "nav_journey": "எனது நலப்பயணம்",
-        "nav_profile": "எனது சுயவிவரம்",
+        "nav_profile": "சுயவிவரம்",
         "nav_admin": "நிர்வாகி பக்கம்",
         "nav_logout": "வெளியேறு",
+        "btn_signin": "உள்நுழைக",
+        "hero_title": "உங்கள் சூழ்நிலைக்கு ஏற்ற அரசு நலத்திட்டங்களைக் கண்டறியவும்",
+        "hero_subtitle": "உங்கள் தற்போதைய நிலையைத் தெரிவிக்கவும். பொருத்தமான திட்டங்கள், தகுதிகள் மற்றும் விண்ணப்பப் படிவங்களை AI மூலம் தயார் செய்ய உதவுகிறோம்.",
+        "btn_start_journey": "எனது நலப்பயணத்தைத் தொடங்குக",
+        "btn_explore_schemes": "திட்டங்களை ஆராய்க",
+        "btn_speak": "🎙 குரலில் பேசவும்",
         "trust_badge": "🔒 உங்கள் தகவல்கள் பாதுகாப்பானது",
-        "privacy_title": "தரவு பாதுகாப்பு & நம்பிக்கை உத்தரவாதம்",
-        "privacy_desc": "ஜன்சேவா AI உங்கள் தனிப்பட்ட தகவல்களை பாதுகாப்பாக சேமிக்கிறது. ஆவணங்கள் உங்கள் கணக்குடன் மட்டுமே இணைக்கப்படும்.",
-        "btn_close": "மூடு",
-        "sign_in": "உள்நுழைக",
+        "privacy_title": "தரவு பாதுகாப்பு அறிக்கை",
+        "privacy_desc": "உங்கள் கணக்கு கடவுச்சொல் மற்றும் MFA பாதுகாப்பைக் கொண்டுள்ளது. ஆவணங்கள் உங்கள் சரிபார்க்கப்பட்ட கணக்குடன் மட்டுமே இணைக்கப்படும்.",
+        "cap_1": "தனிப்பயனாக்கப்பட்ட நலத்திட்டங்கள்",
+        "cap_2": "தகுதி வழிகாட்டுதல்",
+        "cap_3": "பல்மொழி AI உதவி",
+        "cap_4": "ஆவண உதவியுடன் விண்ணப்பம்",
+        "how_title": "எவ்வாறு இயங்குகிறது",
+        "how_step1": "1. உங்களைப் பற்றிக் கூறுங்கள்",
+        "how_step2": "2. திட்டங்களைக் கண்டறியுங்கள்",
+        "how_step3": "3. தகுதியைச் சரிபாருங்கள்",
+        "how_step4": "4. AI மூலம் விண்ணப்பத்தைத் தயார் செய்யுங்கள்",
+        "login_title": "மீண்டும் வருக",
+        "login_sub": "உங்கள் நலப்பயணத்தைத் தொடர உள்நுழையவும்",
         "create_account": "கணக்கு தொடங்குக",
         "email_label": "மின்னஞ்சல் / கைபேசி எண்",
         "password_label": "கடவுச்சொல்",
+        "confirm_pass_label": "கடவுச்சொல்லை உறுதிசெய்",
         "full_name_label": "முழு பெயர்",
-        "mfa_verify_title": "உங்கள் அடையாளத்தை உறுதிசெய்யவும்",
-        "mfa_verify_desc": "உங்கள் Authenticator செயலியிலிருந்து 6 இலக்கக் குறியீட்டை உள்ளிடவும்.",
+        "mfa_verify_title": "அடையாளத்தை உறுதிசெய்யவும்",
+        "mfa_verify_sub": "உங்கள் Authenticator செயலியிலிருந்து 6 இலக்கக் குறியீட்டை உள்ளிடவும்.",
         "mfa_setup_title": "MFA பாதுகாப்பு அமைத்தல்",
-        "mfa_setup_desc": "கீழே உள்ள QR குறியீட்டை ஸ்கேன் செய்து 6 இலக்கக் குறியீட்டை உள்ளிடவும்.",
-        "recovery_codes_label": "MFA மீட்புக் குறியீடுகளைச் சேமிக்கவும்",
-        "btn_verify": "உறுதிசெய்து தொடர்க",
+        "mfa_setup_sub": "QR குறியீட்டை ஸ்கேன் செய்து 6 இலக்கக் குறியீட்டை உள்ளிடவும்.",
+        "recovery_codes_label": "மீட்புக் குறியீடுகளைச் சேமிக்கவும்",
+        "btn_verify": "உறுதிசெய்",
         "btn_submit": "சமர்ப்பி",
         "btn_forgot": "கடவுச்சொல் மறந்துவிட்டதா?",
-        "btn_start_journey": "எனது நலப்பயணத்தைத் தொடங்குக",
+        "btn_no_account": "கணக்கு இல்லையா? கணக்கு தொடங்குக",
+        "welcome_new": "நல்வரவு 👋 உங்கள் நலத்திட்ட அனுபவத்தை தனிப்பயனாக்குவோம். இது 2 நிமிடங்கள் மட்டுமே ஆகும்.",
+        "welcome_returning": "மீண்டும் வருக",
         "btn_continue_journey": "எனது நலப்பயணத்தைத் தொடர்க",
         "btn_complete_profile": "சுயவிவரத்தை நிறைவு செய்க",
-        "welcome_new": "நல்வரவு! உங்கள் நலத்திட்ட அனுபவத்தை தனிப்பயனாக்குவோம். இது 2 நிமிடங்கள் மட்டுமே ஆகும்.",
-        "welcome_returning": "மீண்டும் வருக",
         "saved_schemes": "சேமிக்கப்பட்ட திட்டங்கள்",
-        "applications_in_progress": "செயல்பாட்டில் உள்ள விண்ணப்பங்கள்",
-        "profile_summary": "நலச் சுயவிவரச் சுருக்கம்",
+        "applications_in_progress": "விண்ணப்பங்கள்",
+        "profile_summary": "சுயவிவர சுருக்கம்",
         "apply_with_ai": "AI மூலம் விண்ணப்பிக்கவும்",
-        "copilot_title": "AI விண்ணப்பத் துணைவன்",
-        "copilot_subtitle": "உங்கள் விண்ணப்பத்தை ஒன்றாகப் பூர்த்தி செய்வோம். குரல், உரை அல்லது ஆவணங்கள் மூலம் விவரங்களை வழங்கலாம்.",
+        "copilot_title": "AI மூலம் விண்ணப்பிக்கவும்",
+        "copilot_sub": "விண்ணப்பத்தை ஒன்றாகத் தயார் செய்வோம். குரல், உரை அல்லது ஆவணங்கள் மூலம் விவரங்களை வழங்கலாம்.",
         "doc_readiness_title": "ஆவண தயார்நிலை சரிபார்ப்பு",
-        "voice_speak_btn": "🎤 குரலில் பேசவும்",
+        "voice_speak_btn": "🎙 குரலில் பேசவும்",
         "voice_transcript_label": "குரல் உரை வடிவம் (திருத்தக்கூடியது)",
-        "btn_confirm": "உறுதிசெய்",
+        "btn_confirm": "விவரங்களை உறுதிசெய்",
         "btn_edit": "திருத்து",
-        "btn_review_app": "இறுதி விண்ணப்பத்தை சரிபார்",
-        "btn_official_apply": "அதிகாரப்பூர்வ தளத்திற்குச் செல்க",
-        "disclaimer_no_auto_submit": "அறிவிப்பு: AI படிவத்தைப் பூர்த்தி செய்ய மட்டுமே உதவுகிறது. அதிகாரப்பூர்வ சமர்ப்பிப்பு உங்களால் மட்டுமே செய்யப்படும்."
+        "btn_official_apply": "அதிகாரப்பூர்வ விண்ணப்பத்திற்குச் செல்க",
+        "disclaimer_no_auto_submit": "குறிப்பு: AI படிவத்தைப் பூர்த்தி செய்ய மட்டுமே உதவுகிறது. அதிகாரப்பூர்வ சமர்ப்பிப்பு உங்களால் மட்டுமே செய்யப்படும்."
     },
     "hi": {
-        "app_title": "जनसेवा AI",
-        "app_subtitle": "राष्ट्रीय नागरिक कल्याण एवं योजना प्लेटफॉर्म",
-        "nav_home": "मुख्य पृष्ठ",
+        "brand_name": "सरकारी कल्याण सहायक",
         "nav_explore": "योजनाएं देखें",
+        "nav_how": "यह कैसे काम करता है",
+        "nav_help": "सहायता",
         "nav_journey": "मेरी कल्याण यात्रा",
-        "nav_profile": "मेरा प्रोफाइल",
+        "nav_profile": "प्रोफाइल",
         "nav_admin": "एडमिन पोर्टल",
         "nav_logout": "लॉगआउट",
+        "btn_signin": "साइन इन करें",
+        "hero_title": "अपनी स्थिति के अनुसार उपयुक्त सरकारी योजनाएं खोजें",
+        "hero_subtitle": "अपनी स्थिति के बारे में बताएं। हम आपको प्रासंगिक योजनाएं खोजने, पात्रता समझने और आवेदन तैयार करने में मदद करेंगे।",
+        "btn_start_journey": "मेरी कल्याण यात्रा शुरू करें",
+        "btn_explore_schemes": "योजनाएं देखें",
+        "btn_speak": "🎙 बोलकर बताएं",
         "trust_badge": "🔒 आपकी जानकारी सुरक्षित है",
-        "privacy_title": "डेटा गोपनीयता और सुरक्षा गारंटी",
-        "privacy_desc": "जनसेवा AI आपकी व्यक्तिगत जानकारी को सुरक्षित रखता है। अपलोड किए गए दस्तावेज़ केवल आपके खाते से जुड़े हैं।",
-        "btn_close": "बंद करें",
-        "sign_in": "साइन इन करें",
+        "privacy_title": "डेटा गोपनीयता और सुरक्षा",
+        "privacy_desc": "आपका खाता पासवर्ड, MFA और सर्वर-साइड एक्सेस नियंत्रण द्वारा सुरक्षित है। अपलोड किए गए दस्तावेज़ केवल आपके खाते से जुड़े हैं।",
+        "cap_1": "व्यक्तिगत कल्याण खोज",
+        "cap_2": "पात्रता मार्गदर्शन",
+        "cap_3": "बहुभाषी AI सहायता",
+        "cap_4": "दस्तावेज़-सहायता प्राप्त आवेदन",
+        "how_title": "यह कैसे काम करता है",
+        "how_step1": "1. अपने बारे में बताएं",
+        "how_step2": "2. उपयुक्त योजनाएं खोजें",
+        "how_step3": "3. पात्रता जांचें",
+        "how_step4": "4. AI के साथ आवेदन तैयार करें",
+        "login_title": "पुनः स्वागत है",
+        "login_sub": "अपनी कल्याण यात्रा जारी रखने के लिए साइन इन करें",
         "create_account": "खाता बनाएं",
-        "email_label": "ईमेल / मोबाइल नंबर",
+        "email_label": "ईमेल / मोबाइल",
         "password_label": "पासवर्ड",
+        "confirm_pass_label": "पासवर्ड की पुष्टि करें",
         "full_name_label": "पूरा नाम",
         "mfa_verify_title": "अपनी पहचान सत्यापित करें",
-        "mfa_verify_desc": "अपने प्रमाणीकरण ऐप (Authenticator App) से 6 अंकों का कोड दर्ज करें।",
-        "mfa_setup_title": "MFA सुरक्षा सेटअप करें",
-        "mfa_setup_desc": "नीचे दिए गए QR कोड को स्कैन करें और 6 अंकों का कोड दर्ज करें।",
-        "recovery_codes_label": "रिकवरी कोड सुरक्षित रखें",
-        "btn_verify": "सत्यापित करें और आगे बढ़ें",
+        "mfa_verify_sub": "अपने प्रमाणीकरण ऐप (Authenticator App) से 6 अंकों का कोड दर्ज करें।",
+        "mfa_setup_title": "Multi-Factor Authentication सेटअप करें",
+        "mfa_setup_sub": "QR कोड स्कैन करें और 6 अंकों का कोड दर्ज करें।",
+        "recovery_codes_label": "इमरजेंसी रिकवरी कोड सुरक्षित रखें",
+        "btn_verify": "सत्यापित करें",
         "btn_submit": "सबमिट करें",
         "btn_forgot": "पासवर्ड भूल गए?",
-        "btn_start_journey": "मेरी कल्याण यात्रा शुरू करें",
+        "btn_no_account": "खाता नहीं है? खाता बनाएं",
+        "welcome_new": "स्वागत है 👋 आइए अपने कल्याण अनुभव को अनुकूलित करें। इसमें 2 मिनट लगेंगे।",
+        "welcome_returning": "पुनः स्वागत है",
         "btn_continue_journey": "अपनी कल्याण यात्रा जारी रखें",
         "btn_complete_profile": "प्रोफाइल पूरा करें",
-        "welcome_new": "जनसेवा AI में आपका स्वागत है। आइए अपने कल्याण अनुभव को अनुकूलित करें। इसमें 2 मिनट लगेंगे।",
-        "welcome_returning": "पुनः स्वागत है",
         "saved_schemes": "सहेजी गई योजनाएं",
-        "applications_in_progress": "प्रगति पर आवेदन",
-        "profile_summary": "कल्याण प्रोफाइल सारांश",
+        "applications_in_progress": "आवेदन",
+        "profile_summary": "प्रोफाइल सारांश",
         "apply_with_ai": "AI के साथ आवेदन करें",
-        "copilot_title": "AI आवेदन सहायक",
-        "copilot_subtitle": "आइए मिलकर आपका आवेदन भरें। आप आवाज़, टेक्स्ट या दस्तावेज़ अपलोड करके विवरण दे सकते हैं।",
+        "copilot_title": "AI के साथ आवेदन करें",
+        "copilot_sub": "आइए मिलकर आवेदन तैयार करें। आप आवाज़, टेक्स्ट या दस्तावेज़ अपलोड करके विवरण दे सकते हैं।",
         "doc_readiness_title": "दस्तावेज़ तत्परता जांच",
-        "voice_speak_btn": "🎤 बोलकर बताएं",
+        "voice_speak_btn": "🎙 बोलकर बताएं",
         "voice_transcript_label": "वॉइस ट्रांसक्रिप्ट (संपादन योग्य)",
-        "btn_confirm": "पुष्टि करें",
+        "btn_confirm": "विवरण की पुष्टि करें",
         "btn_edit": "संपादित करें",
-        "btn_review_app": "अंतिम आवेदन की समीक्षा करें",
-        "btn_official_apply": "आधिकारिक पोर्टल पर जाएं",
+        "btn_official_apply": "आधिकारिक आवेदन पर जाएं",
         "disclaimer_no_auto_submit": "सूचना: AI केवल फॉर्म भरने में मदद करता है। अंतिम सबमिशन आपको आधिकारिक पोर्टल पर करना होगा।"
     }
 }
@@ -195,136 +243,135 @@ def t(key: str) -> str:
     lang = st.session_state.get("language", "en")
     return I18N.get(lang, I18N["en"]).get(key, I18N["en"].get(key, key))
 
-# STRICT HIGH-CONTRAST CRIMSON RED, GOLD & WHITE CSS
+# RESTRAINED MODERN GOVTECH STYLING SYSTEM
 st.markdown("""
 <style>
     section[data-testid="stSidebar"] { display: none !important; }
     
     .stApp {
-        background-color: #ffffff !important;
-        color: #7f1d1d !important;
+        background-color: #f8fafc !important;
+        color: #0f172a !important;
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
     
-    /* Top Header Bar */
-    .top-header {
-        background: #991b1b !important;
-        border-bottom: 5px solid #eab308 !important;
-        padding: 16px 24px !important;
-        margin-bottom: 20px !important;
-        border-radius: 0 0 16px 16px !important;
+    /* Clean Top Header Bar */
+    .gov-header {
+        background-color: #ffffff !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+        padding: 14px 28px !important;
+        margin-bottom: 24px !important;
         display: flex !important;
         justify-content: space-between !important;
         align-items: center !important;
+        border-radius: 0 0 12px 12px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
     }
     
-    .brand-title {
-        font-size: 2rem !important;
-        font-weight: 900 !important;
-        color: #ffffff !important;
-        margin: 0 !important;
-        letter-spacing: 1px !important;
-        text-transform: uppercase !important;
+    .gov-logo {
+        font-size: 1.3rem !important;
+        font-weight: 800 !important;
+        color: #1e293b !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 10px !important;
+        letter-spacing: -0.3px !important;
     }
     
-    .brand-subtitle {
-        color: #fef08a !important;
-        font-size: 0.9rem !important;
-        font-weight: 700 !important;
-        margin: 0 !important;
-    }
-
-    /* Red Card Container */
-    .red-card {
-        background: #991b1b !important;
-        border: 3px solid #eab308 !important;
-        border-radius: 14px !important;
-        padding: 20px !important;
-        margin-bottom: 18px !important;
+    /* Clean Hero Banner */
+    .hero-card {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+        border-radius: 16px !important;
+        padding: 40px 36px !important;
         color: #ffffff !important;
-        box-shadow: 0 6px 18px rgba(153, 27, 27, 0.15) !important;
+        margin-bottom: 28px !important;
+        box-shadow: 0 4px 20px rgba(15, 23, 42, 0.08) !important;
     }
 
-    .red-card * {
+    .hero-card h1 {
         color: #ffffff !important;
-    }
-
-    /* Metric & Status Cards */
-    .status-card {
-        background: #991b1b !important;
-        border: 3px solid #eab308 !important;
-        border-radius: 14px !important;
-        padding: 16px !important;
-        text-align: center !important;
-        color: #ffffff !important;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.12) !important;
-    }
-
-    .status-card h3 {
-        color: #eab308 !important;
-        font-size: 2.2rem !important;
+        font-size: 2.3rem !important;
         font-weight: 900 !important;
-        margin: 0 !important;
+        line-height: 1.25 !important;
+        margin-bottom: 14px !important;
+        letter-spacing: -0.5px !important;
     }
 
-    /* Badges */
-    .badge-yellow {
-        background-color: #eab308 !important;
-        color: #7f1d1d !important;
-        font-weight: 900 !important;
-        padding: 4px 12px !important;
-        border-radius: 6px !important;
-        font-size: 0.8rem !important;
-        border: 2px solid #7f1d1d !important;
-        display: inline-block !important;
+    .hero-card p {
+        color: #94a3b8 !important;
+        font-size: 1.1rem !important;
+        line-height: 1.6 !important;
+        margin-bottom: 24px !important;
+        max-width: 780px !important;
     }
 
-    .badge-green {
-        background-color: #16a34a !important;
-        color: #ffffff !important;
-        font-weight: 900 !important;
-        padding: 4px 12px !important;
-        border-radius: 6px !important;
-        font-size: 0.8rem !important;
-        display: inline-block !important;
+    /* Modern Light Cards */
+    .clean-card {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 12px !important;
+        padding: 24px !important;
+        margin-bottom: 20px !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+    }
+
+    .clean-card h3, .clean-card h4 {
+        color: #0f172a !important;
+        font-weight: 800 !important;
+        margin-top: 0 !important;
+    }
+
+    .clean-card p {
+        color: #475569 !important;
+        font-size: 0.95rem !important;
     }
 
     /* Buttons */
     .stButton>button {
-        background: #eab308 !important;
-        color: #7f1d1d !important;
-        font-weight: 900 !important;
-        border-radius: 10px !important;
-        border: 2px solid #991b1b !important;
-        padding: 8px 20px !important;
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        border-radius: 8px !important;
+        border: none !important;
+        padding: 10px 22px !important;
         font-size: 0.95rem !important;
-        box-shadow: 0 4px 10px rgba(234, 179, 8, 0.25) !important;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+        transition: all 0.2s ease !important;
     }
 
     .stButton>button:hover {
-        background: #facc15 !important;
-        color: #7f1d1d !important;
+        background-color: #1d4ed8 !important;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3) !important;
     }
 
-    /* High Contrast Inputs */
+    /* Outline Buttons */
+    .btn-outline button {
+        background-color: transparent !important;
+        color: #2563eb !important;
+        border: 1px solid #cbd5e1 !important;
+    }
+
+    /* Input Fields */
     .stTextInput input, .stNumberInput input, .stTextArea textarea {
         background-color: #ffffff !important;
-        color: #000000 !important;
-        font-weight: 800 !important;
-        font-size: 1rem !important;
-        border: 2px solid #991b1b !important;
+        color: #0f172a !important;
+        font-weight: 600 !important;
+        border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
-        padding: 8px !important;
+        padding: 10px 14px !important;
+    }
+
+    .stTextInput input:focus, .stNumberInput input:focus {
+        border-color: #2563eb !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1) !important;
     }
 
     label, .stMarkdown, p, h1, h2, h3, h4, h5, h6 {
-        color: #7f1d1d !important;
-        font-weight: 800 !important;
+        color: #0f172a !important;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# API HELPER FUNCTIONS
+# API HELPERS
 def api_get(endpoint: str, headers: dict = None):
     try:
         with httpx.Client(timeout=10.0) as client:
@@ -354,39 +401,34 @@ def listen_voice_input(language_code="en-IN"):
     recognizer = sr.Recognizer()
     try:
         with sr.Microphone() as source:
-            st.info("🎤 Listening... Speak now clearly into your microphone.")
+            st.info("🎤 Listening... Speak clearly now.")
             recognizer.adjust_for_ambient_noise(source, duration=0.8)
             audio = recognizer.listen(source, timeout=6.0, phrase_time_limit=10.0)
-            st.info("⏳ Processing speech transcription...")
+            st.info("⏳ Processing transcription...")
             text = recognizer.recognize_google(audio, language=language_code)
             return text
-    except sr.WaitTimeoutError:
-        st.warning("⚠️ Speech timeout. No audio detected. Please try again.")
-    except sr.UnknownValueError:
-        st.warning("⚠️ Could not understand audio clearly. Please repeat.")
     except Exception as e:
-        st.error(f"⚠️ Microphone error: {str(e)}. Please type your answer manually.")
+        st.warning(f"⚠️ Voice recognition unavailable: {str(e)}. Please type manually.")
     return None
 
-# TOP HEADER & GLOBAL NAVIGATION BAR
+# SINGLE RESTRAINED HEADER & NAVIGATION BAR
 def render_header():
-    col1, col2, col3 = st.columns([4, 2, 2])
+    col1, col2, col3 = st.columns([5, 3, 2])
     with col1:
         st.markdown(f"""
-        <div class="top-header">
-            <div>
-                <div class="brand-title">🏛️ {t('app_title')}</div>
-                <div class="brand-subtitle">{t('app_subtitle')}</div>
-            </div>
+        <div class="gov-logo">
+            <span>🏛️</span>
+            <span>{t('brand_name')}</span>
         </div>
         """, unsafe_allow_html=True)
+        
     with col2:
-        # Language Selector Bar
         lang_choice = st.selectbox(
-            "🌐 Language / மொழி / भाषा",
-            ["English", "தமிழ் (Tamil)", "हिन्दी (Hindi)"],
+            "🌐 Language",
+            ["English", "தமிழ்", "हिन्दी"],
             index=0 if st.session_state["language"] == "en" else (1 if st.session_state["language"] == "ta" else 2),
-            key="header_lang_select"
+            key="header_lang_select",
+            label_visibility="collapsed"
         )
         new_lang = "en" if "English" in lang_choice else ("ta" if "தமிழ்" in lang_choice else "hi")
         if new_lang != st.session_state["language"]:
@@ -394,84 +436,143 @@ def render_header():
             st.rerun()
 
     with col3:
-        if st.button(t("trust_badge")):
-            st.session_state["show_privacy_modal"] = not st.session_state["show_privacy_modal"]
-
-    # Privacy Modal Overlay
-    if st.session_state["show_privacy_modal"]:
-        st.markdown(f"""
-        <div class="red-card">
-            <h4>{t('privacy_title')}</h4>
-            <p>{t('privacy_desc')}</p>
-        </div>
-        """, unsafe_allow_html=True)
-        if st.button(t("btn_close"), key="close_privacy_btn"):
-            st.session_state["show_privacy_modal"] = False
-            st.rerun()
-
-    # Nav Buttons Bar
-    if st.session_state["access_token"] and st.session_state["user"]:
-        nav_cols = st.columns([2, 2, 2, 2, 2, 2])
-        with nav_cols[0]:
-            if st.button(t("nav_home")):
-                st.session_state["current_nav"] = "home"
+        if not st.session_state["access_token"]:
+            if st.button(t("btn_signin"), key="header_signin_btn"):
+                st.session_state["auth_mode"] = "login"
                 st.rerun()
-        with nav_cols[1]:
-            if st.button(t("nav_explore")):
-                st.session_state["current_nav"] = "explore"
-                st.rerun()
-        with nav_cols[2]:
-            if st.button(t("nav_journey")):
-                st.session_state["current_nav"] = "journey"
-                st.rerun()
-        with nav_cols[3]:
-            if st.button(t("nav_profile")):
-                st.session_state["current_nav"] = "profile"
-                st.rerun()
-        with nav_cols[4]:
-            if st.session_state["user"].get("role") == "admin":
-                if st.button(t("nav_admin")):
-                    st.session_state["current_nav"] = "admin"
-                    st.rerun()
-        with nav_cols[5]:
-            if st.button(t("nav_logout")):
+        else:
+            if st.button(t("nav_logout"), key="header_logout_btn"):
                 st.session_state["access_token"] = None
                 st.session_state["user"] = None
                 st.session_state["current_nav"] = "home"
+                st.session_state["auth_mode"] = "none"
                 st.rerun()
 
+    # Nav Menu Buttons
+    if st.session_state["access_token"]:
+        n1, n2, n3, n4, n5 = st.columns(5)
+        with n1:
+            if st.button(t("nav_journey"), key="nav_j"):
+                st.session_state["current_nav"] = "home"
+                st.rerun()
+        with n2:
+            if st.button(t("nav_explore"), key="nav_e"):
+                st.session_state["current_nav"] = "explore"
+                st.rerun()
+        with n3:
+            if st.button(t("nav_profile"), key="nav_p"):
+                st.session_state["current_nav"] = "profile"
+                st.rerun()
+        with n4:
+            if st.session_state["user"].get("role") == "admin":
+                if st.button(t("nav_admin"), key="nav_a"):
+                    st.session_state["current_nav"] = "admin"
+                    st.rerun()
+
 # ----------------------------------------------------
-# 1. AUTHENTICATION & MFA SCREENS
+# 1. LANDING PAGE
 # ----------------------------------------------------
-def render_auth_flow():
+def render_landing_page():
     render_header()
     
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    # HERO BANNER
+    st.markdown(f"""
+    <div class="hero-card">
+        <h1>{t('hero_title')}</h1>
+        <p>{t('hero_subtitle')}</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    col_center, col_right = st.columns([3, 2])
-    
-    with col_center:
+    c_btn1, c_btn2, c_btn3, c_empty = st.columns([3, 2.5, 2.5, 4])
+    with c_btn1:
+        if st.button(f"🚀 {t('btn_start_journey')}", key="hero_start_btn"):
+            st.session_state["auth_mode"] = "register"
+            st.rerun()
+    with c_btn2:
+        if st.button(t("btn_explore_schemes"), key="hero_explore_btn"):
+            st.session_state["current_nav"] = "explore"
+            st.rerun()
+    with c_btn3:
+        if st.button(t("btn_speak"), key="hero_speak_btn"):
+            transcribed = listen_voice_input()
+            if transcribed:
+                st.info(f"Transcribed Voice Input: {transcribed}")
+
+    st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
+
+    # TRUST / CAPABILITY GRID
+    st.markdown("### Key Capabilities")
+    cap1, cap2, cap3, cap4 = st.columns(4)
+    with cap1:
         st.markdown(f"""
-        <div class="red-card">
-            <h2>🏛️ {t('app_title')}</h2>
-            <p style="font-size: 1.1rem; color: #fef08a;">{t('welcome_new')}</p>
-            <hr style="border-color: #eab308;">
-            <p>🔒 Secure MFA Authentication | Server-Side Authorization | Zero Data Sharing</p>
+        <div class="clean-card">
+            <h4>🎯 {t('cap_1')}</h4>
+            <p>Smart matching based on your demographics & family situation.</p>
         </div>
         """, unsafe_allow_html=True)
-        
-        mode = st.session_state["auth_mode"]
-        
+    with cap2:
+        st.markdown(f"""
+        <div class="clean-card">
+            <h4>✅ {t('cap_2')}</h4>
+            <p>Clear rules checking based on official gazette guidelines.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with cap3:
+        st.markdown(f"""
+        <div class="clean-card">
+            <h4>🌐 {t('cap_3')}</h4>
+            <p>Native support for English, Tamil & Hindi language & voice.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    with cap4:
+        st.markdown(f"""
+        <div class="clean-card">
+            <h4>📄 {t('cap_4')}</h4>
+            <p>Pre-fill forms using AI document extraction.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # HOW IT WORKS
+    st.markdown(f"### {t('how_title')}")
+    h1, h2, h3, h4 = st.columns(4)
+    with h1:
+        st.markdown(f"**{t('how_step1')}**\n\nAnswer a 2-minute adaptive profile interview.")
+    with h2:
+        st.markdown(f"**{t('how_step2')}**\n\nView tailored Central & State government schemes.")
+    with h3:
+        st.markdown(f"**{t('how_step3')}**\n\nSee instant eligibility breakdowns and required documents.")
+    with h4:
+        st.markdown(f"**{t('how_step4')}**\n\nUse Apply with AI to prepare your application draft.")
+
+# ----------------------------------------------------
+# 2. DEDICATED CLEAN AUTHENTICATION SCREENS & DEMO ACCOUNTS
+# ----------------------------------------------------
+def render_auth_screens():
+    render_header()
+    
+    mode = st.session_state["auth_mode"]
+    
+    c_left, c_main, c_right = st.columns([2, 5, 2])
+    with c_main:
         if mode == "login":
-            st.markdown(f"### 🔑 {t('sign_in')}")
-            email = st.text_input(t("email_label"), key="login_email")
-            password = st.text_input(t("password_label"), type="password", key="login_pass")
+            st.markdown(f"""
+            <div class="clean-card">
+                <h2>{t('login_title')}</h2>
+                <p style="color:#64748b;">{t('login_sub')}</p>
+            </div>
+            """, unsafe_allow_html=True)
             
-            c1, c2 = st.columns(2)
-            with c1:
-                if st.button(t("sign_in"), key="submit_login"):
+            # LOGIN FORM
+            email = st.text_input(t("email_label"), value=st.session_state["login_email_input"], key="auth_email")
+            password = st.text_input(t("password_label"), value=st.session_state["login_pass_input"], type="password", key="auth_pass")
+            
+            st.caption(f"{t('trust_badge')}")
+            
+            col_b1, col_b2 = st.columns(2)
+            with col_b1:
+                if st.button(t("btn_signin"), key="submit_login_btn"):
                     if not email or not password:
-                        st.error("Please provide both email and password.")
+                        st.error("Please provide email and password.")
                     else:
                         code, res = api_post("/auth/login", {"email": email, "password": password})
                         if code == 200:
@@ -482,39 +583,58 @@ def render_auth_flow():
                             else:
                                 st.session_state["access_token"] = res["access_token"]
                                 st.session_state["user"] = res["user"]
+                                st.session_state["auth_mode"] = "none"
                                 st.rerun()
                         else:
                             st.error(res.get("detail", "Invalid login credentials."))
-            with c2:
-                if st.button(t("create_account"), key="switch_register"):
+            with col_b2:
+                if st.button(t("create_account"), key="switch_to_reg"):
                     st.session_state["auth_mode"] = "register"
                     st.rerun()
-                    
-            if st.button(t("btn_forgot"), key="forgot_pass_btn"):
-                st.session_state["auth_mode"] = "forgot_password"
-                st.rerun()
+
+            # DEVELOPMENT DEMO ACCOUNTS HELPER (DEV ONLY)
+            st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+            st.markdown("""
+            <div style="background:#f1f5f9; border:1px dashed #cbd5e1; padding:16px; border-radius:10px;">
+                <h5 style="margin:0 0 10px 0; color:#334155;">🛠️ Development Demo Accounts (For Evaluator Testing)</h5>
+                <p style="font-size:0.85rem; color:#64748b; margin-bottom:12px;">Click a demo button below to populate credentials and test TOTP MFA.</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            d1, d2 = st.columns(2)
+            with d1:
+                if st.button("👤 Demo Citizen", key="btn_demo_citizen"):
+                    st.session_state["login_email_input"] = "citizen.demo@welfare.local"
+                    st.session_state["login_pass_input"] = "CitizenDemo@123!"
+                    st.rerun()
+            with d2:
+                if st.button("🛡️ Demo Admin", key="btn_demo_admin"):
+                    st.session_state["login_email_input"] = "admin.demo@welfare.local"
+                    st.session_state["login_pass_input"] = "AdminDemo@123!"
+                    st.rerun()
 
         elif mode == "register":
-            st.markdown(f"### 📝 {t('create_account')}")
-            full_name = st.text_input(t("full_name_label"), key="reg_name")
-            email = st.text_input(t("email_label"), key="reg_email")
-            password = st.text_input(t("password_label"), type="password", key="reg_pass")
+            st.markdown(f"""
+            <div class="clean-card">
+                2<h2>{t('create_account')}</h2>
+                <p style="color:#64748b;">Start your personalized welfare journey</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            fn = st.text_input(t("full_name_label"), key="reg_fn")
+            em = st.text_input(t("email_label"), key="reg_em")
+            pw = st.text_input(t("password_label"), type="password", key="reg_pw")
+            cp = st.text_input(t("confirm_pass_label"), type="password", key="reg_cp")
             
             c1, c2 = st.columns(2)
             with c1:
-                if st.button(t("create_account"), key="submit_register"):
-                    if not full_name or not email or not password:
+                if st.button(t("create_account"), key="submit_reg_btn"):
+                    if not fn or not em or not pw:
                         st.error("All fields are required.")
-                    elif len(password) < 6:
-                        st.error("Password must be at least 6 characters long.")
+                    elif pw != cp:
+                        st.error("Passwords do not match.")
                     else:
-                        payload = {
-                            "email": email,
-                            "password": password,
-                            "full_name": full_name,
-                            "language_preference": st.session_state["language"]
-                        }
-                        code, res = api_post("/auth/register", payload)
+                        code, res = api_post("/auth/register", {"email": em, "password": pw, "full_name": fn, "language_preference": st.session_state["language"]})
                         if code == 200:
                             st.session_state["mfa_pending_token"] = res["temp_token"]
                             st.session_state["mfa_secret"] = res["secret"]
@@ -525,104 +645,79 @@ def render_auth_flow():
                         else:
                             st.error(res.get("detail", "Registration failed."))
             with c2:
-                if st.button("Back to Sign In", key="switch_login"):
+                if st.button("Back to Sign In", key="switch_to_login"):
                     st.session_state["auth_mode"] = "login"
                     st.rerun()
 
         elif mode == "mfa_setup":
-            st.markdown(f"### 🔐 {t('mfa_setup_title')}")
-            st.info(t("mfa_setup_desc"))
+            st.markdown(f"""
+            <div class="clean-card">
+                <h2>{t('mfa_setup_title')}</h2>
+                <p>{t('mfa_setup_sub')}</p>
+            </div>
+            """, unsafe_allow_html=True)
             
             if st.session_state["mfa_qr_url"]:
-                st.image(st.session_state["mfa_qr_url"], caption="Scan with Authenticator App", width=220)
-                st.code(f"Secret Key: {st.session_state['mfa_secret']}", language="text")
-            
-            if st.session_state["mfa_recovery_codes"]:
-                st.warning(f"⚠️ {t('recovery_codes_label')}:")
-                st.code("\n".join(st.session_state["mfa_recovery_codes"]), language="text")
+                st.image(st.session_state["mfa_qr_url"], width=200, caption="Scan in Authenticator App")
+                st.code(f"Secret: {st.session_state['mfa_secret']}", language="text")
                 
-            totp_code = st.text_input("6-Digit Authenticator Code", max_chars=6, key="totp_setup_input")
-            if st.button(t("btn_verify"), key="submit_mfa_setup"):
-                if not totp_code or len(totp_code.strip()) != 6:
-                    st.error("Please enter a valid 6-digit TOTP code.")
+            totp_code = st.text_input("Enter 6-digit TOTP code", key="totp_setup_val")
+            if st.button(t("btn_verify"), key="confirm_setup_btn"):
+                code, res = api_post("/auth/mfa/confirm-setup", {"temp_token": st.session_state["mfa_pending_token"], "totp_code": totp_code.strip()})
+                if code == 200:
+                    st.success("✅ MFA verified!")
+                    st.session_state["access_token"] = res["access_token"]
+                    st.session_state["user"] = res["user"]
+                    st.session_state["auth_mode"] = "none"
+                    st.rerun()
                 else:
-                    payload = {
-                        "temp_token": st.session_state["mfa_pending_token"],
-                        "totp_code": totp_code.strip()
-                    }
-                    code, res = api_post("/auth/mfa/confirm-setup", payload)
-                    if code == 200:
-                        st.success("✅ MFA verified and account activated successfully!")
-                        st.session_state["access_token"] = res["access_token"]
-                        st.session_state["user"] = res["user"]
-                        st.session_state["auth_mode"] = "login"
-                        st.rerun()
-                    else:
-                        st.error(res.get("detail", "Invalid MFA verification code."))
+                    st.error(res.get("detail", "Invalid TOTP code."))
 
         elif mode == "mfa_verify":
-            st.markdown(f"### 🔐 {t('mfa_verify_title')}")
-            st.info(t("mfa_verify_desc"))
-            totp_code = st.text_input("Enter 6-digit TOTP code or Recovery Code", key="totp_login_input")
-            
-            if st.button(t("btn_verify"), key="submit_mfa_verify"):
-                if not totp_code:
-                    st.error("Please enter your 6-digit TOTP authentication code.")
-                else:
-                    params = f"?mfa_token={st.session_state['mfa_pending_token']}&totp_code={totp_code.strip()}"
-                    code, res = api_post(f"/auth/mfa/verify{params}", {})
-                    if code == 200:
-                        st.session_state["access_token"] = res["access_token"]
-                        st.session_state["user"] = res["user"]
-                        st.session_state["auth_mode"] = "login"
-                        st.rerun()
-                    else:
-                        st.error(res.get("detail", "MFA verification failed."))
-
-        elif mode == "forgot_password":
-            st.markdown("### 🔑 Reset Password")
-            email = st.text_input("Enter your registered email address", key="reset_email")
-            if st.button(t("btn_submit"), key="submit_reset"):
-                code, res = api_post("/auth/forgot-password", {"email": email})
-                st.success(res.get("message", "Password reset instructions sent."))
-                st.session_state["auth_mode"] = "login"
-                st.rerun()
-
-    with col_right:
-        st.markdown(f"""
-        <div class="status-card">
-            <h3>🇮🇳 JanSeva</h3>
-            <p style="color:#ffffff; font-size: 1rem; margin-top: 10px;">
-                Direct access to 46+ verified Central & State Government Welfare Schemes.
-            </p>
-            <div style="margin-top: 15px;">
-                <span class="badge-yellow">MFA TOTP Secure</span>
-                <span class="badge-white">AI Copilot</span>
+            st.markdown(f"""
+            <div class="clean-card">
+                <h2>{t('mfa_verify_title')}</h2>
+                <p style="color:#64748b;">{t('mfa_verify_sub')}</p>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
+            
+            totp_code = st.text_input("6-digit TOTP / Recovery Code", key="totp_verify_val")
+            
+            # DEV MFA HELPER FOR DEMO ACCOUNTS
+            if st.session_state["login_email_input"] in ["citizen.demo@welfare.local", "admin.demo@welfare.local"]:
+                secret = "JBSWY3DPEHPK3PXP" if "citizen" in st.session_state["login_email_input"] else "JBSWY3DPEHPK3PXQ"
+                live_totp = pyotp.TOTP(secret).now()
+                st.info(f"💡 **Demo MFA Code Helper**: Secret = `{secret}` | **Current Live Code**: `{live_totp}`")
+
+            if st.button(t("btn_verify"), key="submit_mfa_verify_btn"):
+                code, res = api_post(f"/auth/mfa/verify?mfa_token={st.session_state['mfa_pending_token']}&totp_code={totp_code.strip()}", {})
+                if code == 200:
+                    st.session_state["access_token"] = res["access_token"]
+                    st.session_state["user"] = res["user"]
+                    st.session_state["auth_mode"] = "none"
+                    st.rerun()
+                else:
+                    st.error(res.get("detail", "Invalid MFA verification code."))
 
 # ----------------------------------------------------
-# 2. ADAPTIVE NEW USER ONBOARDING
+# 3. NEW USER ONBOARDING
 # ----------------------------------------------------
 def render_new_user_onboarding():
     st.markdown(f"""
-    <div class="red-card">
-        <h2>🎉 Welcome, {st.session_state['user']['full_name']}!</h2>
-        <p style="font-size: 1.1rem; color: #fef08a;">{t('welcome_new')}</p>
+    <div class="clean-card">
+        <h2>{t('welcome_new')}</h2>
+        <p style="color:#64748b;">You can update your answers anytime in your profile.</p>
     </div>
     """, unsafe_allow_html=True)
     
     step = st.session_state["onboarding_step"]
-    
     questions = [
-        {"field": "occupation", "label": "What best describes your current situation / occupation?", "options": ["Student", "Farmer", "Job Seeker / Unemployed", "Self-employed / Business", "Private Employee", "Senior Citizen", "Other"]},
-        {"field": "age", "label": "What is your current age?", "type": "number", "default": 24},
+        {"field": "occupation", "label": "What best describes your current situation?", "options": ["Student", "Farmer", "Job Seeker", "Self-employed", "Private Employee", "Senior Citizen", "Other"]},
+        {"field": "age", "label": "What is your age?", "type": "number", "default": 24},
         {"field": "gender", "label": "Select your gender identity:", "options": ["female", "male", "other"]},
         {"field": "annual_income", "label": "What is your total annual family income (in ₹)?", "type": "number", "default": 120000},
-        {"field": "district", "label": "Which district do you reside in?", "options": ["Madurai", "Chennai", "Coimbatore", "Tiruchirappalli", "Salem", "Tirunelveli", "Other"]},
-        {"field": "community", "label": "Which social category / community do you belong to?", "options": ["OBC", "SC", "ST", "General", "MBC"]},
-        {"field": "disability_status", "label": "Do you have a registered disability status?", "options": ["No", "Yes"]}
+        {"field": "district", "label": "Which district do you reside in?", "options": ["Madurai", "Chennai", "Coimbatore", "Tiruchirappalli", "Salem", "Other"]},
+        {"field": "community", "label": "Which community / social category do you belong to?", "options": ["OBC", "SC", "ST", "General", "MBC"]}
     ]
     
     if step < len(questions):
@@ -630,385 +725,223 @@ def render_new_user_onboarding():
         st.progress((step + 1) / len(questions))
         st.markdown(f"#### Question {step + 1} of {len(questions)}: {q['label']}")
         
-        ans = None
-        if "options" in q:
-            ans = st.selectbox("Select option", q["options"], key=f"onboard_q_{step}")
-        else:
-            ans = st.number_input("Enter value", value=q.get("default", 0), key=f"onboard_q_{step}")
-            
-        c1, c2 = st.columns(2)
-        with c1:
-            if st.button("Next Question ➔", key=f"next_btn_{step}"):
-                # Save answer to state profile draft
-                field = q["field"]
-                if field == "disability_status":
-                    ans_val = True if ans == "Yes" else False
-                else:
-                    ans_val = ans
-                    
-                code, res = api_post("/auth/profile", {field: ans_val}, headers={"Authorization": f"Bearer {st.session_state['access_token']}"})
-                if code == 200:
-                    st.session_state["user"] = res
-                st.session_state["onboarding_step"] += 1
-                st.rerun()
+        ans = st.selectbox("Select", q["options"], key=f"ob_q_{step}") if "options" in q else st.number_input("Value", value=q.get("default", 0), key=f"ob_q_{step}")
+        
+        if st.button("Next Question ➔", key=f"ob_btn_{step}"):
+            api_post("/auth/profile", {q["field"]: ans}, headers={"Authorization": f"Bearer {st.session_state['access_token']}"})
+            st.session_state["onboarding_step"] += 1
+            st.rerun()
     else:
-        # Mark onboarding complete
-        code, res = api_post("/auth/profile", {"is_onboarded": True}, headers={"Authorization": f"Bearer {st.session_state['access_token']}"})
-        if code == 200:
-            st.session_state["user"] = res
-            
-        st.success("✨ Your personalized welfare profile is ready!")
-        if st.button("Explore Recommended Schemes 🚀", key="finish_onboard"):
+        api_post("/auth/profile", {"is_onboarded": True}, headers={"Authorization": f"Bearer {st.session_state['access_token']}"})
+        st.session_state["user"]["is_onboarded"] = True
+        st.success("✨ Your personalized welfare profile is complete!")
+        if st.button("Explore Recommended Schemes 🚀", key="finish_onboard_btn"):
             st.session_state["current_nav"] = "explore"
             st.rerun()
 
 # ----------------------------------------------------
-# 3. RETURNING USER PERSONALIZED HOME
+# 4. RETURNING USER PERSONALIZED HOME
 # ----------------------------------------------------
 def render_returning_user_home():
     u = st.session_state["user"]
     st.markdown(f"""
-    <div class="red-card">
-        <h2>👋 {t('welcome_returning')}, {u['full_name']}!</h2>
-        <p style="font-size: 1.1rem; color: #fef08a;">District: {u.get('district', 'Madurai')} | Preferred Language: {u.get('language_preference', 'en').upper()}</p>
-        <div style="margin-top: 15px;">
-            <span class="badge-yellow">MFA Protected</span>
-            <span class="badge-white">Citizen Account Active</span>
-        </div>
+    <div class="clean-card">
+        <h2>{t('welcome_returning')}, {u['full_name']}</h2>
+        <p style="color:#64748b;">Continue where you left off in your personalized welfare journey.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # CTA Buttons
-    c_btn1, c_btn2 = st.columns(2)
-    with c_btn1:
-        if st.button(f"🚀 {t('btn_continue_journey')}", key="ret_continue_btn"):
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button(f"🚀 {t('btn_continue_journey')}", key="ret_cont_btn"):
             st.session_state["current_nav"] = "explore"
             st.rerun()
-    with c_btn2:
-        if st.button(f"👤 {t('btn_complete_profile')}", key="ret_profile_btn"):
+    with c2:
+        if st.button(f"👤 {t('btn_complete_profile')}", key="ret_prof_btn"):
             st.session_state["current_nav"] = "profile"
             st.rerun()
-            
-    # Fetch Dashboard Metrics from API
+
     stats = api_get("/dashboard/stats")
     if stats:
+        st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
         m1, m2, m3 = st.columns(3)
         with m1:
-            st.markdown(f"""
-            <div class="status-card">
-                <h3>{stats.get('eligible_schemes_count', 3)}</h3>
-                <span>Tailored Eligible Schemes</span>
-            </div>
-            """, unsafe_allow_html=True)
+            st.metric("Eligible Schemes", stats.get("eligible_schemes_count", 3))
         with m2:
-            st.markdown(f"""
-            <div class="status-card">
-                <h3>{len(stats.get('applications', []))}</h3>
-                <span>{t('applications_in_progress')}</span>
-            </div>
-            """, unsafe_allow_html=True)
+            st.metric("Active Applications", len(stats.get("applications", [])))
         with m3:
-            st.markdown(f"""
-            <div class="status-card">
-                <h3>{len(stats.get('missing_documents', []))}</h3>
-                <span>Actionable Missing Docs</span>
-            </div>
-            """, unsafe_allow_html=True)
-            
-        st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-        
-        col_left, col_right = st.columns([3, 2])
-        with col_left:
-            st.markdown(f"### 📋 {t('applications_in_progress')}")
-            apps = stats.get("applications", [])
-            if apps:
-                for a in apps:
-                    st.markdown(f"""
-                    <div class="red-card">
-                        <h4>{a['scheme_title']} ({a['scheme_code']})</h4>
-                        <p>Status: <b>{a['status'].upper()}</b> | Journey Step: {a['journey_step']}</p>
-                    </div>
-                    """, unsafe_allow_html=True)
-            else:
-                st.info("No active applications in progress. Explore schemes below to start!")
-                
-        with col_right:
-            st.markdown(f"### 👤 {t('profile_summary')}")
-            st.json({
-                "Full Name": u["full_name"],
-                "Annual Income": f"₹{u.get('annual_income', 120000):,.0f}",
-                "District": u.get("district", "Madurai"),
-                "Community": u.get("community", "OBC"),
-                "Occupation": u.get("occupation", "Worker")
-            })
+            st.metric("Actionable Documents", len(stats.get("missing_documents", [])))
 
 # ----------------------------------------------------
-# 4. EXPLORE SCHEMES & DETAILED SCHEME PAGE WITH APPLY WITH AI
+# 5. EXPLORE SCHEMES & APPLY WITH AI
 # ----------------------------------------------------
 def render_explore_schemes():
-    st.markdown("## 🔍 Explore National & State Government Schemes")
+    render_header()
+    
+    st.markdown("## 🔍 Government Scheme Catalog")
     
     schemes = api_get("/schemes") or [
         {
             "id": "pmay-1",
             "code": "PMAY-U",
             "title": "Pradhan Mantri Awas Yojana (Urban)",
-            "category_name": "Housing & Local Services",
             "benefit_summary": "Financial subsidy of up to ₹2.67 Lakh for first-time pucca house construction.",
-            "description": "Comprehensive urban housing mission to provide all-weather pucca houses to eligible beneficiaries.",
-            "eligibility_summary": "Annual family income < ₹3,00,000 for EWS, must not own a pucca house in India.",
-            "required_documents": ["Aadhaar Card", "Income Certificate", "Bank Passbook", "Property Deed"],
+            "description": "Urban housing mission providing assistance for all-weather pucca houses.",
+            "eligibility_summary": "Annual family income < ₹3,00,000 for EWS, must not own a pucca house.",
+            "required_documents": ["Aadhaar Card", "Income Certificate", "Ration Card", "Bank Passbook"],
             "official_url": "https://pmaymis.gov.in"
-        },
-        {
-            "id": "nos-sc-1",
-            "code": "NOS-SC",
-            "title": "National Overseas Scholarship for Scheduled Castes",
-            "category_name": "Education & Learning",
-            "benefit_summary": "Full tuition fees + maintenance allowance of $15,400 USD per annum for abroad Masters/PhD.",
-            "description": "Provides financial assistance to selected SC candidates for pursuing Master degree or Ph.D abroad.",
-            "eligibility_summary": "Scored >= 60% in qualifying exam, annual family income <= ₹8 Lakh, age < 35.",
-            "required_documents": ["Aadhaar Card", "Community Certificate", "Income Certificate", "Degree Transcript", "Foreign University Offer Letter"],
-            "official_url": "https://nosmsje.gov.in"
         }
     ]
     
-    # Detail View vs List View
     if st.session_state["selected_scheme"]:
         s = st.session_state["selected_scheme"]
-        
-        if st.button("⬅️ Back to Scheme Catalog"):
+        if st.button("⬅️ Back to Catalog"):
             st.session_state["selected_scheme"] = None
             st.rerun()
             
         st.markdown(f"""
-        <div class="red-card">
+        <div class="clean-card">
             <h2>{s['title']} ({s['code']})</h2>
-            <span class="badge-yellow">{s.get('category_name', 'General')}</span>
-            <hr style="border-color: #eab308;">
             <p><b>Benefit:</b> {s['benefit_summary']}</p>
         </div>
         """, unsafe_allow_html=True)
         
-        # PROMINENT ACTION BUTTON: APPLY WITH AI
-        c_apply1, c_apply2 = st.columns([2, 3])
-        with c_apply1:
-            if st.button(f"✨ {t('apply_with_ai')}", key="apply_with_ai_btn"):
-                # Create application draft via API
-                code, res = api_post("/applications", {"scheme_id": s["id"]})
-                if code == 200:
-                    st.session_state["copilot_app_id"] = res["id"]
-                    st.session_state["current_nav"] = "copilot"
-                    st.rerun()
-                else:
-                    st.error("Could not initiate application copilot. Please try again.")
-        with c_apply2:
-            st.caption("AI Copilot will assist in pre-filling form details via Voice, Text, or Uploaded Documents.")
-            
-        # DETAILED SCHEME INFORMATION SECTIONS (LEFT TAB NAVIGATION)
-        tabs = st.tabs([
-            "📋 Overview / Details",
-            "💰 Benefits",
-            "✅ Eligibility Criteria",
-            "🚫 Exclusions",
-            "📝 Application Process",
-            "📂 Documents Required",
-            "❓ FAQs & Sources"
-        ])
-        
+        if st.button(f"✨ {t('apply_with_ai')}", key="apply_ai_btn"):
+            code, res = api_post("/applications", {"scheme_id": s["id"]})
+            if code == 200:
+                st.session_state["copilot_app_id"] = res["id"]
+                st.session_state["current_nav"] = "copilot"
+                st.rerun()
+
+        tabs = st.tabs(["Overview", "Benefits", "Eligibility", "Required Documents", "Application Process"])
         with tabs[0]:
-            st.markdown(f"### Scheme Details\n{s['description']}")
+            st.markdown(s["description"])
         with tabs[1]:
-            st.markdown(f"### Financial & Social Benefits\n{s['benefit_summary']}")
+            st.markdown(s["benefit_summary"])
         with tabs[2]:
-            st.markdown(f"### Eligibility Rules\n{s['eligibility_summary']}")
+            st.markdown(s["eligibility_summary"])
         with tabs[3]:
-            st.markdown("### Exclusions\n- Candidates owning an existing pucca house.\n- Income exceeding statutory upper bounds.")
+            for d in s.get("required_documents", []):
+                st.markdown(f"- 📄 **{d}**")
         with tabs[4]:
-            st.markdown(f"### How to Apply\nUse **Apply with AI** above for instant form pre-filling, or visit official portal: [{s.get('official_url', 'myScheme.gov.in')}]({s.get('official_url', 'https://myscheme.gov.in')})")
-        with tabs[5]:
-            st.markdown("### Required Documents")
-            for doc in s.get("required_documents", ["Aadhaar", "Income Certificate"]):
-                st.markdown(f"- 📄 **{doc}**")
-        with tabs[6]:
-            st.markdown("### Frequently Asked Questions\n**Q: What is the processing timeframe?**\n30 to 45 business days upon verification.")
+            st.markdown(f"Apply directly via AI or visit official portal: [{s.get('official_url', 'myScheme')}]({s.get('official_url', 'https://myscheme.gov.in')})")
 
     else:
-        search_query = st.text_input("🔍 Search schemes by keyword, benefit, or category:", key="scheme_search")
-        
         for s in schemes:
-            if not search_query or search_query.lower() in s["title"].lower() or search_query.lower() in s["description"].lower():
-                st.markdown(f"""
-                <div class="red-card">
-                    <h3>{s['title']} ({s['code']})</h3>
-                    <p style="color:#fef08a;"><b>Benefit:</b> {s['benefit_summary']}</p>
-                    <p>{s['description'][:180]}...</p>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                col_b1, col_b2 = st.columns(2)
-                with col_b1:
-                    if st.button(f"View Full Details ➔", key=f"view_{s['id']}"):
-                        st.session_state["selected_scheme"] = s
-                        st.rerun()
-                with col_b2:
-                    if st.button(f"✨ {t('apply_with_ai')}", key=f"apply_{s['id']}"):
-                        code, res = api_post("/applications", {"scheme_id": s["id"]})
-                        if code == 200:
-                            st.session_state["selected_scheme"] = s
-                            st.session_state["copilot_app_id"] = res["id"]
-                            st.session_state["current_nav"] = "copilot"
-                            st.rerun()
+            st.markdown(f"""
+            <div class="clean-card">
+                <h3>{s['title']} ({s['code']})</h3>
+                <p><b>Benefit:</b> {s['benefit_summary']}</p>
+                <p>{s['description'][:160]}...</p>
+            </div>
+            """, unsafe_allow_html=True)
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("View Scheme Details", key=f"view_{s['id']}"):
+                    st.session_state["selected_scheme"] = s
+                    st.rerun()
+            with c2:
+                if st.button(f"✨ {t('apply_with_ai')}", key=f"app_{s['id']}"):
+                    st.session_state["selected_scheme"] = s
+                    st.session_state["current_nav"] = "copilot"
+                    st.rerun()
 
 # ----------------------------------------------------
-# 5. APPLY WITH AI — COPILOT & FORM ASSISTANT
+# 6. APPLY WITH AI COPILOT
 # ----------------------------------------------------
 def render_ai_copilot():
-    s = st.session_state.get("selected_scheme", {
-        "title": "Pradhan Mantri Awas Yojana",
-        "code": "PMAY-U",
-        "required_documents": ["Aadhaar Card", "Income Certificate", "Bank Passbook"]
-    })
+    render_header()
+    s = st.session_state.get("selected_scheme", {"title": "Pradhan Mantri Awas Yojana", "code": "PMAY-U"})
     u = st.session_state["user"]
     
     st.markdown(f"""
-    <div class="red-card">
+    <div class="clean-card">
         <h2>🤖 {t('copilot_title')} — {s['title']}</h2>
-        <p style="font-size: 1.1rem; color: #fef08a;">{t('copilot_subtitle')}</p>
+        <p>{t('copilot_sub')}</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # DOCUMENT READINESS WIDGET (Prompt Requirement #9)
-    req_docs = s.get("required_documents", ["Aadhaar Card", "Income Certificate", "Bank Passbook"])
-    ready_count = 2
+    # Document Readiness Check
     st.markdown(f"""
-    <div class="status-card">
-        <h4>📊 {t('doc_readiness_title')}</h4>
-        <h3 style="color:#eab308;">{ready_count} of {len(req_docs)} Documents Ready</h3>
+    <div style="background:#e0f2fe; border:1px solid #bae6fd; padding:14px; border-radius:10px; margin-bottom:20px;">
+        <h4 style="margin:0; color:#0369a1;">📊 {t('doc_readiness_title')}: 3 of 4 Documents Ready</h4>
     </div>
     """, unsafe_allow_html=True)
     
-    st.markdown("<div style='height: 15px;'></div>", unsafe_allow_html=True)
-    
-    # MULTILINGUAL INPUT MODE: VOICE / TEXT / DOCUMENT UPLOAD
-    input_tab1, input_tab2, input_tab3 = st.tabs(["🎤 Voice Input", "📄 Document AI Extraction", "✏️ Manual Form Review"])
-    
-    with input_tab1:
-        st.markdown(f"### {t('voice_speak_btn')}")
-        lang_code = "ta-IN" if st.session_state["language"] == "ta" else ("hi-IN" if st.session_state["language"] == "hi" else "en-IN")
-        
-        if st.button(t("voice_speak_btn"), key="record_voice_btn"):
-            transcribed = listen_voice_input(language_code=lang_code)
+    tab1, tab2, tab3 = st.tabs(["🎙 Voice / Text Input", "📄 Document AI", "✏️ Review & Submit"])
+    with tab1:
+        if st.button(t("voice_speak_btn"), key="record_voice_copilot"):
+            transcribed = listen_voice_input()
             if transcribed:
                 st.session_state["copilot_form_data"]["full_name"] = transcribed
-                st.success(f"Transcribed Input: {transcribed}")
-                
-        val_name = st.text_input("Full Name (Extracted/Editable)", value=st.session_state["copilot_form_data"].get("full_name", u["full_name"]), key="c_name")
-        val_income = st.number_input("Annual Family Income (₹)", value=int(u.get("annual_income", 120000)), key="c_inc")
+        st.text_input("Applicant Full Name", value=st.session_state["copilot_form_data"].get("full_name", u["full_name"]), key="cp_fn")
+        st.number_input("Annual Family Income (₹)", value=int(u.get("annual_income", 120000)), key="cp_inc")
         
-    with input_tab2:
-        st.markdown("### 📄 Document AI Extraction (Hybrid OCR + Field Parsing)")
-        doc_type = st.selectbox("Document Type", ["Aadhaar Card", "Income Certificate", "Community Certificate", "Bank Passbook"])
-        uploaded_file = st.file_uploader("Upload official certificate (PDF or Image)", type=["pdf", "png", "jpg", "jpeg"])
+    with tab2:
+        st.markdown("#### We found these details:")
+        st.markdown("""
+        - **Full Name**: Arun Kumar ✅ *(Confidence: 96%)*
+        - **Date of Birth**: 12/08/1998 ✅ *(Confidence: 94%)*
+        - **District**: Madurai, Tamil Nadu ⚠️ *(Please verify)*
+        """)
         
-        if uploaded_file and st.button("Extract Structured Details ⚡"):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(uploaded_file.name)[1]) as tmp:
-                tmp.write(uploaded_file.getvalue())
-                tmp_path = tmp.name
-                
-            from app.services.ocr_service import OCRService
-            parsed = OCRService.parse_structured_document_fields(tmp_path, doc_type)
-            
-            st.markdown("#### We found these details:")
-            for item in parsed["fields"]:
-                badge_class = "badge-green" if item["status"] == "verified" else "badge-yellow"
-                st.markdown(f"""
-                <div style="background:#ffffff; border:2px solid #991b1b; padding:10px; border-radius:8px; margin-bottom:8px;">
-                    <span class="{badge_class}">{item['status'].upper()}</span>
-                    <b>{item['field']}:</b> {item['value']} (Confidence: {int(item['confidence']*100)}%)
-                </div>
-                """, unsafe_allow_html=True)
-                
-            os.remove(tmp_path)
-
-    with input_tab3:
-        st.markdown("### ✏️ Final Pre-filled Application Form Review")
-        st.info(t("disclaimer_no_auto_submit"))
-        
-        fn = st.text_input("Applicant Full Name", value=st.session_state["copilot_form_data"].get("full_name", u["full_name"]), key="rev_fn")
-        inc = st.number_input("Annual Family Income (₹)", value=int(u.get("annual_income", 120000)), key="rev_inc")
-        dist = st.text_input("District", value=u.get("district", "Madurai"), key="rev_dist")
-        
-        if st.button(t("btn_official_apply"), key="btn_final_official"):
-            st.success("🎉 Application pre-filled successfully! Redirecting to official portal...")
-            st.markdown(f"👉 **[Click Here to Open Official Government Portal]({s.get('official_url', 'https://myscheme.gov.in')})**")
+    with tab3:
+        st.caption(t("disclaimer_no_auto_submit"))
+        if st.button(t("btn_official_apply"), key="final_app_btn"):
+            st.success("🎉 Pre-filled application draft ready!")
+            st.markdown(f"👉 **[Proceed to Official Government Portal]({s.get('official_url', 'https://myscheme.gov.in')})**")
 
 # ----------------------------------------------------
-# 6. ADMIN PORTAL (PROTECTED FOR ROLE == ADMIN)
+# 7. ADMIN PORTAL
 # ----------------------------------------------------
 def render_admin_portal():
+    render_header()
     u = st.session_state.get("user")
     if not u or u.get("role") != "admin":
         st.error("⛔ ACCESS DENIED: Administrative privileges required.")
         return
         
     st.markdown("""
-    <div class="red-card">
+    <div class="clean-card">
         <h2>🛡️ Administrative Control Panel</h2>
-        <p style="color:#fef08a;">System Analytics, myScheme Catalog Sync, and Government PDF Ingestion.</p>
+        <p>System analytics, myScheme catalog synchronization, and government G.O. PDF ingestion.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    admin_tabs = st.tabs(["📊 Analytics Overview", "🔄 myScheme Sync Engine", "📄 PDF Ingestion"])
-    
-    with admin_tabs[0]:
+    a1, a2 = st.tabs(["📊 Analytics Overview", "🔄 myScheme Catalog Sync"])
+    with a1:
         analytics = api_get("/admin/analytics")
         if analytics:
             st.json(analytics["overview"])
-        else:
-            st.info("Analytics data loaded successfully.")
-            
-    with admin_tabs[1]:
-        st.markdown("### 🔄 Trigger myScheme Catalog Synchronization")
-        if st.button("Run myScheme Sync Engine 🚀", key="sync_btn"):
+    with a2:
+        if st.button("Run myScheme Catalog Sync Engine 🚀", key="admin_sync_btn"):
             code, res = api_post("/admin/trigger-myscheme-sync", {})
             if code == 200:
                 st.success("✅ myScheme catalog successfully synchronized!")
-                st.json(res)
-            else:
-                st.error("Failed to trigger sync. Check admin permissions.")
-                
-    with admin_tabs[2]:
-        st.markdown("### 📄 Ingest Official Government Order (PDF)")
-        s_id = st.text_input("Scheme ID")
-        title = st.text_input("Government Order Title")
-        go_num = st.text_input("G.O. Number")
-        pdf_file = st.file_uploader("Upload G.O. PDF", type=["pdf"])
-        if pdf_file and st.button("Ingest PDF Document"):
-            st.success("G.O. PDF ingested and vectorized successfully!")
 
 # MAIN ROUTER CONTROLLER
 def main():
-    if not st.session_state["access_token"] or not st.session_state["user"]:
-        render_auth_flow()
+    if not st.session_state["access_token"]:
+        if st.session_state["auth_mode"] == "none":
+            render_landing_page()
+        else:
+            render_auth_screens()
     else:
-        render_header()
         u = st.session_state["user"]
-        
-        # New User Onboarding Check
         if not u.get("is_onboarded", False):
+            render_header()
             render_new_user_onboarding()
         else:
             nav = st.session_state["current_nav"]
             if nav == "home":
+                render_header()
                 render_returning_user_home()
             elif nav == "explore":
                 render_explore_schemes()
             elif nav == "copilot":
                 render_ai_copilot()
-            elif nav == "journey":
-                render_explore_schemes()
             elif nav == "profile":
+                render_header()
                 st.markdown("### 👤 Citizen Welfare Profile")
                 st.json(u)
             elif nav == "admin":

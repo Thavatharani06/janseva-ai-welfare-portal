@@ -1,44 +1,57 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+import json
 from app.models.scheme import SchemeCategory, Scheme, SchemeAlias, Document, DocumentEmbedding
 from app.models.user import User
-from app.core.security import hash_password
+from app.core.security import hash_password, generate_recovery_codes
 
 async def seed_initial_welfare_data(db: AsyncSession):
-    """Seed core categories, schemes, aliases, and initial admin account."""
+    """Seed core categories, schemes, aliases, and initial demo accounts."""
     
-    # 1. Check if admin exists
-    admin_result = await db.execute(select(User).where(User.email == "admin@janseva.gov.in"))
-    admin_user = admin_result.scalars().first()
-    if not admin_user:
-        admin_user = User(
-            email="admin@janseva.gov.in",
-            hashed_password=hash_password("AdminJanSeva2026!"),
-            full_name="JanSeva Welfare Officer Admin",
+    # 1. Seed DEMO CITIZEN Account (Development/Demo)
+    demo_citizen_res = await db.execute(select(User).where(User.email == "citizen.demo@welfare.local"))
+    demo_citizen = demo_citizen_res.scalars().first()
+    if not demo_citizen:
+        demo_citizen = User(
+            email="citizen.demo@welfare.local",
+            hashed_password=hash_password("CitizenDemo@123!"),
+            full_name="Arun Kumar (Demo Citizen)",
+            role="citizen",
+            language_preference="en",
+            district="Madurai",
+            age=24,
+            gender="male",
+            annual_income=120000.0,
+            occupation="Student",
+            community="OBC",
+            mfa_secret="JBSWY3DPEHPK3PXP",
+            is_mfa_enabled=True,
+            mfa_recovery_codes=json.dumps(generate_recovery_codes(8)),
+            is_onboarded=True
+        )
+        db.add(demo_citizen)
+        await db.commit()
+
+    # 2. Seed DEMO ADMIN Account (Development/Demo)
+    demo_admin_res = await db.execute(select(User).where(User.email == "admin.demo@welfare.local"))
+    demo_admin = demo_admin_res.scalars().first()
+    if not demo_admin:
+        demo_admin = User(
+            email="admin.demo@welfare.local",
+            hashed_password=hash_password("AdminDemo@123!"),
+            full_name="Welfare Officer (Demo Admin)",
             role="admin",
             language_preference="en",
-            district="Chennai"
+            district="Chennai",
+            mfa_secret="JBSWY3DPEHPK3PXQ",
+            is_mfa_enabled=True,
+            mfa_recovery_codes=json.dumps(generate_recovery_codes(8)),
+            is_onboarded=True
         )
-        db.add(admin_user)
+        db.add(demo_admin)
         await db.commit()
 
-    # Check if guest user exists
-    guest_result = await db.execute(select(User).where(User.email == "guest@janseva.gov.in"))
-    guest_user = guest_result.scalars().first()
-    if not guest_user:
-        guest_user = User(
-            email="guest@janseva.gov.in",
-            hashed_password=hash_password("GuestPass2026!"),
-            full_name="Public Citizen Guest Account",
-            role="citizen",
-            language_preference="ta",
-            district="Madurai"
-        )
-        db.add(guest_user)
-        await db.commit()
-
-
-    # 2. Check if categories exist
+    # 3. Check if categories exist
     cat_result = await db.execute(select(SchemeCategory))
     categories = cat_result.scalars().all()
     if categories:
