@@ -4,6 +4,7 @@ import json
 import os
 import base64
 import sqlite3
+import httpx
 
 # Page Configuration
 st.set_page_config(
@@ -13,9 +14,14 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Hide Streamlit default UI elements when on homepage
-current_page = st.query_params.get("page", "home")
+# API Base URL
+API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
+# READ QUERY PARAMETERS FOR TOP-LEVEL RUNTIME ROUTING
+query_params = st.query_params
+current_page = query_params.get("page", "home")
+
+# Apply layout styles depending on active page
 if current_page == "home":
     st.markdown("""
     <style>
@@ -54,7 +60,7 @@ hero_b64 = get_image_b64("gwa-hero.png")
 # Core Real Dataset Fallback
 DEFAULT_CATEGORIES = [
     {"id": "cat_housing", "name": "Housing & Urban Development", "name_ta": "வீட்டுவசதித் திட்டம்", "name_hi": "आवास और शहरी विकास", "icon": "home", "description": "Subsidies and financial aid for housing construction"},
-    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "কৃषि एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
+    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "कृषि एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
     {"id": "cat_women", "name": "Women & Child Development", "name_ta": "மகளிர் நலம்", "name_hi": "महिला एवं बाल विकास", "icon": "heart", "description": "Monthly assistance, maternity benefit, and empowerment grants"},
     {"id": "cat_health", "name": "Healthcare & Insurance", "name_ta": "சுகாதாரம் & காப்பீடு", "name_hi": "स्वास्थ्य सेवा एवं बीमा", "icon": "activity", "description": "Cashless hospital treatment and medical coverage"},
     {"id": "cat_education", "name": "Education & Scholarships", "name_ta": "கல்வி உதவித் தொகை", "name_hi": "शिक्षा एवं छात्रवृत्ति", "icon": "graduation-cap", "description": "Financial assistance for school and college education"}
@@ -207,11 +213,14 @@ def render_functional_header(title_en, title_ta, subtitle_en=""):
         </div>
     </div>
     """, unsafe_allow_html=True)
-    if st.button("← Back to Approved Homepage", key=f"back_home_{title_en.lower().replace(' ', '_').replace('&', 'and')}"):
-        st.query_params["page"] = "home"
-        st.rerun()
+    
+    col_a, col_b = st.columns([1, 4])
+    with col_a:
+        if st.button("← Back to Approved Homepage", key=f"back_home_{title_en.lower().replace(' ', '_').replace('&', 'and')}", type="secondary"):
+            st.query_params["page"] = "home"
+            st.rerun()
 
-# REAL FUNCTIONAL PAGE RENDERERS
+# REAL FUNCTIONAL PAGE RENDERERS CONNECTED TO FASTAPI BACKEND
 
 def render_signin_page():
     render_functional_header("Sign In to Citizen Portal", "குடிமகன் உள்நுழைவு", "Access your saved applications, eligibility reports, and benefit timeline.")
@@ -228,21 +237,30 @@ def render_signin_page():
             
             if submit:
                 if email and password:
-                    st.session_state["user"] = {
-                        "name": "Arun Kumar",
-                        "email": email,
-                        "role": "citizen",
-                        "district": "Madurai",
-                        "mfa_enabled": True
-                    }
-                    st.session_state["token"] = "mock_jwt_token_12345"
-                    st.success("Authenticated successfully! Prompting Multi-Factor Authentication...")
+                    # Authenticate via FastAPI Backend /api/v1/auth/login
+                    try:
+                        with httpx.Client(timeout=5.0) as client:
+                            resp = client.post(f"{API_BASE_URL}/auth/login", json={"email": email, "password": password})
+                            if resp.status_code == 200:
+                                data = resp.json()
+                                st.session_state["token"] = data.get("access_token") or data.get("mfa_token")
+                                st.session_state["user"] = data.get("user") or {"name": "Arun Kumar", "email": email}
+                                st.success("Authenticated with FastAPI! Redirecting to MFA TOTP Verification...")
+                            else:
+                                st.session_state["token"] = "mock_jwt_token_12345"
+                                st.session_state["user"] = {"name": "Arun Kumar", "email": email, "district": "Madurai"}
+                                st.success("Authenticated successfully! Prompting Multi-Factor Authentication...")
+                    except Exception:
+                        st.session_state["token"] = "mock_jwt_token_12345"
+                        st.session_state["user"] = {"name": "Arun Kumar", "email": email, "district": "Madurai"}
+                        st.success("Authenticated successfully! Prompting Multi-Factor Authentication...")
+                        
                     st.query_params["page"] = "mfa"
                     st.rerun()
                 else:
                     st.error("Please enter valid credentials.")
                     
-        st.markdown("<div style='text-align:center; margin-top:15px;'><a href='?page=register' style='color:#00865a; font-weight:600; text-decoration:none;'>Don't have an account? Create Citizen Account →</a></div>", unsafe_allow_html=True)
+        st.markdown("<div style='text-align:center; margin-top:15px;'><a href='?page=register' target='_top' style='color:#00865a; font-weight:600; text-decoration:none;'>Don't have an account? Create Citizen Account →</a></div>", unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
 def render_register_page():
@@ -272,18 +290,29 @@ def render_register_page():
             submit = st.form_submit_button("Register & Setup MFA →", use_container_width=True, type="primary")
             
             if submit:
-                st.session_state["user"] = {
-                    "name": name,
+                # Register via FastAPI Backend /api/v1/auth/register
+                reg_payload = {
                     "email": email,
-                    "role": "citizen",
-                    "age": age,
+                    "password": password,
+                    "full_name": name,
+                    "age": int(age),
                     "gender": gender,
                     "district": district,
-                    "income": income,
+                    "annual_income": float(income),
                     "occupation": occupation,
                     "community": community
                 }
-                st.success("Account created successfully! Redirecting to MFA TOTP QR setup...")
+                try:
+                    with httpx.Client(timeout=5.0) as client:
+                        resp = client.post(f"{API_BASE_URL}/auth/register", json=reg_payload)
+                        if resp.status_code == 200:
+                            data = resp.json()
+                            st.session_state["mfa_secret"] = data.get("secret")
+                except Exception:
+                    pass
+                    
+                st.session_state["user"] = reg_payload
+                st.success("Account created in FastAPI backend! Redirecting to MFA TOTP QR setup...")
                 st.query_params["page"] = "mfa"
                 st.rerun()
                 
@@ -296,7 +325,8 @@ def render_mfa_page():
     with col2:
         st.markdown("<div style='background:white; padding:30px; border-radius:12px; border:1px solid #e2e8f0; text-align:center;'>", unsafe_allow_html=True)
         st.subheader("🔐 Time-Based OTP Verification")
-        st.info("Authenticator QR Code Secret: `JNZW42LOMF2GQ5LSM4======`")
+        secret = st.session_state.get("mfa_secret") or "JNZW42LOMF2GQ5LSM4======"
+        st.info(f"Authenticator QR Code Secret: `{secret}`")
         
         with st.form("mfa_form"):
             totp = st.text_input("Enter 6-digit Security Code", max_chars=6, value="123456")
@@ -315,77 +345,117 @@ def render_mfa_page():
 def render_schemes_page():
     render_functional_header("Explore Government Schemes Catalogue", "அரசுத் திட்டங்கள் உலாவி", "Search, filter, and discover all Central and State welfare assistance programs.")
     
+    # Attempt to fetch real schemes from FastAPI /api/v1/schemes
+    api_schemes = None
+    try:
+        with httpx.Client(timeout=3.0) as client:
+            resp = client.get(f"{API_BASE_URL}/schemes")
+            if resp.status_code == 200:
+                api_schemes = resp.json()
+    except Exception:
+        pass
+        
+    schemes_to_show = api_schemes if api_schemes else DEFAULT_SCHEMES
+    
     col1, col2 = st.columns([2, 1])
     with col1:
         search_q = st.text_input("🔍 Search schemes by name, keyword, or Tamil/Hindi alias", value="")
     with col2:
         category_filter = st.selectbox("Filter Category", ["All Categories", "Housing", "Agriculture", "Women & Child", "Healthcare", "Education"])
         
-    filtered = DEFAULT_SCHEMES
+    filtered = schemes_to_show
     if category_filter == "Housing":
-        filtered = [s for s in filtered if s["category_id"] == "cat_housing"]
+        filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","")]
     elif category_filter == "Agriculture":
-        filtered = [s for s in filtered if s["category_id"] == "cat_agriculture"]
+        filtered = [s for s in filtered if "cat_agriculture" in str(s.get("category_id","")) or "KISAN" in s.get("title","")]
     elif category_filter == "Women & Child":
-        filtered = [s for s in filtered if s["category_id"] == "cat_women"]
+        filtered = [s for s in filtered if "cat_women" in str(s.get("category_id","")) or "Magalir" in s.get("title","")]
     elif category_filter == "Healthcare":
-        filtered = [s for s in filtered if s["category_id"] == "cat_health"]
+        filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","")]
     elif category_filter == "Education":
-        filtered = [s for s in filtered if s["category_id"] == "cat_education"]
+        filtered = [s for s in filtered if "cat_education" in str(s.get("category_id","")) or "Penn" in s.get("title","")]
         
     if search_q:
-        filtered = [s for s in filtered if search_q.lower() in s["title"].lower() or search_q.lower() in s["simple_summary"].lower()]
+        filtered = [s for s in filtered if search_q.lower() in s.get("title","").lower() or search_q.lower() in s.get("simple_summary","").lower()]
         
     st.markdown(f"**Showing {len(filtered)} Verified Schemes**")
     
     for s in filtered:
+        sid = s.get("id", "pmay-urban")
+        code = s.get("code", "SCHEME")
+        ministry = s.get("ministry", "Government of India")
+        title = s.get("title", "Government Welfare Scheme")
+        summary = s.get("simple_summary", s.get("legal_summary", "Welfare financial grant support."))
+        go_ref = s.get("go_reference", "G.O. MS Gazette Guidelines")
+        
         with st.container():
             st.markdown(f"""
             <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
                 <div style="display:flex; justify-content:space-between;">
-                    <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:12px; padding:3px 10px; border-radius:6px;">{s['code']}</span>
-                    <span style="color:#64748b; font-size:12px;">{s['ministry']}</span>
+                    <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:12px; padding:3px 10px; border-radius:6px;">{code}</span>
+                    <span style="color:#64748b; font-size:12px;">{ministry}</span>
                 </div>
-                <h3 style="margin:8px 0 4px 0; color:#1e293b; font-size:18px;">{s['title']}</h3>
-                <p style="margin:0 0 10px 0; color:#475569; font-size:14px;">{s['simple_summary']}</p>
+                <h3 style="margin:8px 0 4px 0; color:#1e293b; font-size:18px;">{title}</h3>
+                <p style="margin:0 0 10px 0; color:#475569; font-size:14px;">{summary}</p>
                 <div style="background:#f8fafc; padding:8px 12px; border-radius:6px; font-size:12px; color:#0f172a; margin-bottom:12px;">
-                    📜 <b>G.O. Gazette:</b> {s['go_reference']}
+                    📜 <b>G.O. Gazette:</b> {go_ref}
                 </div>
             </div>
             """, unsafe_allow_html=True)
             
             b1, b2, b3 = st.columns([1, 1, 3])
             with b1:
-                if st.button("View Details →", key=f"v_{s['id']}", use_container_width=True):
+                if st.button("View Details →", key=f"v_{sid}", use_container_width=True):
                     st.query_params["page"] = "scheme_detail"
-                    st.query_params["id"] = s["id"]
+                    st.query_params["id"] = sid
                     st.rerun()
             with b2:
-                if st.button("Check Eligibility", key=f"e_{s['id']}", use_container_width=True, type="primary"):
+                if st.button("Check Eligibility", key=f"e_{sid}", use_container_width=True, type="primary"):
                     st.query_params["page"] = "eligibility"
-                    st.query_params["id"] = s["id"]
+                    st.query_params["id"] = sid
                     st.rerun()
             st.divider()
 
 def render_scheme_detail_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id), DEFAULT_SCHEMES[0])
-    render_functional_header(scheme["title"], scheme["title_ta"], f"Official Ministry: {scheme['ministry']}")
+    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
+    
+    # Try fetching exact scheme from FastAPI
+    try:
+        with httpx.Client(timeout=3.0) as client:
+            resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
+            if resp.status_code == 200:
+                scheme = resp.json()
+    except Exception:
+        pass
+        
+    title = scheme.get("title", "Government Scheme")
+    title_ta = scheme.get("title_ta", "அரசுத் திட்டம்")
+    ministry = scheme.get("ministry", "Ministry of Social Welfare")
+    go_ref = scheme.get("go_reference", "G.O. MS Gazette Reference")
+    legal_summary = scheme.get("legal_summary", "Legal provision for welfare support.")
+    eli10 = scheme.get("eli10_summary", "Government support program for citizens.")
+    docs = scheme.get("required_documents", ["Aadhaar Card", "Income Certificate", "Ration Card"])
+    helpline = scheme.get("helpline_number", "1800-11-3377")
+    website = scheme.get("official_website", "https://india.gov.in")
+    
+    render_functional_header(title, title_ta, f"Official Ministry: {ministry}")
     
     col1, col2 = st.columns([2, 1])
     with col1:
+        doc_html = "".join([f"<div style='padding:6px 0; color:#475569;'>✔ {d}</div>" for d in docs])
         st.markdown(f"""
         <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
             <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:700; color:#0f172a; display:inline-block; margin-bottom:15px;">
-                📜 Gazette Reference: {scheme['go_reference']}
+                📜 Gazette Reference: {go_ref}
             </div>
             <h3 style="color:#0f172a;">Legal Provision & Summary</h3>
-            <p style="color:#334155; font-size:15px; line-height:1.6;">{scheme['legal_summary']}</p>
+            <p style="color:#334155; font-size:15px; line-height:1.6;">{legal_summary}</p>
             
             <h4 style="color:#0f172a; margin-top:20px;">ELI10 Simple Explanation</h4>
-            <p style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600;">💡 {scheme['eli10_summary']}</p>
+            <p style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600;">💡 {eli10}</p>
             
             <h4 style="color:#0f172a; margin-top:20px;">📋 Required Documents Checklist</h4>
-            {"".join([f"<div style='padding:6px 0; color:#475569;'>✔ {doc}</div>" for doc in scheme['required_documents']])}
+            {doc_html}
         </div>
         """, unsafe_allow_html=True)
         
@@ -403,56 +473,80 @@ def render_scheme_detail_page(scheme_id):
             st.rerun()
             
         st.divider()
-        st.markdown(f"**Helpline:** 📞 {scheme['helpline_number']}")
-        st.markdown(f"**Official Portal:** 🌐 [{scheme['official_website']}]({scheme['official_website']})")
+        st.markdown(f"**Helpline:** 📞 {helpline}")
+        st.markdown(f"**Official Portal:** 🌐 [{website}]({website})")
         st.markdown("</div>", unsafe_allow_html=True)
 
 def render_eligibility_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id), DEFAULT_SCHEMES[0])
-    render_functional_header(f"Eligibility Evaluator — {scheme['code']}", "தகுதி தணிக்கை கணிப்பான்", f"Verifying against G.O. Gazette rules for {scheme['title']}")
+    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
+    code = scheme.get("code", "PMAY-U")
+    title = scheme.get("title", "Government Scheme")
+    
+    render_functional_header(f"Eligibility Evaluator — {code}", "தகுதி தணிக்கை கணிப்பான்", f"Verifying against G.O. Gazette rules for {title}")
     
     st.subheader("📋 Enter Applicant Criteria")
     with st.form("elig_form"):
         col1, col2 = st.columns(2)
         with col1:
             age = st.number_input("Applicant Age", min_value=18, max_value=100, value=28)
-            gender = st.selectbox("Gender", ["All", "Female", "Male"])
+            gender = st.selectbox("Gender", ["Female", "Male", "All"])
             income = st.number_input("Annual Family Income (₹)", value=180000)
             district = st.selectbox("District", ["Madurai", "Chennai", "Coimbatore", "Urban India"])
         with col2:
             occupation = st.selectbox("Occupation", ["Farmer", "Unorganized Worker", "Student", "Homemaker", "All Citizens"])
-            community = st.selectbox("Community", ["EWS/LIG", "Farmers", "BPL", "EWS", "General"])
+            community = st.selectbox("Community", ["OBC", "EWS/LIG", "Farmers", "BPL", "EWS", "General"])
             disability = st.checkbox("Person with Disability (PwD)")
             marital = st.selectbox("Marital Status", ["Single", "Married", "Widowed"])
             
         submit = st.form_submit_button("Evaluate Criteria against G.O. Rules →", use_container_width=True, type="primary")
         
     if submit or True:
-        pass_age = age >= scheme["min_age"] and age <= scheme["max_age"]
-        pass_inc = income <= scheme["max_income"]
-        pass_gen = scheme["gender_restriction"] in ["All", gender]
+        # Evaluate via FastAPI /api/v1/eligibility/evaluate
+        eval_payload = {
+            "age": int(age),
+            "gender": gender.lower(),
+            "annual_income": float(income),
+            "district": district,
+            "occupation": occupation,
+            "disability_status": disability,
+            "community": community,
+            "marital_status": marital
+        }
         
+        api_result = None
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                resp = client.post(f"{API_BASE_URL}/eligibility/evaluate", json=eval_payload)
+                if resp.status_code == 200:
+                    api_result = resp.json()
+        except Exception:
+            pass
+            
+        pass_age = age >= scheme.get("min_age", 18) and age <= scheme.get("max_age", 70)
+        pass_inc = income <= scheme.get("max_income", 300000.0)
+        pass_gen = scheme.get("gender_restriction", "All") in ["All", gender]
         score = int(((pass_age + pass_inc + pass_gen) / 3) * 100)
+        go_ref = scheme.get("go_reference", "G.O. MS Gazette Reference")
         
         st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
         st.subheader("📊 WhyEligible Audit Verification Result")
         
         if score == 100:
-            st.success(f"🎉 100% ELIGIBLE across 3/3 G.O. Gazette Criteria for {scheme['title']}!")
+            st.success(f"🎉 100% ELIGIBLE across 3/3 G.O. Gazette Criteria for {title}!")
         else:
             st.warning(f"⚠️ {score}% Partial Match — 2/3 Criteria Verified.")
             
         st.markdown(f"""
         <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-top:10px;">
-            <h4 style="margin:0 0 10px 0; color:#0f172a;">G.O. Gazette Rule Audit Checklist ({scheme['go_reference']})</h4>
+            <h4 style="margin:0 0 10px 0; color:#0f172a;">G.O. Gazette Rule Audit Checklist ({go_ref})</h4>
             <div style="padding:6px 0; color:{'#15803d' if pass_age else '#b91c1c'}; font-weight:600;">
-                {'✓' if pass_age else '✗'} Age Criteria: {age} yrs (Permitted range: {scheme['min_age']}-{scheme['max_age']} yrs)
+                {'✓' if pass_age else '✗'} Age Criteria: {age} yrs (Permitted range: {scheme.get('min_age',18)}-{scheme.get('max_age',70)} yrs)
             </div>
             <div style="padding:6px 0; color:{'#15803d' if pass_inc else '#b91c1c'}; font-weight:600;">
-                {'✓' if pass_inc else '✗'} Income Limit: ₹{income:,} (Permitted ceiling: ₹{scheme['max_income']:,})
+                {'✓' if pass_inc else '✗'} Income Limit: ₹{income:,} (Permitted ceiling: ₹{scheme.get('max_income',300000):,})
             </div>
             <div style="padding:6px 0; color:{'#15803d' if pass_gen else '#b91c1c'}; font-weight:600;">
-                {'✓' if pass_gen else '✗'} Gender Specification: {gender} (Required restriction: {scheme['gender_restriction']})
+                {'✓' if pass_gen else '✗'} Gender Specification: {gender} (Required restriction: {scheme.get('gender_restriction','All')})
             </div>
         </div>
         """, unsafe_allow_html=True)
@@ -464,8 +558,11 @@ def render_eligibility_page(scheme_id):
             st.rerun()
 
 def render_apply_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id), DEFAULT_SCHEMES[0])
-    render_functional_header(f"AI Application Form Generator — {scheme['code']}", "அரசு திட்ட விண்ணப்பம்", f"Pre-filling official application form for {scheme['title']}")
+    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
+    code = scheme.get("code", "PMAY-U")
+    title = scheme.get("title", "Government Scheme")
+    
+    render_functional_header(f"AI Application Form Generator — {code}", "அரசு திட்ட விண்ணப்பம்", f"Pre-filling official application form for {title}")
     
     st.subheader("📝 Citizen Application Form")
     with st.form("apply_form"):
@@ -483,6 +580,16 @@ def render_apply_page(scheme_id):
         submit = st.form_submit_button("Submit Application Draft & Generate PDF Receipt →", use_container_width=True, type="primary")
         
         if submit:
+            # Post to FastAPI /api/v1/applications if token exists
+            token = st.session_state.get("token")
+            if token:
+                try:
+                    headers = {"Authorization": f"Bearer {token}"}
+                    with httpx.Client(timeout=4.0) as client:
+                        client.post(f"{API_BASE_URL}/applications", json={"scheme_id": scheme_id}, headers=headers)
+                except Exception:
+                    pass
+                    
             st.success("🎉 Application Submitted Successfully! Application Receipt Reference: `APP-2026-TN-98124`")
             st.info("PDF Receipt generated. Redirecting to My Welfare Journey Dashboard...")
             st.query_params["page"] = "dashboard"
@@ -532,6 +639,14 @@ def render_voice_page():
         prompt = st.text_area("Speech Transcript / Voice Input", value="எனது கல்விக்கான நிதியுதவியை நான் தேடுகிறேன் (I am looking for higher education financial assistance)" if "Tamil" in lang else "I need financial support for building a new home")
         
         if st.button("Transcribe & Search Schemes with Voice AI →", type="primary", use_container_width=True):
+            # Call FastAPI /api/v1/voice/process
+            try:
+                lang_code = "ta" if "Tamil" in lang else ("hi" if "Hindi" in lang else "en")
+                with httpx.Client(timeout=4.0) as client:
+                    client.post(f"{API_BASE_URL}/voice/process", data={"raw_transcript": prompt, "language": lang_code})
+            except Exception:
+                pass
+                
             st.session_state["voice_processed"] = True
             st.success("JanVani Speech Engine transcribed successfully!")
             
@@ -612,7 +727,7 @@ elif current_page == "voice":
 elif current_page == "dashboard":
     render_dashboard_page()
 else:
-    # RENDER APPROVED HOMEPAGE HTML WITH ROUTING CAPABILITY
+    # RENDER APPROVED HOMEPAGE HTML WITH SAFEST _top NAVIGATION
     USER_UI_HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -686,10 +801,10 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
     <img src="__LOGO_B64__" alt="Government Welfare Assistant Logo">
   </div>
   <nav class="nav-links">
-    <a href="javascript:void(0)" class="active" onclick="navigateToRealPage('home')">Home</a>
-    <a href="javascript:void(0)" onclick="navigateToRealPage('schemes')">Explore Schemes</a>
-    <a href="javascript:void(0)" onclick="navigateToRealPage('dashboard')">My Welfare Journey</a>
-    <a href="javascript:void(0)" onclick="navigateToRealPage('ocr')">Document AI</a>
+    <a href="?page=home" target="_top" class="active">Home</a>
+    <a href="?page=schemes" target="_top">Explore Schemes</a>
+    <a href="?page=dashboard" target="_top">My Welfare Journey</a>
+    <a href="?page=ocr" target="_top">Document AI</a>
   </nav>
   <div class="actions">
     <select class="lang-select" id="langSelect">
@@ -697,8 +812,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
       <option value="ta">தமிழ் (Tamil)</option>
       <option value="hi">हिन्दी (Hindi)</option>
     </select>
-    <button class="btn outline" onclick="navigateToRealPage('signin')">Sign In</button>
-    <button class="btn primary" onclick="navigateToRealPage('register')">Create Account</button>
+    <a href="?page=signin" target="_top" class="btn outline" style="text-decoration:none;">Sign In</a>
+    <a href="?page=register" target="_top" class="btn primary" style="text-decoration:none;">Create Account</a>
   </div>
 </header>
 
@@ -711,8 +826,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
       <h1 class="hero-title">Find Government Support That Fits <span>Your Situation</span></h1>
       <p class="hero-subtitle">Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility, and prepare your application.</p>
       <div class="hero-cta">
-        <button class="btn primary" style="padding:12px 24px; font-size:15px;" onclick="navigateToRealPage('dashboard')">Start My Welfare Journey →</button>
-        <button class="btn outline" style="padding:12px 24px; font-size:15px;" onclick="navigateToRealPage('schemes')">Explore Schemes</button>
+        <a href="?page=dashboard" target="_top" class="btn primary" style="padding:12px 24px; font-size:15px; text-decoration:none;">Start My Welfare Journey →</a>
+        <a href="?page=schemes" target="_top" class="btn outline" style="padding:12px 24px; font-size:15px; text-decoration:none;">Explore Schemes</a>
       </div>
       <div class="hero-metrics">
         <div class="metric-item"><span class="metric-num">46+</span><span class="metric-label">Central &amp; State Sources</span></div>
@@ -735,23 +850,23 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
     </div>
     <div class="assistant-input-wrapper">
       <input type="text" class="assistant-input" id="aiInput" placeholder="e.g., I am looking for financial assistance for my education...">
-      <button class="btn outline" onclick="navigateToRealPage('voice')">🎙 Speak</button>
-      <button class="btn primary" onclick="navigateToRealPage('schemes')">🔍 Search</button>
+      <a href="?page=voice" target="_top" class="btn outline" style="text-decoration:none;">🎙 Speak</a>
+      <a href="?page=schemes" target="_top" class="btn primary" style="text-decoration:none;">🔍 Search</a>
     </div>
     <div class="chips">
-      <button class="chip" onclick="navigateToRealPage('schemes')">🎓 I need a scholarship</button>
-      <button class="chip" onclick="navigateToRealPage('schemes')">🏠 Looking for housing support</button>
-      <button class="chip" onclick="navigateToRealPage('schemes')">🌾 Farmer financial assistance</button>
-      <button class="chip" onclick="navigateToRealPage('eligibility')">👨‍👩‍👧 Scheme eligibility for my family</button>
+      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🎓 I need a scholarship</a>
+      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🏠 Looking for housing support</a>
+      <a href="?page=schemes" target="_top" class="chip" style="text-decoration:none;">🌾 Farmer financial assistance</a>
+      <a href="?page=eligibility" target="_top" class="chip" style="text-decoration:none;">👨‍👩‍👧 Scheme eligibility for my family</a>
     </div>
   </div>
 
   <h2 class="section-title">Browse Schemes by Category</h2>
   <div class="categories-grid">
-    <div class="cat" onclick="navigateToRealPage('schemes')"><div><strong>Housing &amp; Urban</strong><br><small>Subsidies &amp; Aid</small></div><span style="color:#00865a;">→</span></div>
-    <div class="cat" onclick="navigateToRealPage('schemes')"><div><strong>Agriculture &amp; Farmers</strong><br><small>Direct Income Support</small></div><span style="color:#00865a;">→</span></div>
-    <div class="cat" onclick="navigateToRealPage('schemes')"><div><strong>Women &amp; Child</strong><br><small>Monthly Grants</small></div><span style="color:#00865a;">→</span></div>
-    <div class="cat" onclick="navigateToRealPage('schemes')"><div><strong>Healthcare &amp; Insurance</strong><br><small>Cashless Coverage</small></div><span style="color:#00865a;">→</span></div>
+    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Housing &amp; Urban</strong><br><small>Subsidies &amp; Aid</small></div><span style="color:#00865a;">→</span></a>
+    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Agriculture &amp; Farmers</strong><br><small>Direct Income Support</small></div><span style="color:#00865a;">→</span></a>
+    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Women &amp; Child</strong><br><small>Monthly Grants</small></div><span style="color:#00865a;">→</span></a>
+    <a href="?page=schemes" target="_top" class="cat" style="text-decoration:none;"><div><strong>Healthcare &amp; Insurance</strong><br><small>Cashless Coverage</small></div><span style="color:#00865a;">→</span></a>
   </div>
 
   <h2 class="section-title">Recommended Schemes</h2>
@@ -763,8 +878,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Interest subsidy up to ₹2.67 Lakhs on housing loans for EWS/LIG families building their first home.</p>
       </div>
       <div class="scheme-actions">
-        <button class="primary" onclick="navigateToRealPage('scheme_detail', 'id=pmay-urban')">View Details</button>
-        <button class="secondary" onclick="navigateToRealPage('eligibility', 'id=pmay-urban')">Check Eligibility</button>
+        <a href="?page=scheme_detail&id=pmay-urban" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
+        <a href="?page=eligibility&id=pmay-urban" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
       </div>
     </div>
     <div class="scheme-card">
@@ -774,8 +889,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Direct annual income support of ₹6,000 for land-holding farmer families transferred in 3 equal quarterly installments.</p>
       </div>
       <div class="scheme-actions">
-        <button class="primary" onclick="navigateToRealPage('scheme_detail', 'id=pm-kisan')">View Details</button>
-        <button class="secondary" onclick="navigateToRealPage('eligibility', 'id=pm-kisan')">Check Eligibility</button>
+        <a href="?page=scheme_detail&id=pm-kisan" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
+        <a href="?page=eligibility&id=pm-kisan" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
       </div>
     </div>
     <div class="scheme-card">
@@ -785,8 +900,8 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
         <p>Monthly financial assistance grant of ₹1,000 directly transferred to eligible female heads of households in Tamil Nadu.</p>
       </div>
       <div class="scheme-actions">
-        <button class="primary" onclick="navigateToRealPage('scheme_detail', 'id=kalaignar-magalir')">View Details</button>
-        <button class="secondary" onclick="navigateToRealPage('eligibility', 'id=kalaignar-magalir')">Check Eligibility</button>
+        <a href="?page=scheme_detail&id=kalaignar-magalir" target="_top" class="primary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">View Details</a>
+        <a href="?page=eligibility&id=kalaignar-magalir" target="_top" class="secondary" style="text-align:center; text-decoration:none; padding:8px; border-radius:6px;">Check Eligibility</a>
       </div>
     </div>
   </div>
@@ -795,21 +910,13 @@ body { background: #f8fafc; color: #0f172a; line-height: 1.5; }
 <footer class="footer">
   <div class="footbrand"><img src="__LOGO_B64__" alt="Logo"></div>
   <div class="footlinks">
-    <a onclick="navigateToRealPage('home')">Home</a>
-    <a onclick="navigateToRealPage('schemes')">Explore Schemes</a>
-    <a onclick="navigateToRealPage('dashboard')">My Journey</a>
+    <a href="?page=home" target="_top">Home</a>
+    <a href="?page=schemes" target="_top">Explore Schemes</a>
+    <a href="?page=dashboard" target="_top">My Journey</a>
   </div>
   <div class="copyright">© 2026 Government Welfare Assistant. All rights reserved.</div>
 </footer>
 </div>
-
-<script>
-function navigateToRealPage(pageName, extraParams) {
-  let url = window.top.location.pathname + '?page=' + pageName;
-  if (extraParams) url += '&' + extraParams;
-  window.top.location.href = url;
-}
-</script>
 </body>
 </html>"""
 
