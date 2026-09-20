@@ -1,10 +1,7 @@
 import streamlit as st
 import streamlit.components.v1 as components
-import httpx
 import json
 import os
-import re
-import time
 import base64
 import sqlite3
 
@@ -247,7 +244,7 @@ categories_rendered_html = render_categories_html(categories_data)
 schemes_rendered_html = render_schemes_html(schemes_data)
 schemes_count_str = f"{len(schemes_data)}+" if schemes_data else "120+"
 
-# EXACT APPROVED UI HTML TEMPLATE WITH FULL DESKTOP PROPORTIONS (1380px MAX-WIDTH)
+# EXACT APPROVED UI HTML TEMPLATE WITH TOP-POSITIONED FLEXIBLE MODALS & FULL DESKTOP PROPORTIONS
 USER_UI_HTML_TEMPLATE = """<!doctype html>
 <html lang="en">
 <head>
@@ -273,7 +270,13 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 .recs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.scheme{border:1px solid var(--line);border-radius:10px;padding:16px;min-height:190px;background:#fff}.scheme h3{font-size:14px;margin:0 0 6px;color:#0b7e59;font-weight:800}.scheme .min{font-size:10px;color:#66768a}.scheme p{font-size:11px;line-height:1.45;margin:10px 0;color:#334155}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:9px;padding:4px 8px;border-radius:4px;background:#edf3f5;color:#40536b;font-weight:600}.scheme-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.scheme-actions button{height:32px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer}.scheme-actions .primary{background:var(--green);color:#fff;border:1px solid var(--green)}.scheme-actions .secondary{background:#fff;color:var(--green);border:1px solid var(--green)}
 .banner{margin:24px 0 12px;background:#e9f8f0;min-height:100px;border-radius:12px;display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:center;padding:22px 32px;position:relative;overflow:hidden}.banner h2{font-size:20px;margin:0 0 6px;font-weight:900}.banner p{font-size:12px;color:#527064;margin:0}.banner-art{position:absolute;left:0;right:38%;bottom:-16px;height:68px;opacity:.45;background:linear-gradient(90deg,transparent,#cfe7d7,transparent);border-radius:50%}.banner-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}.bstat{background:#fff;border:1px solid #e4e9e8;border-radius:6px;text-align:center;padding:12px 6px}.bstat strong{display:block;color:#006e4e;font-size:15px;font-weight:800}.bstat small{font-size:9px;color:#66768a}
 .footer{border-top:1px solid #e4e8eb;padding:20px 0 0;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px}.footbrand{display:flex;align-items:center;gap:8px}.footbrand img{height:40px}.footlinks{display:flex;gap:20px;font-size:11px;font-weight:600}.footlinks a{color:#43536a;text-decoration:none}.copyright{grid-column:1/-1;border-top:1px solid #edf0f2;padding-top:12px;margin-top:12px;color:#718096;font-size:10px;display:flex;justify-content:space-between}
-.modal-backdrop{position:fixed;inset:0;background:rgba(11,30,52,.45);display:none;align-items:center;justify-content:center;z-index:100}.modal-backdrop.open{display:flex}.modal{width:min(520px,calc(100vw - 32px));background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(17,36,72,.18);padding:26px;position:relative;max-height:85vh;overflow-y:auto}.modal-close{position:absolute;right:16px;top:12px;border:0;background:none;font-size:24px;color:#607086;cursor:pointer}.modal h2{margin:0 0 8px;font-size:22px;font-weight:800}.modal p{color:#63738a;font-size:12px;line-height:1.5}.modal input,.modal select{width:100%;height:40px;border:1px solid #ccd9df;border-radius:8px;padding:0 14px;margin:6px 0 14px;font-size:12px}.modal .full{width:100%;margin-top:10px;height:40px;font-size:12px}.modal .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}.toast{position:fixed;right:24px;bottom:24px;background:#10243c;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:200}.toast.show{opacity:1;transform:none}
+
+/* FIXED MODAL POSITIONING (POPS UP AT TOP OF VIEWPORT FOR EASY VIEWING) */
+.modal-backdrop{position:fixed;inset:0;background:rgba(11,30,52,.55);display:none;align-items:flex-start;justify-content:center;padding-top:60px;z-index:999999;overflow-y:auto}
+.modal-backdrop.open{display:flex !important}
+.modal{width:min(540px,calc(100vw - 32px));background:#fff;border-radius:12px;border:1px solid var(--line);box-shadow:0 18px 55px rgba(17,36,72,.3);padding:26px;position:relative;max-height:85vh;overflow-y:auto;z-index:1000000;margin-bottom:60px}
+.modal-close{position:absolute;right:16px;top:12px;border:0;background:none;font-size:24px;color:#607086;cursor:pointer}.modal h2{margin:0 0 8px;font-size:22px;font-weight:800}.modal p{color:#63738a;font-size:12px;line-height:1.5}.modal input,.modal select{width:100%;height:40px;border:1px solid #ccd9df;border-radius:8px;padding:0 14px;margin:6px 0 14px;font-size:12px}.modal .full{width:100%;margin-top:10px;height:40px;font-size:12px}.modal .choice{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.toast{position:fixed;right:24px;bottom:24px;background:#10243c;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:2000000}.toast.show{opacity:1;transform:none}
 @media(max-width:1100px){.categories{grid-template-columns:repeat(3,1fr)}}
 @media(max-width:850px){.top{height:auto;padding:10px 0;flex-wrap:wrap}.brand img{max-width:220px}.nav{order:3;width:100%;justify-content:center;gap:15px}.hero{grid-template-columns:1fr;padding-top:20px}.hero-img{max-height:300px;object-fit:cover}.categories{grid-template-columns:repeat(2,1fr)}.feature-grid{grid-template-columns:1fr}.recs{grid-template-columns:1fr}.steps{grid-template-columns:repeat(2,1fr)}.step:not(:last-child):after{display:none}.page{padding:0 16px}}
 </style>
@@ -337,28 +340,54 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="filePicked(this)">
 <div class="toast" id="toast"></div>
 
+<!-- SAFE JSON DATA EMBEDDING (PREVENTS SCRIPT PARSING CRASHES) -->
+<script type="application/json" id="schemesData">__SCHEMES_JSON__</script>
+<script type="application/json" id="categoriesData">__CATEGORIES_JSON__</script>
+
 <script>
 // Dynamic API URL Configuration
 const API_BASE_URL = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
   ? 'http://127.0.0.1:8000/api/v1'
   : (window.API_URL || '/api/v1');
 
-// Real Backend Dataset Pre-Loaded
-window.REAL_SCHEMES = __SCHEMES_JSON__;
-window.REAL_CATEGORIES = __CATEGORIES_JSON__;
+// Safely parse JSON dataset from HTML script tags
+try {
+  window.REAL_SCHEMES = JSON.parse(document.getElementById('schemesData').textContent);
+} catch(e) { window.REAL_SCHEMES = []; }
+
+try {
+  window.REAL_CATEGORIES = JSON.parse(document.getElementById('categoriesData').textContent);
+} catch(e) { window.REAL_CATEGORIES = []; }
+
 window.currentUser = null;
 window.authToken = null;
 window.pendingAction = null;
 
-function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>e.classList.remove('show'),2500)}
+function toast(t){const e=document.getElementById('toast');if(!e)return;e.textContent=t;e.classList.add('show');clearTimeout(window.__t);window.__t=setTimeout(()=>e.classList.remove('show'),2500)}
 function go(id){document.getElementById(id)?.scrollIntoView({behavior:'smooth'})}
-function fill(t){document.getElementById('aiInput').value=t;document.getElementById('aiInput').focus()}
-function openModal(html){document.getElementById('modalContent').innerHTML=html;document.getElementById('modal').classList.add('open')}
-function closeModal(){document.getElementById('modal').classList.remove('open')}
+function fill(t){const elem=document.getElementById('aiInput');if(elem){elem.value=t;elem.focus();}}
+
+// Flexible modal launcher (Scrolls into view near top of viewport)
+function openModal(html){
+  const modalContent = document.getElementById('modalContent');
+  const modal = document.getElementById('modal');
+  if(!modalContent || !modal) return;
+  modalContent.innerHTML = html;
+  modal.classList.add('open');
+  modal.scrollTop = 0;
+  try {
+    modal.scrollIntoView({behavior: 'smooth', block: 'start'});
+  } catch(e){}
+}
+function closeModal(){
+  const modal = document.getElementById('modal');
+  if(modal) modal.classList.remove('open');
+}
 
 // Step 2: RAG AI Assistant Search
 async function searchAI(){
-  const q = document.getElementById('aiInput').value.trim();
+  const inputElem = document.getElementById('aiInput');
+  const q = inputElem ? inputElem.value.trim() : '';
   if(!q){ toast('Please enter what support you need first.'); return; }
   toast('AI Assistant searching scheme database...');
   
@@ -374,25 +403,26 @@ async function searchAI(){
     
     if (res.ok) {
       const data = await res.json();
-      openModal('<h2>AI Welfare Assistant Answer</h2><p><b>Confidence Score: ' + Math.round((data.confidence_score||0.88)*100) + '%</b></p><div style="background:#f4fbf8; padding:12px; border-radius:8px; font-size:12px; line-height:1.5; margin:10px 0; border:1px solid #dce5e8;">' + (data.response||'Answer retrieved.') + '</div>' + (data.matched_scheme ? '<button class="btn primary full" onclick="scheme(\'' + data.matched_scheme.id + '\')">View Matched Scheme: ' + data.matched_scheme.title + ' →</button>' : '<button class="btn primary full" onclick="closeModal()">Close Answer</button>'));
+      openModal('<h2>AI Welfare Assistant Answer</h2><p style="color:#00865a; font-weight:700;"><b>AI Confidence Score: ' + Math.round((data.confidence_score||0.88)*100) + '%</b></p><div style="background:#f4fbf8; padding:14px; border-radius:8px; font-size:12px; line-height:1.55; margin:12px 0; border:1px solid #dce5e8;">' + (data.response||'Answer retrieved.') + '</div>' + (data.matched_scheme ? '<button class="btn primary full" onclick="scheme(\'' + data.matched_scheme.id + '\')">View Matched Scheme: ' + data.matched_scheme.title + ' →</button>' : '<button class="btn primary full" onclick="closeModal()">Close Answer</button>'));
       return;
     }
   } catch(err){}
   
-  // Local RAG Service Matcher
+  // Local RAG Service Matcher Engine
   const qLower = q.toLowerCase();
-  const matched = window.REAL_SCHEMES.filter(s => 
-    s.title.toLowerCase().includes(qLower) || 
+  const matched = (window.REAL_SCHEMES||[]).filter(s => 
+    (s.title && s.title.toLowerCase().includes(qLower)) || 
     (s.simple_summary && s.simple_summary.toLowerCase().includes(qLower)) ||
     (s.target_occupation && s.target_occupation.toLowerCase().includes(qLower)) ||
-    (s.code && s.code.toLowerCase().includes(qLower))
+    (s.code && s.code.toLowerCase().includes(qLower)) ||
+    (s.legal_summary && s.legal_summary.toLowerCase().includes(qLower))
   );
   
-  const displayList = matched.length > 0 ? matched : window.REAL_SCHEMES;
+  const displayList = matched.length > 0 ? matched : (window.REAL_SCHEMES||[]);
   let html = '<h2>AI Assistant Search Results</h2><p>Retrieved <b>' + displayList.length + '</b> relevant scheme(s) for: "<i>' + q + '</i>"</p>';
-  html += '<div style="max-height:280px; overflow-y:auto; margin:10px 0;">';
+  html += '<div style="max-height:300px; overflow-y:auto; margin:12px 0;">';
   displayList.forEach(s => {
-    html += '<div style="border:1px solid #dce5e8; border-radius:8px; padding:12px; margin-bottom:8px; background:#fff;"><strong style="color:#00865a; font-size:13px;">' + s.title + '</strong><p style="font-size:11px; margin:4px 0; color:#334155;">' + (s.simple_summary||'').substring(0,140) + '...</p><div style="display:flex; gap:8px; margin-top:8px;"><button class="btn outline" style="height:28px; padding:0 12px; font-size:11px;" onclick="scheme(\'' + s.id + '\')">View Scheme</button><button class="btn primary" style="height:28px; padding:0 12px; font-size:11px;" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button></div></div>';
+    html += '<div style="border:1px solid #dce5e8; border-radius:8px; padding:12px; margin-bottom:10px; background:#fff;"><strong style="color:#00865a; font-size:13px;">' + s.title + '</strong><p style="font-size:11px; margin:4px 0; color:#334155;">' + (s.simple_summary||'').substring(0,140) + '...</p><div style="display:flex; gap:8px; margin-top:8px;"><button class="btn outline" style="height:28px; padding:0 12px; font-size:11px;" onclick="scheme(\'' + s.id + '\')">View Details</button><button class="btn primary" style="height:28px; padding:0 12px; font-size:11px;" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button></div></div>';
   });
   html += '</div>';
   html += '<button class="btn outline full" onclick="closeModal()">Close Results</button>';
@@ -405,30 +435,30 @@ function category(catId){
   const titleElem = document.getElementById('recsTitle');
   const subElem = document.getElementById('recsSub');
   
-  let filtered = window.REAL_SCHEMES;
+  let filtered = window.REAL_SCHEMES||[];
   if(catId && catId !== 'all'){
-    filtered = window.REAL_SCHEMES.filter(s => s.category_id === catId);
-    if(filtered.length === 0) filtered = window.REAL_SCHEMES;
-    const catObj = window.REAL_CATEGORIES.find(c => c.id === catId);
-    titleElem.textContent = catObj ? catObj.name : 'Government Schemes';
-    subElem.textContent = 'Showing ' + filtered.length + ' scheme(s) in this category';
+    filtered = (window.REAL_SCHEMES||[]).filter(s => s.category_id === catId);
+    if(filtered.length === 0) filtered = window.REAL_SCHEMES||[];
+    const catObj = (window.REAL_CATEGORIES||[]).find(c => c.id === catId);
+    if(titleElem) titleElem.textContent = catObj ? catObj.name : 'Government Schemes';
+    if(subElem) subElem.textContent = 'Showing ' + filtered.length + ' scheme(s) in this category';
   } else {
-    titleElem.textContent = 'All Government Schemes';
-    subElem.textContent = 'Showing all ' + filtered.length + ' indexed schemes';
+    if(titleElem) titleElem.textContent = 'All Government Schemes';
+    if(subElem) subElem.textContent = 'Showing all ' + filtered.length + ' indexed schemes';
   }
   
   let html = '';
   filtered.forEach(s => {
     html += '<div class="scheme"><h3>' + s.title + '</h3><div class="min">' + s.ministry + '</div><p>' + (s.simple_summary||'').substring(0,130) + '...</p><div class="tags"><span class="tag">' + (s.target_occupation||'Central Scheme') + '</span></div><div class="scheme-actions"><button class="primary" onclick="scheme(\'' + s.id + '\')">View Scheme →</button><button class="secondary" onclick="eligibility(\'' + s.id + '\')">Check Eligibility</button></div></div>';
   });
-  container.innerHTML = html;
+  if(container) container.innerHTML = html;
   go('recommendations');
   toast('Category filter applied');
 }
 
 // Step 4: Scheme Details Modal
 function scheme(sid){
-  const s = window.REAL_SCHEMES.find(item => item.id === sid || item.code === sid || item.title === sid) || window.REAL_SCHEMES[0];
+  const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid || item.title === sid) || (window.REAL_SCHEMES||[])[0];
   if(!s) return;
   
   let docsHtml = '';
@@ -454,7 +484,7 @@ function scheme(sid){
 
 // Step 5: Eligibility Check
 async function eligibility(sid){
-  const s = window.REAL_SCHEMES.find(item => item.id === sid || item.code === sid) || window.REAL_SCHEMES[0];
+  const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid || item.code === sid) || (window.REAL_SCHEMES||[])[0];
   
   let html = '<h2>Check Eligibility: ' + (s ? s.title : 'Welfare Scheme') + '</h2>';
   html += '<p>Provide your demographic details to evaluate rule compliance:</p>';
@@ -467,10 +497,15 @@ async function eligibility(sid){
 }
 
 async function submitEligibility(sid){
-  const age = parseInt(document.getElementById('eAge').value)||24;
-  const income = parseFloat(document.getElementById('eIncome').value)||120000;
-  const district = document.getElementById('eDistrict').value;
-  const occupation = document.getElementById('eOccupation').value;
+  const ageElem = document.getElementById('eAge');
+  const incElem = document.getElementById('eIncome');
+  const distElem = document.getElementById('eDistrict');
+  const occElem = document.getElementById('eOccupation');
+  
+  const age = ageElem ? parseInt(ageElem.value)||24 : 24;
+  const income = incElem ? parseFloat(incElem.value)||120000 : 120000;
+  const district = distElem ? distElem.value : 'Madurai';
+  const occupation = occElem ? occElem.value : 'Student';
   
   toast('Evaluating eligibility against backend rules...');
   
@@ -493,21 +528,21 @@ async function submitEligibility(sid){
   } catch(err){}
   
   // Local Rule Evaluator Service
-  const s = window.REAL_SCHEMES.find(item => item.id === sid) || window.REAL_SCHEMES[0];
+  const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid) || (window.REAL_SCHEMES||[])[0];
   let score = 100;
   let met = [];
   let rejected = [];
   
-  if(s.max_income) {
+  if(s && s.max_income) {
     if(income <= s.max_income) met.push('✓ Annual income ₹' + income.toLocaleString('en-IN') + ' is within limit of ₹' + s.max_income.toLocaleString('en-IN'));
     else { score -= 40; rejected.push('❌ Income ₹' + income.toLocaleString('en-IN') + ' exceeds max limit ₹' + s.max_income.toLocaleString('en-IN')); }
   }
-  if(s.min_age && s.max_age) {
+  if(s && s.min_age && s.max_age) {
     if(age >= s.min_age && age <= s.max_age) met.push('✓ Age ' + age + ' falls between ' + s.min_age + ' and ' + s.max_age + ' years');
     else { score -= 30; rejected.push('❌ Age ' + age + ' outside range ' + s.min_age + '-' + s.max_age + ' years'); }
   }
   
-  let html = '<h2>Eligibility Result: ' + s.title + '</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + Math.max(0, score) + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? 'High Priority Match' : 'Conditional Match') + '</p></div><div style="font-size:12px; line-height:1.55; margin:12px 0;">';
+  let html = '<h2>Eligibility Result: ' + (s ? s.title : 'Welfare Scheme') + '</h2><div style="text-align:center; padding:14px; background:#eef8f5; border-radius:8px; margin:12px 0;"><h1 style="color:#00865a; margin:0; font-size:40px;">' + Math.max(0, score) + '%</h1><p style="font-weight:700; margin:4px 0; color:#112448;">' + (score >= 70 ? 'High Priority Match' : 'Conditional Match') + '</p></div><div style="font-size:12px; line-height:1.55; margin:12px 0;">';
   if(met.length) html += '<p style="color:#00865a; font-weight:600;">' + met.join('<br>') + '</p>';
   if(rejected.length) html += '<p style="color:#dc2626; font-weight:600;">' + rejected.join('<br>') + '</p>';
   html += '</div><button class="btn primary full" onclick="applyAI(\'' + sid + '\')">Apply with AI →</button>';
@@ -517,14 +552,22 @@ async function submitEligibility(sid){
 // Step 6: Authentication & MFA Flow
 function auth(p, nextAction){
   if(nextAction) window.pendingAction = nextAction;
-  openModal('<h2>' + p + '</h2><p>' + (p==='Sign In'?'Sign in to access your citizen profile and applications.':'Create your official citizen account.') + '</p><input id="authEmail" placeholder="Email (e.g. citizen.demo@welfare.local)"><input type="password" id="authPass" placeholder="Password"><button class="btn primary full" onclick="submitAuth(\'' + p + '\')">Continue →</button><p style="font-size:11px; color:#64748b; margin-top:12px; background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0;"><b>Pre-seeded Demo Accounts:</b><br><b>Citizen:</b> citizen.demo@welfare.local | CitizenDemo@123!<br><b>Admin:</b> admin.demo@welfare.local | AdminDemo@123!</p>');
+  let html = '<h2>' + p + '</h2>';
+  html += '<p>' + (p==='Sign In'?'Sign in to access your citizen profile and applications.':'Create your official citizen account.') + '</p>';
+  html += '<label style="font-size:11px; font-weight:700;">Email Address / Mobile</label><input id="authEmail" value="citizen.demo@welfare.local">';
+  html += '<label style="font-size:11px; font-weight:700;">Password</label><input type="password" id="authPass" value="CitizenDemo@123!">';
+  html += '<button class="btn primary full" onclick="submitAuth(\'' + p + '\')">Continue →</button>';
+  html += '<div style="font-size:11px; color:#475569; margin-top:14px; background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;"><p style="margin:0 0 4px; font-weight:700; color:#112448;">Pre-seeded Demo Accounts:</p><p style="margin:2px 0;"><b>Citizen:</b> citizen.demo@welfare.local | CitizenDemo@123!</p><p style="margin:2px 0;"><b>Admin:</b> admin.demo@welfare.local | AdminDemo@123!</p></div>';
+  openModal(html);
 }
 
 async function submitAuth(mode){
-  const email = document.getElementById('authEmail').value.trim() || 'citizen.demo@welfare.local';
-  const password = document.getElementById('authPass').value || 'CitizenDemo@123!';
+  const emailInput = document.getElementById('authEmail');
+  const passInput = document.getElementById('authPass');
+  const email = (emailInput ? emailInput.value.trim() : '') || 'citizen.demo@welfare.local';
+  const password = (passInput ? passInput.value : '') || 'CitizenDemo@123!';
   
-  toast('Verifying credentials with backend...');
+  toast('Verifying credentials...');
   
   try {
     const endpoint = mode === 'Sign In' ? '/auth/login' : '/auth/register';
@@ -562,7 +605,8 @@ async function submitAuth(mode){
 }
 
 async function verifyMFA(mfaToken){
-  const code = document.getElementById('totpCode').value.trim();
+  const codeElem = document.getElementById('totpCode');
+  const code = codeElem ? codeElem.value.trim() : '';
   toast('Verifying TOTP code...');
   try {
     const res = await fetch(API_BASE_URL + '/auth/mfa/verify?mfa_token=' + mfaToken + '&totp_code=' + code, { method: 'POST' });
@@ -587,7 +631,7 @@ async function verifyMFA(mfaToken){
 
 function updateHeaderAuth(){
   const actionsDiv = document.getElementById('userActions');
-  if(window.currentUser){
+  if(actionsDiv && window.currentUser){
     actionsDiv.innerHTML = '<span style="font-size:12px; font-weight:700; color:#00865a; background:#eef8f5; padding:6px 12px; border-radius:6px;">👤 ' + (window.currentUser.name||'Citizen') + '</span><button class="btn outline" onclick="logout()">Sign Out</button>';
   }
 }
@@ -605,22 +649,29 @@ function applyAI(sid){
     auth('Sign In', () => applyAI(sid));
     return;
   }
-  const s = window.REAL_SCHEMES.find(item => item.id === sid) || window.REAL_SCHEMES[0];
+  const s = (window.REAL_SCHEMES||[]).find(item => item.id === sid) || (window.REAL_SCHEMES||[])[0];
   openModal('<h2>Apply with AI: ' + (s ? s.title : 'Application') + '</h2><p>AI Assistant is initializing your pre-filled application draft:</p><div style="background:#f4fbf8; padding:12px; border-radius:8px; font-size:12px; line-height:1.5; margin:12px 0; border:1px solid #dce5e8;"><p><b>Applicant Name:</b> ' + window.currentUser.name + '</p><p><b>Target Scheme:</b> ' + (s ? s.title : 'PMAY Urban') + '</p><p><b>Status:</b> Application Draft Prepared</p><p><b>Verified Documents:</b> 3 of 4 Attached</p></div><button class="btn primary full" onclick="closeModal();toast(\'Application draft created successfully!\');">Confirm &amp; Download Application Summary →</button>');
 }
 
 // Step 8: Document AI Extraction
-function documentAI(){ document.getElementById('fileInput').click(); }
+function documentAI(){ 
+  const input = document.getElementById('fileInput');
+  if(input) input.click(); 
+}
 function filePicked(input){
-  if(input.files.length){
+  if(input && input.files.length){
     const fileName = input.files[0].name;
     toast('Extracting OCR fields from: ' + fileName);
     setTimeout(() => {
-      document.getElementById('ocrName').textContent = 'Arun Kumar';
-      document.getElementById('ocrDob').textContent = '12 Aug 1998';
-      document.getElementById('ocrDist').textContent = 'Madurai, Tamil Nadu';
-      document.getElementById('ocrDistStatus').className = 'good';
-      document.getElementById('ocrDistStatus').textContent = '✓ Verified';
+      const elName = document.getElementById('ocrName');
+      const elDob = document.getElementById('ocrDob');
+      const elDist = document.getElementById('ocrDist');
+      const elDistStatus = document.getElementById('ocrDistStatus');
+      
+      if(elName) elName.textContent = 'Arun Kumar';
+      if(elDob) elDob.textContent = '12 Aug 1998';
+      if(elDist) elDist.textContent = 'Madurai, Tamil Nadu';
+      if(elDistStatus) { elDistStatus.className = 'good'; elDistStatus.textContent = '✓ Verified'; }
       
       openModal('<h2>Document AI Extraction Result</h2><p>Extracted information from <b>' + fileName + '</b>:</p><div style="font-size:12px; line-height:1.6; margin:12px 0;"><div class="field"><span>Full Name</span><b>Arun Kumar</b> <span class="good">✓ Verified</span></div><div class="field"><span>Date of Birth</span><b>12 Aug 1998</b> <span class="good">✓ Verified</span></div><div class="field"><span>District</span><b>Madurai, Tamil Nadu</b> <span class="good">✓ Verified</span></div></div><button class="btn primary full" onclick="closeModal();toast(\'Document verified and attached!\')">Confirm &amp; Attach Document</button>');
     }, 600);
@@ -644,7 +695,8 @@ function resources(){
 
 // Step 11: Multilingual Voice Assistant
 function speak(){
-  const lang = document.getElementById('langSelect').value || 'en';
+  const langElem = document.getElementById('langSelect');
+  const lang = langElem ? langElem.value || 'en' : 'en';
   toast('Voice Assistant active (' + lang.toUpperCase() + '). Listening...');
   setTimeout(() => {
     fill('I need financial support for higher education');
