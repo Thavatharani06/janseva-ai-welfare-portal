@@ -231,7 +231,7 @@ def render_categories_html(categories):
         cat_id = cat.get("id", "")
         count = len([s for s in schemes_data if s.get("category_id") == cat_id])
         if count == 0: count = 1
-        html_items.append(f'<div class="cat" data-catid="{cat_id}" onclick="category(\'{cat_id}\')"><div class="cat-icon">{icon}</div><div><strong>{name}</strong><small>{count} Schemes</small></div><span class="arrow">→</span></div>')
+        html_items.append(f'<div class="cat" data-catid="{cat_id}" onclick="event.preventDefault(); category(\'{cat_id}\')"><div class="cat-icon">{icon}</div><div><strong>{name}</strong><small>{count} Schemes</small></div><span class="arrow">→</span></div>')
     return "".join(html_items)
 
 def render_schemes_html(schemes):
@@ -253,8 +253,8 @@ def render_schemes_html(schemes):
           <p>{summary}</p>
           <div class="tags">{tags_html}</div>
           <div class="scheme-actions">
-            <button class="primary" onclick="openSchemePage('{sid}')">View Scheme →</button>
-            <button class="secondary" onclick="openEligibilityPage('{sid}')">Check Eligibility</button>
+            <button class="primary" onclick="event.preventDefault(); openSchemePage('{sid}')">View Scheme →</button>
+            <button class="secondary" onclick="event.preventDefault(); openEligibilityPage('{sid}')">Check Eligibility</button>
           </div>
         </div>
         ''')
@@ -295,7 +295,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 .feature-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:20px}.feature{border:1px solid var(--line);border-radius:12px;padding:20px;background:#fff;min-height:240px}.feature-title{display:flex;gap:10px;align-items:center}.feature-title .ficon{font-size:22px;color:var(--green)}.feature h3{margin:0;font-size:16px;font-weight:800}.feature>p{margin:4px 0 14px;color:#63738a;font-size:12px}.app-inner{display:grid;grid-template-columns:1.25fr .8fr;gap:14px}.chat{border:1px solid #e0e7ec;border-radius:8px;padding:12px;background:#fbfcfd}.bubble{padding:10px;border-radius:8px;background:#f0f4f8;margin-bottom:8px;font-size:11px;line-height:1.45}.bubble.user{background:#d9f8e6;text-align:right}.bubble.success{background:#f0f4f8}.progress{border-left:1px solid #edf0f2;padding-left:14px}.progress h4{font-size:11px;margin:0 0 10px;font-weight:700}.prog-row{display:flex;justify-content:space-between;font-size:11px;padding:8px 0;border-bottom:1px solid #edf0f2}.ok{color:var(--green);font-weight:800}.doc-inner{display:grid;grid-template-columns:140px 1fr;gap:16px}.doc-thumb{border:1px solid #dfe6e9;border-radius:8px;padding:8px;height:150px;background:#fafafa}.paper{height:100%;background:repeating-linear-gradient(to bottom,#fff 0,#fff 9px,#e7ebee 10px);border:1px solid #ddd}.extract{padding:2px 0}.extract h4{font-size:12px;color:#00764f;margin:0 0 8px;font-weight:700}.field{display:flex;justify-content:space-between;font-size:11px;margin:0 0 10px}.good{color:#07855b;font-weight:700}.warn{color:#e38a00;font-weight:700}.mini-btn{margin-top:12px;height:34px;border:1px solid var(--green);background:#fff;color:var(--green);border-radius:8px;padding:0 16px;font-size:12px;font-weight:700;cursor:pointer}
 .recs{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}.scheme{border:1px solid var(--line);border-radius:10px;padding:16px;min-height:190px;background:#fff}.scheme h3{font-size:14px;margin:0 0 6px;color:#0b7e59;font-weight:800}.scheme .min{font-size:10px;color:#66768a}.scheme p{font-size:11px;line-height:1.45;margin:10px 0;color:#334155}.tags{display:flex;gap:6px;flex-wrap:wrap}.tag{font-size:9px;padding:4px 8px;border-radius:4px;background:#edf3f5;color:#40536b;font-weight:600}.scheme-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.scheme-actions button{height:32px;border-radius:6px;font-size:10px;font-weight:700;cursor:pointer}.scheme-actions .primary{background:var(--green);color:#fff;border:1px solid var(--green)}.scheme-actions .secondary{background:#fff;color:var(--green);border:1px solid var(--green)}
 .banner{margin:24px 0 12px;background:#e9f8f0;min-height:100px;border-radius:12px;display:grid;grid-template-columns:1.6fr 1fr;gap:16px;align-items:center;padding:22px 32px;position:relative;overflow:hidden}.banner h2{font-size:20px;margin:0 0 6px;font-weight:900}.banner p{font-size:12px;color:#527064;margin:0}.banner-art{position:absolute;left:0;right:38%;bottom:-16px;height:68px;opacity:.45;background:linear-gradient(90deg,transparent,#cfe7d7,transparent);border-radius:50%}.banner-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;position:relative}.bstat{background:#fff;border:1px solid #e4e9e8;border-radius:6px;text-align:center;padding:12px 6px}.bstat strong{display:block;color:#006e4e;font-size:15px;font-weight:800}.bstat small{font-size:9px;color:#66768a}
-.footer{border-top:1px solid #e4e8eb;padding:20px 0 0;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px}.footbrand{display:flex;align-items:center;gap:8px}.footbrand img{height:40px}.footlinks{display:flex;gap:20px;font-size:11px;font-weight:600}.footlinks a{color:#43536a;text-decoration:none}.copyright{grid-column:1/-1;border-top:1px solid #edf0f2;padding-top:12px;margin-top:12px;color:#718096;font-size:10px;display:flex;justify-content:space-between}
+.footer{border-top:1px solid #e4e8eb;padding:20px 0 0;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center;margin-top:24px}.footbrand{display:flex;align-items:center;gap:8px}.footbrand img{height:40px}.footlinks{display:flex;gap:20px;font-size:11px;font-weight:600}.footlinks a{color:#43536a;text-decoration:none;cursor:pointer}.copyright{grid-column:1/-1;border-top:1px solid #edf0f2;padding-top:12px;margin-top:12px;color:#718096;font-size:10px;display:flex;justify-content:space-between}
 
 /* DEDICATED FULL-PAGE CARDS & FORM CONTAINER */
 .page-container{background:#fff;border:1px solid var(--line);border-radius:12px;padding:32px;margin:24px 0;box-shadow:0 4px 20px rgba(17,36,72,.05)}
@@ -305,7 +305,6 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 .form-group{margin-bottom:18px}.form-group label{display:block;font-size:12px;font-weight:700;margin-bottom:6px;color:#1e293b}.form-group input,.form-group select,.form-group textarea{width:100%;height:42px;border:1px solid #ccd9df;border-radius:8px;padding:0 14px;font-size:13px;outline:none}.form-group input:focus{border-color:var(--green)}
 .go-badge{background:#eef8f5;color:#00865a;padding:4px 10px;border-radius:6px;font-size:11px;font-weight:700;display:inline-block;margin-bottom:10px}
 .audit-item{border-left:3px solid var(--green);padding:10px 14px;background:#f8fafc;margin-bottom:10px;border-radius:0 8px 8px 0;font-size:12px}
-.audit-item.reject{border-left-color:#ef4444;background:#fef2f2}
 
 .toast{position:fixed;right:24px;bottom:24px;background:#10243c;color:#fff;padding:12px 18px;border-radius:8px;font-size:12px;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none;z-index:2147483647 !important}.toast.show{opacity:1;transform:none}
 @media(max-width:1100px){.categories{grid-template-columns:repeat(3,1fr)}}
@@ -316,17 +315,17 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 
 <div class="page">
 <header class="top">
-  <div class="brand" onclick="showPage('view-home')"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div>
+  <div class="brand" onclick="event.preventDefault(); showPage('view-home')"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div>
   <nav class="nav">
-    <a id="navHomeLink" class="active" onclick="showPage('view-home')">Home</a>
-    <a id="navExploreLink" onclick="showPage('view-home'); category('all')">Explore Schemes</a>
-    <a id="navJourneyLink" onclick="openDashboardPage()">My Welfare Journey</a>
-    <a id="navResourcesLink" onclick="resourcesModal()">Resources</a>
+    <a href="javascript:void(0)" id="navHomeLink" class="active" onclick="event.preventDefault(); showPage('view-home')">Home</a>
+    <a href="javascript:void(0)" id="navExploreLink" onclick="event.preventDefault(); showPage('view-home'); category('all')">Explore Schemes</a>
+    <a href="javascript:void(0)" id="navJourneyLink" onclick="event.preventDefault(); openDashboardPage()">My Welfare Journey</a>
+    <a href="javascript:void(0)" id="navResourcesLink" onclick="event.preventDefault(); resourcesModal()">Resources</a>
   </nav>
   <div class="actions" id="userActions">
     <select class="select" id="langSelect" onchange="setLanguage(this.value)"><option value="en">English ▾</option><option value="ta">தமிழ் (Tamil)</option><option value="hi">हिंदी (Hindi)</option></select>
-    <button class="btn outline" id="btnSignIn" onclick="showPage('view-signin')">Sign In</button>
-    <button class="btn primary" id="btnCreateAccount" onclick="showPage('view-signin')">Create Account</button>
+    <button class="btn outline" id="btnSignIn" onclick="event.preventDefault(); showPage('view-signin')">Sign In</button>
+    <button class="btn primary" id="btnCreateAccount" onclick="event.preventDefault(); showPage('view-signin')">Create Account</button>
   </div>
 </header>
 
@@ -337,7 +336,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 <!-- ================================================================= -->
 <div id="view-home" class="view-page active">
 <section class="hero">
- <div><div class="crumb">Citizens <span>|</span> Schemes <span>|</span> AI <span>|</span> A Stronger Tomorrow</div><h1>Find Government Support<br>That Fits <em>Your Situation</em></h1><p>Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.</p><div class="hero-actions"><button class="btn primary" id="btnHeroStartJourney" onclick="openDashboardPage()">Start My Welfare Journey →</button><button class="btn outline" id="btnHeroExploreSchemes" onclick="category('all')">Explore Schemes</button></div></div>
+ <div><div class="crumb">Citizens <span>|</span> Schemes <span>|</span> AI <span>|</span> A Stronger Tomorrow</div><h1>Find Government Support<br>That Fits <em>Your Situation</em></h1><p>Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.</p><div class="hero-actions"><button class="btn primary" id="btnHeroStartJourney" onclick="event.preventDefault(); openDashboardPage()">Start My Welfare Journey →</button><button class="btn outline" id="btnHeroExploreSchemes" onclick="event.preventDefault(); category('all')">Explore Schemes</button></div></div>
  <div><img class="hero-img" src="__HERO_B64__" alt="Family using Government Welfare Assistant"></div>
 </section>
 <section class="stats">
@@ -346,31 +345,31 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
   <div class="stat"><div class="stat-icon">🌐</div><div><strong>3</strong><small>Languages Supported</small></div></div>
 </section>
 <section class="ai-box" id="assistant">
-  <div class="ai-head"><div class="ai-badge">AI</div><div><h2>Ask the Welfare Assistant</h2><p>Tell us what you need in your own words. You can type or speak.</p></div><div class="ai-top" id="btnAiTryExample" onclick="fill('I need financial support for higher education')">↻ &nbsp; Try example</div></div>
-  <div class="ai-input-row"><input id="aiInput" class="ai-input" placeholder="e.g., I am looking for financial assistance for my education..."><button class="btn outline" id="btnSpeak" onclick="startVoiceDictation('aiInput')">🎙 Speak</button><button class="btn primary" id="btnSearch" onclick="searchAI()">🔍 Search</button></div>
+  <div class="ai-head"><div class="ai-badge">AI</div><div><h2>Ask the Welfare Assistant</h2><p>Tell us what you need in your own words. You can type or speak.</p></div><div class="ai-top" id="btnAiTryExample" onclick="event.preventDefault(); fill('I need financial support for higher education')">↻ &nbsp; Try example</div></div>
+  <div class="ai-input-row"><input id="aiInput" class="ai-input" placeholder="e.g., I am looking for financial assistance for my education..."><button class="btn outline" id="btnSpeak" onclick="event.preventDefault(); startVoiceDictation('aiInput')">🎙 Speak</button><button class="btn primary" id="btnSearch" onclick="event.preventDefault(); searchAI()">🔍 Search</button></div>
   <div class="chips">
-    <button class="chip" onclick="fill('I need a scholarship')">🎓 I need a scholarship</button>
-    <button class="chip" onclick="fill('Looking for housing support')">🏠 Looking for housing support</button>
-    <button class="chip" onclick="fill('Farmer financial assistance')">🌾 Farmer financial assistance</button>
-    <button class="chip" onclick="fill('Scheme eligibility for my family')">👨‍👩‍👧 Scheme eligibility for my family</button>
+    <button class="chip" onclick="event.preventDefault(); fill('I need a scholarship')">🎓 I need a scholarship</button>
+    <button class="chip" onclick="event.preventDefault(); fill('Looking for housing support')">🏠 Looking for housing support</button>
+    <button class="chip" onclick="event.preventDefault(); fill('Farmer financial assistance')">🌾 Farmer financial assistance</button>
+    <button class="chip" onclick="event.preventDefault(); fill('Scheme eligibility for my family')">👨‍👩‍👧 Scheme eligibility for my family</button>
   </div>
 </section>
 <section class="section" id="explore">
-  <div class="section-head"><div><h2>Explore Government Support</h2><p class="section-sub">Browse schemes by category or explore all schemes</p></div><a class="link" href="#recommendations" onclick="category('all')">View All Categories →</a></div>
+  <div class="section-head"><div><h2>Explore Government Support</h2><p class="section-sub">Browse schemes by category or explore all schemes</p></div><a class="link" href="javascript:void(0)" onclick="event.preventDefault(); category('all')">View All Categories →</a></div>
   <div class="categories" id="categoriesContainer">
     __CATEGORIES_HTML__
   </div>
 </section>
 <section class="section" id="journey">
-  <div class="section-head"><div><h2>How It Works</h2><p class="section-sub">Get from discovery to application in four simple steps (Adaptive Navigator)</p></div><a class="link" href="#resources" onclick="resourcesModal()">Learn more →</a></div>
+  <div class="section-head"><div><h2>How It Works</h2><p class="section-sub">Get from discovery to application in four simple steps (Adaptive Navigator)</p></div><a class="link" href="javascript:void(0)" onclick="event.preventDefault(); resourcesModal()">Learn more →</a></div>
   <div class="steps"><div class="step"><div class="num">01</div><div class="step-icon">👤</div><h3>Tell us about yourself</h3><p>Answer a quick progressive profile or speak to JanVani Voice.</p></div><div class="step"><div class="num">02</div><div class="step-icon">🔍</div><h3>Find relevant schemes</h3><p>Get personalized recommendations mapped to your entire household.</p></div><div class="step"><div class="num">03</div><div class="step-icon">📝</div><h3>WhyEligible Audit</h3><p>Inspect transparent criteria checklists with official G.O. Gazette references.</p></div><div class="step"><div class="num">04</div><div class="step-icon">🚀</div><h3>DocReady Engine</h3><p>Upload files &amp; auto-verify requirements before submitting.</p></div></div>
 </section>
 <section class="feature-grid section" id="resources">
-  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3 id="ft1Title">AI Application Assistant</h3><p id="ft1Sub">Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" id="btnTryApplyAI" onclick="openApplyPage()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
-  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3 id="ft2Title">Understand Your Documents with AI</h3><p id="ft2Sub">Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="good" id="ocrDistStatus">✓ Verified</span></div></div></div><button class="mini-btn" id="btnUploadDocMini" onclick="openApplyPage()">Upload Document</button></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">✦</span><div><h3 id="ft1Title">AI Application Assistant</h3><p id="ft1Sub">Get step-by-step help to complete your application</p></div></div><div class="app-inner"><div class="chat"><div class="bubble"><b>AI Assistant:</b> What is your annual family income?</div><div class="bubble user">You: ₹3,00,000</div><div class="bubble success"><b>AI Assistant:</b> Got it. Added ₹3,00,000 to your application draft.<br><span class="ok">✓ Income captured</span></div><button class="btn primary" style="margin-top:8px" id="btnTryApplyAI" onclick="event.preventDefault(); openApplyPage()">Try Apply with AI →</button></div><div class="progress"><h4>Application Progress</h4><div class="prog-row">Profile <span class="ok">●</span></div><div class="prog-row">Documents <span>3/4</span></div><div class="prog-row">Application <span>60%</span></div><div class="prog-row">Review <span>○</span></div></div></div></div>
+  <div class="feature"><div class="feature-title"><span class="ficon">📄</span><div><h3 id="ft2Title">Understand Your Documents with AI</h3><p id="ft2Sub">Upload a document and we'll extract key information</p></div></div><div class="doc-inner"><div class="doc-thumb"><div class="paper"></div></div><div class="extract"><h4>Extracted Information</h4><div class="field"><span>Full Name: <b id="ocrName">Arun Kumar</b></span><span class="good" id="ocrNameStatus">✓ Verified</span></div><div class="field"><span>Date of Birth: <b id="ocrDob">12 Aug 1998</b></span><span class="good" id="ocrDobStatus">✓ Verified</span></div><div class="field"><span>District: <b id="ocrDist">Madurai, Tamil Nadu</b></span><span class="good" id="ocrDistStatus">✓ Verified</span></div></div></div><button class="mini-btn" id="btnUploadDocMini" onclick="event.preventDefault(); openApplyPage()">Upload Document</button></div>
 </section>
 <section class="section" id="recommendations">
-  <div class="section-head"><div><h2 id="recsTitle">Recommended for You</h2><p class="section-sub" id="recsSub">Based on your profile and interests</p></div><a class="link" href="#explore" onclick="category('all')">View All Schemes →</a></div>
+  <div class="section-head"><div><h2 id="recsTitle">Recommended for You</h2><p class="section-sub" id="recsSub">Based on your profile and interests</p></div><a class="link" href="javascript:void(0)" onclick="event.preventDefault(); category('all')">View All Schemes →</a></div>
   <div class="recs" id="recsContainer">
     __SCHEMES_HTML__
   </div>
@@ -388,7 +387,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <h1 id="lblSignInTitle">Citizen Account Sign In</h1>
         <p id="lblSignInSub">Sign in to access your citizen profile, applications, and Household Shield.</p>
       </div>
-      <button class="back-btn" onclick="showPage('view-home')">← Back to Home</button>
+      <button class="back-btn" onclick="event.preventDefault(); showPage('view-home')">← Back to Home</button>
     </div>
     <div style="max-width:480px; margin:0 auto;" id="authCard">
       <div class="form-group">
@@ -399,7 +398,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <label id="lblAuthPass">Password</label>
         <input type="password" id="authPass" value="CitizenDemo@123!">
       </div>
-      <button class="btn primary full" style="height:44px; font-size:14px;" onclick="submitAuth('Sign In')">Continue to Account →</button>
+      <button class="btn primary full" style="height:44px; font-size:14px;" onclick="event.preventDefault(); submitAuth('Sign In')">Continue to Account →</button>
       <div style="font-size:11px; color:#475569; margin-top:20px; background:#f8fafc; padding:14px; border-radius:8px; border:1px solid #e2e8f0;">
         <p style="margin:0 0 6px; font-weight:700; color:#112448;">Pre-seeded Demo Accounts:</p>
         <p style="margin:2px 0;"><b>Citizen:</b> citizen.demo@welfare.local | CitizenDemo@123!</p>
@@ -419,7 +418,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <h1 id="lblDashTitle">My Welfare Journey Dashboard</h1>
         <p id="lblDashSub">Manage your applications, household benefit mapping, and LifeShift timeline.</p>
       </div>
-      <button class="back-btn" onclick="showPage('view-home')">← Back to Home</button>
+      <button class="back-btn" onclick="event.preventDefault(); showPage('view-home')">← Back to Home</button>
     </div>
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:24px;">
@@ -468,7 +467,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
     <!-- Active Applications List -->
     <h3 style="margin:0 0 12px; color:#112448; font-size:16px;">📋 Active Applications Tracker</h3>
     <div style="border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:12px; background:#fff;">
-      <div style="display:flex; justify-space-between; align-items:center;">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
         <div>
           <strong style="font-size:14px; color:#112448;">Pradhan Mantri Awas Yojana (PMAY-Urban)</strong>
           <p style="margin:2px 0; color:#64748b; font-size:11px;">Application ID: TN-2026-PMAY-8842 | Submitted to e-Sevai</p>
@@ -478,8 +477,8 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
     </div>
 
     <div style="display:flex; gap:12px; margin-top:24px;">
-      <button class="btn primary" onclick="openApplyPage()">+ New Application (DocReady Engine)</button>
-      <button class="btn outline" onclick="openApplyPage()">📄 Upload Document</button>
+      <button class="btn primary" onclick="event.preventDefault(); openApplyPage()">+ New Application (DocReady Engine)</button>
+      <button class="btn outline" onclick="event.preventDefault(); openApplyPage()">📄 Upload Document</button>
     </div>
   </div>
 </div>
@@ -494,7 +493,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <h1 id="eligSchemeTitle">Scheme Details &amp; WhyEligible Audit</h1>
         <p id="eligSchemeMinistry">Ministry of Housing &amp; Urban Affairs</p>
       </div>
-      <button class="back-btn" onclick="showPage('view-home')">← Back to Home</button>
+      <button class="back-btn" onclick="event.preventDefault(); showPage('view-home')">← Back to Home</button>
     </div>
 
     <div style="display:grid; grid-template-columns:1.2fr .8fr; gap:24px;">
@@ -502,7 +501,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <!-- TTS Read Aloud Control -->
         <div style="display:flex; justify-content:space-between; align-items:center; background:#f4fbf8; padding:12px 16px; border-radius:8px; margin-bottom:18px; border:1px solid #dce5e8;">
           <span style="font-weight:700; color:#00865a;">🔊 Read Aloud Voice Assistant</span>
-          <button class="btn outline" style="height:32px; padding:0 14px;" onclick="speakReadAloud(document.getElementById('eligLegalSummary').textContent)">🔊 Listen Out Loud</button>
+          <button class="btn outline" style="height:32px; padding:0 14px;" onclick="event.preventDefault(); speakReadAloud(document.getElementById('eligLegalSummary').textContent)">🔊 Listen Out Loud</button>
         </div>
 
         <div class="go-badge" id="eligGoRef">G.O. MS No. 142/2015</div>
@@ -519,7 +518,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <div class="audit-item">✓ <b>Location Scope:</b> Verified scope for Urban India.</div>
 
         <div style="margin-top:24px; display:flex; gap:12px;">
-          <button class="btn primary" style="height:40px; padding:0 24px; font-size:13px;" onclick="openApplyPage()">Proceed to Apply with AI →</button>
+          <button class="btn primary" style="height:40px; padding:0 24px; font-size:13px;" onclick="event.preventDefault(); openApplyPage()">Proceed to Apply with AI →</button>
         </div>
       </div>
 
@@ -542,7 +541,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
           <label>Occupation</label>
           <input id="evOccupation" value="Student">
         </div>
-        <button class="btn primary full" style="height:40px;" onclick="evaluateWhyEligible()">Evaluate Criteria →</button>
+        <button class="btn primary full" style="height:40px;" onclick="event.preventDefault(); evaluateWhyEligible()">Evaluate Criteria →</button>
       </div>
     </div>
   </div>
@@ -558,7 +557,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <h1 id="applyTitle">AI Application Form &amp; DocReady Engine</h1>
         <p>Pre-fill forms, dictate responses with Speech-to-Text, and verify uploaded documents.</p>
       </div>
-      <button class="back-btn" onclick="showPage('view-home')">← Back to Home</button>
+      <button class="back-btn" onclick="event.preventDefault(); showPage('view-home')">← Back to Home</button>
     </div>
 
     <div style="display:grid; grid-template-columns:1.2fr .8fr; gap:24px;">
@@ -575,7 +574,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
           <label>JanVani Voice Speech-to-Text Input</label>
           <div style="display:flex; gap:10px;">
             <input id="appVoiceText" placeholder="Dictate your response or type here...">
-            <button class="btn outline" onclick="startVoiceDictation('appVoiceText')">🎙 Speak</button>
+            <button class="btn outline" onclick="event.preventDefault(); startVoiceDictation('appVoiceText')">🎙 Speak</button>
           </div>
         </div>
 
@@ -583,7 +582,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
         <h3 style="margin:20px 0 12px; color:#112448; font-size:15px;">📑 DocReady Verification Engine</h3>
         <div style="border:2px dashed #cbd5e1; border-radius:10px; padding:24px; text-align:center; background:#f8fafc;">
           <p style="margin:0 0 10px; color:#475569; font-size:12px;">Upload Aadhaar, Ration Card, or Income Certificate (PDF/JPG)</p>
-          <button class="btn outline" onclick="triggerFileInput()">Select Document File</button>
+          <button class="btn outline" onclick="event.preventDefault(); triggerFileInput()">Select Document File</button>
         </div>
 
         <div style="margin-top:16px;" id="docVerifyList">
@@ -592,7 +591,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
           <div class="field"><span>Ration Card</span><span class="good">✓ Verified (DocReady Engine)</span></div>
         </div>
 
-        <button class="btn primary full" style="height:44px; margin-top:24px; font-size:14px;" onclick="submitApplicationDraft()">Submit Application Draft &amp; Get Receipt →</button>
+        <button class="btn primary full" style="height:44px; margin-top:24px; font-size:14px;" onclick="event.preventDefault(); submitApplicationDraft()">Submit Application Draft &amp; Get Receipt →</button>
       </div>
 
       <!-- Application Progress Panel -->
@@ -609,7 +608,7 @@ USER_UI_HTML_TEMPLATE = """<!doctype html>
 
 </main>
 
-<footer class="footer"><div class="footbrand"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div><div class="footlinks"><a onclick="showPage('view-home')">About</a><a onclick="showPage('view-home')">How it works</a><a onclick="showPage('view-home'); category('all')">Explore Schemes</a><a onclick="resourcesModal()">Privacy</a><a onclick="resourcesModal()">Security</a><a onclick="resourcesModal()">Accessibility</a><a onclick="resourcesModal()">Contact</a></div><div class="copyright"><span>© 2024 Government Welfare Assistant. All rights reserved.</span><span>Built with AI for a Better Tomorrow →</span></div></footer>
+<footer class="footer"><div class="footbrand"><img src="__LOGO_B64__" alt="Government Welfare Assistant"></div><div class="footlinks"><a onclick="event.preventDefault(); showPage('view-home')">About</a><a onclick="event.preventDefault(); showPage('view-home')">How it works</a><a onclick="event.preventDefault(); showPage('view-home'); category('all')">Explore Schemes</a><a onclick="event.preventDefault(); resourcesModal()">Privacy</a><a onclick="event.preventDefault(); resourcesModal()">Security</a><a onclick="event.preventDefault(); resourcesModal()">Accessibility</a><a onclick="event.preventDefault(); resourcesModal()">Contact</a></div><div class="copyright"><span>© 2024 Government Welfare Assistant. All rights reserved.</span><span>Built with AI for a Better Tomorrow →</span></div></footer>
 </div>
 
 <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" hidden onchange="filePicked(this)">
@@ -930,7 +929,7 @@ function renderCategoriesUI() {
     const catId = cat.id;
     const count = (window.REAL_SCHEMES || []).filter(s => s.category_id === catId).length || 1;
     const schemeLabel = lang === 'ta' ? 'திட்டங்கள்' : (lang === 'hi' ? 'योजनाएं' : 'Schemes');
-    html += `<div class="cat" data-catid="${catId}" onclick="category('${catId}')"><div class="cat-icon">${icon}</div><div><strong>${name}</strong><small>${count} ${schemeLabel}</small></div><span class="arrow">→</span></div>`;
+    html += `<div class="cat" data-catid="${catId}" onclick="event.preventDefault(); category('${catId}')"><div class="cat-icon">${icon}</div><div><strong>${name}</strong><small>${count} ${schemeLabel}</small></div><span class="arrow">→</span></div>`;
   });
   container.innerHTML = html;
 }
@@ -962,8 +961,8 @@ function renderSchemesUI(schemes) {
       <p>${summary}</p>
       <div class="tags"><span class="tag">${tag}</span></div>
       <div class="scheme-actions">
-        <button class="primary" onclick="openSchemePage('${sid}')">${t.btnViewScheme}</button>
-        <button class="secondary" onclick="openEligibilityPage('${sid}')">${t.btnCheckEligibility}</button>
+        <button class="primary" onclick="event.preventDefault(); openSchemePage('${sid}')">${t.btnViewScheme}</button>
+        <button class="secondary" onclick="event.preventDefault(); openEligibilityPage('${sid}')">${t.btnCheckEligibility}</button>
       </div>
     </div>
     `;
