@@ -80,6 +80,8 @@ I18N = {
         "nav_logout": "Logout",
         "btn_signin": "Sign In",
         "btn_create": "Create Account",
+        "create_account_title": "Create your account",
+        "create_account_sub": "Start your personalized welfare journey",
         "hero_tag": "Citizens | Schemes | AI | A Stronger Tomorrow",
         "hero_title": "Find Government Support That Fits <span style='color:#059669;'>Your Situation</span>",
         "hero_subtitle": "Tell us what you need. Our AI helps you discover relevant government schemes, understand eligibility and prepare your application.",
@@ -169,6 +171,8 @@ I18N = {
         "nav_logout": "வெளியேறு",
         "btn_signin": "உள்நுழைக",
         "btn_create": "கணக்கு தொடங்குக",
+        "create_account_title": "உங்கள் கணக்கை உருவாக்கவும்",
+        "create_account_sub": "உங்கள் நலப்பயணத்தைத் தொடங்குங்கள்",
         "hero_tag": "குடிமக்கள் | திட்டங்கள் | AI | வலுவான எதிர்காலம்",
         "hero_title": "உங்கள் சூழ்நிலைக்கு ஏற்ற <span style='color:#059669;'>அரசு நலத்திட்டங்கள்</span>",
         "hero_subtitle": "உங்கள் தேவைகளைக் கூறுங்கள். பொருத்தமான அரசு திட்டங்களைக் கண்டறியவும், தகுதியைப் புரிந்துகொள்ளவும், விண்ணப்பத்தைத் தயார் செய்யவும் AI உதவுகிறது.",
@@ -258,6 +262,8 @@ I18N = {
         "nav_logout": "लॉगआउट",
         "btn_signin": "साइन इन करें",
         "btn_create": "खाता बनाएं",
+        "create_account_title": "अपना खाता बनाएं",
+        "create_account_sub": "अपनी कल्याण यात्रा शुरू करें",
         "hero_tag": "नागरिक | योजनाएं | AI | सशक्त भविष्य",
         "hero_title": "अपनी स्थिति के अनुसार <span style='color:#059669;'>उपयुक्त सरकारी योजनाएं</span> खोजें",
         "hero_subtitle": "अपनी आवश्यकताओं के बारे में बताएं। AI आपको उपयुक्त सरकारी योजनाएं खोजने, पात्रता समझने और आवेदन तैयार करने में मदद करता है।",
@@ -352,7 +358,7 @@ st.markdown("""
         font-family: 'Inter', system-ui, -apple-system, sans-serif !important;
     }
 
-    /* Prevent text truncation on Streamlit buttons */
+    /* Prevent text truncation on Streamlit buttons & force full label visibility */
     .stButton>button {
         white-space: nowrap !important;
         word-break: normal !important;
@@ -362,17 +368,21 @@ st.markdown("""
         border-radius: 8px !important;
         padding: 8px 16px !important;
         font-size: 0.9rem !important;
+        min-width: max-content !important;
+    }
+
+    .stButton>button p {
+        white-space: nowrap !important;
+        overflow: visible !important;
+        text-overflow: clip !important;
+    }
+
+    div[data-testid="column"] button {
+        white-space: nowrap !important;
+        min-width: max-content !important;
     }
     
     /* Top Header Bar */
-    .top-navbar-container {
-        background-color: #ffffff !important;
-        border-bottom: 2px solid #059669 !important;
-        padding: 12px 24px !important;
-        margin-bottom: 24px !important;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
-    }
-
     .brand-title-text {
         font-size: 1.35rem !important;
         font-weight: 900 !important;
@@ -792,38 +802,74 @@ def listen_voice_input(language_code="en-IN"):
 
 # MYSCHEME 3.0 EXACT HEADER & NAVIGATION BAR
 def render_header():
-    # Brand logo SVG emblem + Title + Links + Language + Auth Controls
-    st.markdown("""
-    <div style="background:#ffffff; border-bottom:2px solid #059669; padding:8px 16px; margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <svg width="34" height="42" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M50 5L90 25V65L50 115L10 65V25L50 5Z" fill="#065f46" stroke="#047857" stroke-width="4"/>
-                    <circle cx="50" cy="50" r="22" fill="#ffffff"/>
-                    <circle cx="50" cy="50" r="14" fill="#059669"/>
-                    <path d="M50 38V62M38 50H62" stroke="#ffffff" stroke-width="3"/>
-                </svg>
-                <div>
-                    <div class="brand-title-text">Government Welfare Assistant <span class="beta-badge">Beta 3.0</span></div>
-                    <div class="brand-subtitle-text">Your Gateway to Government Schemes</div>
-                </div>
+    # Brand logo SVG emblem + Title + Language + Auth Controls (Top Row)
+    c_brand, c_controls = st.columns([7, 5])
+    with c_brand:
+        st.markdown("""
+        <div style="display:flex; align-items:center; gap:12px; padding-bottom:6px;">
+            <svg width="34" height="42" viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5L90 25V65L50 115L10 65V25L50 5Z" fill="#065f46" stroke="#047857" stroke-width="4"/>
+                <circle cx="50" cy="50" r="22" fill="#ffffff"/>
+                <circle cx="50" cy="50" r="14" fill="#059669"/>
+                <path d="M50 38V62M38 50H62" stroke="#ffffff" stroke-width="3"/>
+            </svg>
+            <div>
+                <div class="brand-title-text">Government Welfare Assistant <span class="beta-badge">Beta 3.0</span></div>
+                <div class="brand-subtitle-text">Your Gateway to Government Schemes</div>
             </div>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True)
 
-    # Clean Row for Navigation Tabs & Controls
-    c_nav1, c_nav2, c_nav3, c_nav4, c_nav_space, c_lang, c_auth = st.columns([1.5, 2.2, 2.2, 1.8, 1, 2.2, 3])
-    with c_nav1:
+    with c_controls:
+        c_lang, c_auth1, c_auth2 = st.columns([2.5, 2.5, 3])
+        with c_lang:
+            lang_choice = st.selectbox(
+                "Language",
+                ["English", "தமிழ்", "हिन्दी"],
+                index=0 if st.session_state["language"] == "en" else (1 if st.session_state["language"] == "ta" else 2),
+                key="hdr_lang_sel",
+                label_visibility="collapsed"
+            )
+            new_lang = "en" if "English" in lang_choice else ("ta" if "தமிழ்" in lang_choice else "hi")
+            if new_lang != st.session_state["language"]:
+                st.session_state["language"] = new_lang
+                st.rerun()
+
+        if not st.session_state["access_token"]:
+            with c_auth1:
+                if st.button(t("btn_signin"), key="hdr_signin_btn"):
+                    st.session_state["auth_mode"] = "login"
+                    st.rerun()
+            with c_auth2:
+                if st.button(t("btn_create"), key="hdr_create_btn"):
+                    st.session_state["auth_mode"] = "register"
+                    st.rerun()
+        else:
+            with c_auth1:
+                if st.button(t("nav_profile"), key="hdr_profile_btn"):
+                    st.session_state["current_nav"] = "profile"
+                    st.rerun()
+            with c_auth2:
+                if st.button(t("nav_logout"), key="hdr_logout_btn"):
+                    st.session_state["access_token"] = None
+                    st.session_state["user"] = None
+                    st.session_state["current_nav"] = "home"
+                    st.session_state["auth_mode"] = "none"
+                    st.rerun()
+
+    # DEDICATED FULL-WIDTH NAVIGATION BAR (NEVER TRUNCATES LINK LABELS)
+    st.markdown("<div style='border-bottom: 2px solid #059669; margin: 4px 0 16px 0;'></div>", unsafe_allow_html=True)
+    c_n1, c_n2, c_n3, c_n4, c_n_space = st.columns([1.5, 2.5, 2.8, 1.8, 4])
+    with c_n1:
         if st.button(t("nav_home"), key="hdr_n_home"):
             st.session_state["current_nav"] = "home"
             st.session_state["auth_mode"] = "none"
             st.rerun()
-    with c_nav2:
+    with c_n2:
         if st.button(t("nav_explore"), key="hdr_n_explore"):
             st.session_state["current_nav"] = "explore"
             st.rerun()
-    with c_nav3:
+    with c_n3:
         if st.button(t("nav_journey"), key="hdr_n_journey"):
             if st.session_state["access_token"]:
                 st.session_state["current_nav"] = "home"
@@ -831,48 +877,10 @@ def render_header():
                 st.session_state["redirect_after_auth"] = "home"
                 st.session_state["auth_mode"] = "login"
             st.rerun()
-    with c_nav4:
+    with c_n4:
         if st.button(t("nav_resources"), key="hdr_n_resources"):
             st.session_state["current_nav"] = "resources"
             st.rerun()
-
-    with c_lang:
-        lang_choice = st.selectbox(
-            "Language",
-            ["English", "தமிழ்", "हिन्दी"],
-            index=0 if st.session_state["language"] == "en" else (1 if st.session_state["language"] == "ta" else 2),
-            key="hdr_lang_sel",
-            label_visibility="collapsed"
-        )
-        new_lang = "en" if "English" in lang_choice else ("ta" if "தமிழ்" in lang_choice else "hi")
-        if new_lang != st.session_state["language"]:
-            st.session_state["language"] = new_lang
-            st.rerun()
-
-    with c_auth:
-        if not st.session_state["access_token"]:
-            a1, a2 = st.columns(2)
-            with a1:
-                if st.button(t("btn_signin"), key="hdr_signin_btn"):
-                    st.session_state["auth_mode"] = "login"
-                    st.rerun()
-            with a2:
-                if st.button(t("btn_create"), key="hdr_create_btn"):
-                    st.session_state["auth_mode"] = "register"
-                    st.rerun()
-        else:
-            a1, a2 = st.columns(2)
-            with a1:
-                if st.button(t("nav_profile"), key="hdr_profile_btn"):
-                    st.session_state["current_nav"] = "profile"
-                    st.rerun()
-            with a2:
-                if st.button(t("nav_logout"), key="hdr_logout_btn"):
-                    st.session_state["access_token"] = None
-                    st.session_state["user"] = None
-                    st.session_state["current_nav"] = "home"
-                    st.session_state["auth_mode"] = "none"
-                    st.rerun()
 
 # ----------------------------------------------------
 # 1. HOMEPAGE (EXACT MYSCHEME 3.0 VISUAL LAYOUT & DENSITY)
@@ -919,9 +927,9 @@ def render_homepage():
     with c_hero_right:
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); border:1px solid #d1fae5; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(0,0,0,0.04);">
-            <div style="position:relative; width:100%; height:230px; background:#e2e8f0; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
+            <div style="position:relative; width:100%; height:230px; background:#065f46; border-radius:12px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
                 <svg width="100%" height="100%" viewBox="0 0 600 300" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <rect width="600" height="300" fill="#047857"/>
+                    <rect width="600" height="300" fill="#065f46"/>
                     <path d="M0 200 C 150 120, 350 240, 600 160 L 600 300 L 0 300 Z" fill="#059669" opacity="0.6"/>
                     <circle cx="300" cy="120" r="70" fill="#ffffff" opacity="0.15"/>
                     <path d="M260 140 C 260 100, 340 100, 340 140 V 220 H 260 Z" fill="#ffffff" opacity="0.25"/>
@@ -1278,8 +1286,8 @@ def render_auth_screens():
         elif mode == "register":
             st.markdown(f"""
             <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:12px; padding:24px; box-shadow:0 2px 6px rgba(0,0,0,0.04);">
-                <h2 style="color:#065f46; margin-top:0;">Create your account</h2>
-                <p style="color:#64748b;">Start your personalized welfare journey</p>
+                <h2 style="color:#065f46; margin-top:0;">{t('create_account_title')}</h2>
+                <p style="color:#64748b;">{t('create_account_sub')}</p>
             </div>
             """, unsafe_allow_html=True)
             
