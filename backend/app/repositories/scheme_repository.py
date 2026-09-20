@@ -28,8 +28,10 @@ class SchemeRepository:
         )
         if category_id:
             cat_term = f"%{category_id.strip()}%"
-            query = query.join(Scheme.category).where(
-                (Scheme.category_id == category_id) | (SchemeCategory.name.ilike(cat_term))
+            query = query.outerjoin(Scheme.category).where(
+                (Scheme.category_id == category_id) | 
+                (Scheme.category.ilike(cat_term)) | 
+                (SchemeCategory.name.ilike(cat_term))
             )
         if state and state not in ["All", "All States / UTs"]:
             if state == "All India" or state == "Central":

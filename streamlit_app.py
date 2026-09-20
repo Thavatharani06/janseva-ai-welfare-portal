@@ -64,6 +64,11 @@ def ensure_sqlite_db():
         try:
             conn = sqlite3.connect(db_path)
             c = conn.cursor()
+            cols = [r[1] for r in c.execute("PRAGMA table_info(schemes);").fetchall()]
+            if "category" not in cols:
+                c.execute("ALTER TABLE schemes ADD COLUMN category TEXT;")
+                conn.commit()
+
             cnt = c.execute("SELECT COUNT(*) FROM schemes").fetchone()[0]
             conn.close()
             if cnt > 0:
@@ -85,6 +90,7 @@ def ensure_sqlite_db():
     CREATE TABLE IF NOT EXISTS schemes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category_id INTEGER,
+        category TEXT,
         title TEXT NOT NULL,
         title_ta TEXT,
         code TEXT UNIQUE NOT NULL,
@@ -133,17 +139,18 @@ def ensure_sqlite_db():
         desc = s.get("description", "")
         elig_text = s.get("eligibility_text", "")
         benefits_text = s.get("benefits_text", "")
+        cat_name = s.get("category", "General Welfare")
 
         cursor.execute('''
         INSERT OR IGNORE INTO schemes (
-            title, title_ta, code, ministry, official_website, helpline_number,
+            title, title_ta, code, category, ministry, official_website, helpline_number,
             legal_summary, simple_summary, eli10_summary, min_age, max_age, max_income,
             gender_restriction, disability_required, target_community, target_occupation,
             state_district_scope, required_documents, source_name, source_url,
             benefits_summary, eligibility_description, application_process
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (
-            title, s.get("title_ta", title), code, s.get("ministry", "Ministry of Social Justice"),
+            title, s.get("title_ta", title), code, cat_name, s.get("ministry", "Ministry of Social Justice"),
             s.get("official_url", ""), s.get("helpline", "1100"),
             f"{desc} Eligible: {elig_text}",
             f"This scheme helps you get {benefits_text}. To apply, you need: {req_docs}.",
@@ -158,6 +165,23 @@ def ensure_sqlite_db():
     conn.commit()
     conn.close()
     return target_db
+
+def get_db_categories():
+    db_path = ensure_sqlite_db()
+    if not db_path:
+        return []
+    try:
+        conn = sqlite3.connect(db_path)
+        cursor = conn.cursor()
+        cols = [r[1] for r in cursor.execute("PRAGMA table_info(schemes);").fetchall()]
+        if "category" in cols:
+            cats = [row[0] for row in cursor.execute("SELECT DISTINCT category FROM schemes WHERE category IS NOT NULL AND category != '' ORDER BY category").fetchall()]
+            conn.close()
+            return cats
+        conn.close()
+        return []
+    except Exception:
+        return []
 
 def fetch_schemes_from_sqlite_db(params):
     db_path = ensure_sqlite_db()
@@ -209,8 +233,9 @@ def fetch_schemes_from_sqlite_db(params):
 
     category = params.get("category")
     if category and category not in ["All Categories", "Select"]:
-        query += " AND (legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
-        sql_params.extend([f"%{category}%", f"%{category}%", f"%{category}%"])
+        query += " AND (category LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
+        cat_term = f"%{category}%"
+        sql_params.extend([cat_term, cat_term, cat_term, cat_term])
 
     rows = cursor.execute(query, sql_params).fetchall()
     results = []
@@ -618,7 +643,19 @@ def render_schemes_page():
             st.rerun()
 
         state_opts = [t["all_states"], "Tamil Nadu", "Urban India", "All India"]
-        cat_opts = [t["all_categories"], "Housing & Urban Development", "Agriculture & Farmers Welfare", "Women & Child Development", "Healthcare & Insurance", "Education & Scholarships"]
+        db_cats = get_db_categories()
+        cat_opts = [t["all_categories"]] + (db_cats if db_cats else [
+            "Agriculture & Farmers Welfare",
+            "Education & Scholarships",
+            "Employment & Skill Development",
+            "Financial Inclusion & Credit",
+            "Healthcare & Insurance",
+            "Housing & Urban Development",
+            "Rural Development",
+            "Small Business & MSME",
+            "Social Welfare & Pensions",
+            "Women & Child Development"
+        ])
         gender_opts = [t["all_genders"], t["female"], t["male"], t["transgender"]]
 
         state_filter = st.selectbox(t["state_ut"], state_opts, key="f_state")
