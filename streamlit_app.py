@@ -361,8 +361,7 @@ def render_mfa_page():
         st.markdown("</div>", unsafe_allow_html=True)
 
 def render_schemes_page():
-    render_functional_header("Explore Government Schemes Catalogue", "அரசுத் திட்டங்கள் உலாவி", "Search, filter, and discover all Central and State welfare assistance programs.")
-    
+    # 1. Fetch real schemes from FastAPI backend or dataset
     api_schemes = None
     try:
         with httpx.Client(timeout=3.0) as client:
@@ -373,61 +372,170 @@ def render_schemes_page():
         pass
         
     schemes_to_show = api_schemes if api_schemes else DEFAULT_SCHEMES
-    
-    col1, col2 = st.columns([2, 1])
-    with col1:
-        search_q = st.text_input("🔍 Search schemes by name, keyword, or Tamil/Hindi alias", value="")
-    with col2:
-        category_filter = st.selectbox("Filter Category", ["All Categories", "Housing", "Agriculture", "Women & Child", "Healthcare", "Education"])
+
+    # Custom CSS for myScheme Search Page Information Architecture
+    st.markdown("""
+    <style>
+        .schemes-header { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e2e8f0; margin-bottom: 12px; }
+        .filter-panel-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .filter-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+        .filter-title { font-size: 16px; font-weight: 700; color: #0f172a; }
+        .reset-link { font-size: 12px; font-weight: 600; color: #00865a; cursor: pointer; text-decoration: none; }
+        .filter-label { font-size: 13px; font-weight: 600; color: #334155; margin-top: 12px; margin-bottom: 4px; }
         
-    filtered = schemes_to_show
-    if category_filter == "Housing":
-        filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","")]
-    elif category_filter == "Agriculture":
-        filtered = [s for s in filtered if "cat_agriculture" in str(s.get("category_id","")) or "KISAN" in s.get("title","")]
-    elif category_filter == "Women & Child":
-        filtered = [s for s in filtered if "cat_women" in str(s.get("category_id","")) or "Magalir" in s.get("title","")]
-    elif category_filter == "Healthcare":
-        filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","")]
-    elif category_filter == "Education":
-        filtered = [s for s in filtered if "cat_education" in str(s.get("category_id","")) or "Penn" in s.get("title","")]
+        .scheme-result-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 22px; margin-bottom: 16px; box-shadow: 0 2px 6px rgba(0,0,0,0.03); transition: border-color 0.2s; }
+        .scheme-result-card:hover { border-color: #00865a; }
+        .scheme-card-title { font-size: 20px; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+        .scheme-card-ministry { font-size: 13px; color: #64748b; margin-bottom: 12px; font-weight: 500; text-decoration: underline; }
+        .scheme-card-desc { font-size: 14px; color: #334155; margin-bottom: 14px; line-height: 1.5; }
+        .tag-pill { display: inline-block; background: #ffffff; border: 1px solid #10b981; color: #047857; font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 20px; margin-right: 6px; margin-bottom: 6px; }
+        .search-helper-text { font-size: 12px; color: #64748b; margin-top: 4px; margin-bottom: 16px; }
+    </style>
+    """, unsafe_allow_html=True)
+
+    # HEADER BAR
+    hdr_col1, hdr_col2 = st.columns([1, 1])
+    with hdr_col1:
+        if logo_b64:
+            st.markdown(f'<img src="{logo_b64}" style="height:38px; width:auto; object-fit:contain;">', unsafe_allow_html=True)
+        else:
+            st.markdown("<h3 style='color:#00865a; margin:0;'>🏛️ Government Welfare Assistant</h3>", unsafe_allow_html=True)
+    with hdr_col2:
+        h_a1, h_a2 = st.columns([2, 1])
+        with h_a1:
+            st.selectbox("Lang", ["English", "தமிழ்", "हिन्दी"], key="schemes_lang", label_visibility="collapsed")
+        with h_a2:
+            if st.button("Sign In →", key="schemes_top_signin", type="primary"):
+                navigate("signin")
+
+    # BACK NAVIGATION
+    st.markdown("<div style='margin-top:6px; margin-bottom:12px;'>", unsafe_allow_html=True)
+    if st.button("← Back", key="schemes_back_btn", type="secondary"):
+        navigate("home")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    # MAIN SEARCH AREA: TWO COLUMN LAYOUT (26% Filter | 74% Results)
+    col_filter, col_results = st.columns([26, 74])
+
+    # LEFT FILTER PANEL
+    with col_filter:
+        st.markdown("""
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <strong style="font-size:16px; color:#0f172a;">Filter By</strong>
+        </div>
+        """, unsafe_allow_html=True)
         
-    if search_q:
-        filtered = [s for s in filtered if search_q.lower() in s.get("title","").lower() or search_q.lower() in s.get("simple_summary","").lower()]
-        
-    st.markdown(f"**Showing {len(filtered)} Verified Schemes**")
-    
-    for s in filtered:
-        sid = s.get("id", "pmay-urban")
-        code = s.get("code", "SCHEME")
-        ministry = s.get("ministry", "Government of India")
-        title = s.get("title", "Government Welfare Scheme")
-        summary = s.get("simple_summary", s.get("legal_summary", "Welfare financial grant support."))
-        go_ref = s.get("go_reference", "G.O. MS Gazette Guidelines")
-        
-        with st.container():
-            st.markdown(f"""
-            <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.03);">
-                <div style="display:flex; justify-content:space-between;">
-                    <span style="background:#eef8f5; color:#00865a; font-weight:700; font-size:12px; padding:3px 10px; border-radius:6px;">{code}</span>
-                    <span style="color:#64748b; font-size:12px;">{ministry}</span>
-                </div>
-                <h3 style="margin:8px 0 4px 0; color:#1e293b; font-size:18px;">{title}</h3>
-                <p style="margin:0 0 10px 0; color:#475569; font-size:14px;">{summary}</p>
-                <div style="background:#f8fafc; padding:8px 12px; border-radius:6px; font-size:12px; color:#0f172a; margin-bottom:12px;">
-                    📜 <b>G.O. Gazette:</b> {go_ref}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+        if st.button("Reset Filters", key="reset_filters_btn", type="secondary", use_container_width=True):
+            st.session_state["f_state"] = "All States / UTs"
+            st.session_state["f_cat"] = "All Categories"
+            st.session_state["f_gender"] = "All"
+            st.session_state["f_age"] = "Select"
+            st.session_state["f_caste"] = "Select"
+            st.session_state["f_residence"] = "Select"
+            st.session_state["f_benefit"] = "Select"
+            st.session_state["f_marital"] = "Select"
+            st.session_state["f_disability"] = "Select"
+            st.session_state["f_emp"] = "Select"
+            st.session_state["f_occ"] = "Select"
+            st.rerun()
+
+        state_filter = st.selectbox("State/UT", ["All States / UTs", "Tamil Nadu", "Urban India", "All India"], key="f_state")
+        cat_filter = st.selectbox("Scheme Category", ["All Categories", "Housing & Urban Development", "Agriculture & Farmers Welfare", "Women & Child Development", "Healthcare & Insurance", "Education & Scholarships"], key="f_cat")
+        gender_filter = st.selectbox("Gender", ["All", "Female", "Male", "Transgender"], key="f_gender")
+        age_filter = st.selectbox("Age", ["Select", "18 - 25 Years", "26 - 40 Years", "41 - 60 Years", "60+ Years"], key="f_age")
+        caste_filter = st.selectbox("Caste / Community", ["Select", "EWS/LIG", "Farmers", "BPL", "OBC", "SC", "ST", "General"], key="f_caste")
+        residence_filter = st.selectbox("Residence", ["Select", "Urban", "Rural", "All"], key="f_residence")
+        benefit_filter = st.selectbox("Benefit Type", ["Select", "Direct Benefit Transfer (DBT)", "Subsidized Loan / Grant", "Health Coverage", "Monthly Financial Aid"], key="f_benefit")
+        marital_filter = st.selectbox("Marital Status", ["Select", "Single", "Married", "Widowed"], key="f_marital")
+        disability_filter = st.selectbox("Disability Percentage", ["Select", "None (0%)", "Benchmark Disability (40%+)"], key="f_disability")
+        emp_filter = st.selectbox("Employment Status", ["Select", "Unorganized Worker", "Farmer", "Student", "Homemaker", "Employed", "Unemployed"], key="f_emp")
+        occ_filter = st.selectbox("Occupation", ["Select", "All Citizens", "Farmer", "Homemaker / Worker", "Student"], key="f_occ")
+
+    # RIGHT RESULTS PANEL
+    with col_results:
+        # Search Box
+        s_col1, s_col2 = st.columns([5, 1])
+        with s_col1:
+            search_q = st.text_input("Search schemes", placeholder="Search schemes", label_visibility="collapsed")
+        with s_col2:
+            st.button("🔍 Search", key="search_exec_btn", type="primary", use_container_width=True)
             
-            b1, b2, b3 = st.columns([1, 1, 3])
-            with b1:
-                if st.button("View Details →", key=f"v_{sid}", use_container_width=True):
-                    navigate("scheme_detail", id=sid)
-            with b2:
-                if st.button("Check Eligibility", key=f"e_{sid}", use_container_width=True, type="primary"):
-                    navigate("eligibility", id=sid)
-            st.divider()
+        st.markdown('<p class="search-helper-text">ⓘ For an exact match, put the words in quotes. For example: "Scheme Name".</p>', unsafe_allow_html=True)
+
+        # Tabs: All Schemes | State/UT Schemes | Central Schemes
+        scheme_tab = st.radio("Scheme Origin", ["All Schemes", "State/UT Schemes", "Central Schemes"], horizontal=True, label_visibility="collapsed")
+        
+        # Apply Filtering Logic to real backend data
+        filtered = schemes_to_show
+        
+        if scheme_tab == "State/UT Schemes":
+            filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "State" in str(s.get("ministry",""))]
+        elif scheme_tab == "Central Schemes":
+            filtered = [s for s in filtered if "India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry",""))]
+
+        if cat_filter != "All Categories":
+            if "Housing" in cat_filter:
+                filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","")]
+            elif "Agriculture" in cat_filter:
+                filtered = [s for s in filtered if "cat_agriculture" in str(s.get("category_id","")) or "KISAN" in s.get("title","")]
+            elif "Women" in cat_filter:
+                filtered = [s for s in filtered if "cat_women" in str(s.get("category_id","")) or "Magalir" in s.get("title","")]
+            elif "Healthcare" in cat_filter:
+                filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","")]
+            elif "Education" in cat_filter:
+                filtered = [s for s in filtered if "cat_education" in str(s.get("category_id","")) or "Penn" in s.get("title","")]
+
+        if gender_filter != "All":
+            filtered = [s for s in filtered if s.get("gender_restriction") in ["All", gender_filter]]
+
+        if search_q:
+            q_clean = search_q.replace('"', '').strip().lower()
+            filtered = [s for s in filtered if q_clean in s.get("title","").lower() or q_clean in s.get("simple_summary","").lower() or q_clean in s.get("code","").lower()]
+
+        # Results Count & Sort Row
+        cnt_col1, cnt_col2 = st.columns([3, 1])
+        with cnt_col1:
+            st.markdown(f"<div style='font-size:16px; font-weight:500; color:#475569; margin-top:8px;'>Total <strong style='color:#0f172a; font-weight:800; font-size:18px;'>{len(filtered)}</strong> schemes available</div>", unsafe_allow_html=True)
+        with cnt_col2:
+            st.selectbox("Sort", ["Sort : Relevance", "Name A-Z", "Newest First"], label_visibility="collapsed")
+
+        st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
+
+        # Render Real Scheme Result Cards matching myScheme format
+        for s in filtered:
+            sid = s.get("id", "pmay-urban")
+            code = s.get("code", "SCHEME")
+            ministry = s.get("ministry", "Ministry of Social Justice")
+            title = s.get("title", "Government Welfare Scheme")
+            summary = s.get("simple_summary", s.get("legal_summary", "Welfare assistance grant for eligible citizens."))
+            category_tag = "Central Scheme" if "Ministry" in ministry or "India" in str(s.get("state_district_scope","")) else "State Scheme"
+            community_tag = s.get("target_community", "All Citizens")
+            scope_tag = s.get("state_district_scope", "All India")
+            
+            with st.container():
+                st.markdown(f"""
+                <div class="scheme-result-card">
+                    <div class="scheme-card-title">{title}</div>
+                    <div class="scheme-card-ministry">{ministry}</div>
+                    <div class="scheme-card-desc">{summary}</div>
+                    <div style="margin-bottom:14px;">
+                        <span class="tag-pill">{code}</span>
+                        <span class="tag-pill">{category_tag}</span>
+                        <span class="tag-pill">{community_tag}</span>
+                        <span class="tag-pill">{scope_tag}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                b1, b2, b3 = st.columns([1, 1, 2])
+                with b1:
+                    if st.button("View Scheme", key=f"res_v_{sid}", use_container_width=True, type="secondary"):
+                        navigate("scheme_detail", id=sid)
+                with b2:
+                    if st.button("Check Eligibility", key=f"res_e_{sid}", use_container_width=True, type="primary"):
+                        navigate("eligibility", id=sid)
+                st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
+
 
 def render_scheme_detail_page(scheme_id):
     scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
