@@ -82,7 +82,11 @@ class SchemeRepository:
             selectinload(Scheme.aliases),
             selectinload(Scheme.documents),
             selectinload(Scheme.eligibility_rules)
-        ).where(Scheme.id == scheme_id)
+        ).where(
+            (Scheme.id == scheme_id) | 
+            (Scheme.code.ilike(scheme_id)) | 
+            (Scheme.code.ilike(f"%{scheme_id}%"))
+        )
         result = await self.db.execute(query)
         return result.scalars().first()
 

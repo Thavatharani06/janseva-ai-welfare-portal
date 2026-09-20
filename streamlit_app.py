@@ -246,6 +246,44 @@ def fetch_schemes_from_sqlite_db(params):
     conn.close()
     return results
 
+def get_scheme_by_id_or_code_sqlite(scheme_id):
+    db_path = ensure_sqlite_db()
+    if not db_path:
+        return None
+
+    conn = sqlite3.connect(db_path)
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+
+    row = cursor.execute(
+        "SELECT * FROM schemes WHERE id = ? OR LOWER(code) = LOWER(?) OR code LIKE ? LIMIT 1",
+        (scheme_id, scheme_id, f"%{scheme_id}%")
+    ).fetchone()
+
+    if not row:
+        clean_id = str(scheme_id).replace("-", " ").replace("_", " ")
+        row = cursor.execute(
+            "SELECT * FROM schemes WHERE title LIKE ? OR code LIKE ? LIMIT 1",
+            (f"%{clean_id}%", f"%{clean_id}%")
+        ).fetchone()
+
+    if not row:
+        row = cursor.execute("SELECT * FROM schemes LIMIT 1").fetchone()
+
+    result = dict(row) if row else None
+    if result:
+        result["official_url"] = result.get("official_website") or result.get("source_url", "")
+        req_docs = result.get("required_documents")
+        if isinstance(req_docs, str):
+            try:
+                result["required_documents"] = json.loads(req_docs)
+            except Exception:
+                result["required_documents"] = [req_docs]
+        elif not req_docs:
+            result["required_documents"] = ["Aadhaar Card", "Income Certificate", "Ration Card", "Bank Passbook"]
+    conn.close()
+    return result
+
 
 
 SCHEMES_I18N = {
@@ -742,8 +780,8 @@ def render_schemes_page():
         </div>
         """, unsafe_allow_html=True)
 
-        # Tabs: All Schemes | State/UT Schemes | Central Schemes
-        scheme_tab = st.radio("Scheme Origin", [t["all_schemes"], t["state_schemes"], t["central_schemes"]], horizontal=True, label_visibility="collapsed")
+        # Tabs: All Schemes | State/UT Schemes | Central Schemes | Saved Schemes
+        scheme_tab = st.radio("Scheme Origin", [t["all_schemes"], t["state_schemes"], t["central_schemes"], "⭐ Saved Schemes"], horizontal=True, label_visibility="collapsed")
         
         # Build API Query Parameters for Database Parameterized Filtering
         api_params = {}
@@ -810,6 +848,9 @@ def render_schemes_page():
             filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "State" in str(s.get("ministry","")) or "Government of Tamil Nadu" in str(s.get("ministry",""))]
         elif scheme_tab == t["central_schemes"]:
             filtered = [s for s in filtered if "All India" in str(s.get("state_district_scope","")) or "Urban India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry","")) or "National" in str(s.get("ministry",""))]
+        elif scheme_tab == "⭐ Saved Schemes":
+            saved_ids = st.session_state.get("saved_schemes", [])
+            filtered = [s for s in filtered if (s.get("id") in saved_ids or s.get("code") in saved_ids)]
 
         # Results Count & Sort Row
         cnt_col1, cnt_col2 = st.columns([3, 1])
@@ -822,7 +863,10 @@ def render_schemes_page():
         st.markdown("<div style='margin-top:14px;'></div>", unsafe_allow_html=True)
 
         if not filtered:
-            st.info("No schemes found matching your selected criteria.")
+            if scheme_tab == "⭐ Saved Schemes":
+                st.info("No saved schemes yet. Click the '☆ Save' button on any scheme to bookmark it.")
+            else:
+                st.info("No schemes found matching your selected criteria.")
 
         # Render Real Scheme Result Cards matching myScheme format
         for s in filtered:
@@ -858,26 +902,42 @@ def render_schemes_page():
                 </div>
                 """, unsafe_allow_html=True)
                 
-                b1, b2, b3 = st.columns([1, 1, 2])
+                b1, b2, b3 = st.columns([1.2, 1.5, 1.3])
                 with b1:
                     if st.button(t["view_scheme"], key=f"res_v_{sid}", use_container_width=True, type="secondary"):
                         navigate("scheme_detail", id=sid)
                 with b2:
                     if st.button(t["check_eligibility"], key=f"res_e_{sid}", use_container_width=True, type="primary"):
                         navigate("eligibility", id=sid)
+                with b3:
+                    is_saved = (sid in st.session_state.get("saved_schemes", []) or code in st.session_state.get("saved_schemes", []))
+                    save_label = "⭐ Saved" if is_saved else "☆ Save"
+                    if st.button(save_label, key=f"res_s_{sid}", use_container_width=True, type="secondary"):
+                        if "saved_schemes" not in st.session_state:
+                            st.session_state["saved_schemes"] = []
+                        target_key = sid if sid else code
+                        if target_key not in st.session_state["saved_schemes"]:
+                            st.session_state["saved_schemes"].append(target_key)
+                            st.toast(f"Saved {code} to My Schemes!")
+                        else:
+                            st.session_state["saved_schemes"].remove(target_key)
+                            st.toast(f"Removed {code} from My Schemes.")
+                        st.rerun()
                 st.markdown("<div style='margin-bottom:20px;'></div>", unsafe_allow_html=True)
 
 
 def render_scheme_detail_page(scheme_id):
     scheme = None
     try:
-        with httpx.Client(timeout=4.0) as client:
+        with httpx.Client(timeout=3.0) as client:
             resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
             if resp.status_code == 200:
                 scheme = resp.json()
-    except Exception as err:
-        st.error("⚠️ Unable to connect to the Government Scheme Database. Please ensure backend is running.")
-        return
+    except Exception:
+        pass
+
+    if not scheme:
+        scheme = get_scheme_by_id_or_code_sqlite(scheme_id)
 
     if not scheme:
         st.error("⚠️ Scheme record not found in official database.")
@@ -935,9 +995,9 @@ def render_scheme_detail_page(scheme_id):
 
 
 def render_eligibility_page(scheme_id):
-    scheme = {}
+    scheme = None
     try:
-        with httpx.Client(timeout=4.0) as client:
+        with httpx.Client(timeout=3.0) as client:
             resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
             if resp.status_code == 200:
                 scheme = resp.json()
@@ -945,17 +1005,10 @@ def render_eligibility_page(scheme_id):
         pass
 
     if not scheme:
-        try:
-            with httpx.Client(timeout=4.0) as client:
-                resp = client.get(f"{API_BASE_URL}/schemes")
-                if resp.status_code == 200:
-                    schemes = resp.json()
-                    scheme = next((s for s in schemes if s.get("id") == scheme_id or str(s.get("code")).lower() in str(scheme_id).lower()), schemes[0] if schemes else {})
-        except Exception:
-            pass
+        scheme = get_scheme_by_id_or_code_sqlite(scheme_id)
 
     if not scheme:
-        st.error("⚠️ Unable to connect to the Government Scheme Database to evaluate eligibility.")
+        st.error("⚠️ Scheme record not found in official database.")
         return
 
     code = scheme.get("code", "SCHEME")
