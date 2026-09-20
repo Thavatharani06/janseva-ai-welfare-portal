@@ -8,7 +8,19 @@ class SchemeRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self, search: Optional[str] = None, category_id: Optional[str] = None) -> List[Scheme]:
+    async def get_all(
+        self,
+        search: Optional[str] = None,
+        category_id: Optional[str] = None,
+        state: Optional[str] = None,
+        gender: Optional[str] = None,
+        min_age: Optional[int] = None,
+        max_age: Optional[int] = None,
+        community: Optional[str] = None,
+        occupation: Optional[str] = None,
+        disability: Optional[bool] = None,
+        max_income: Optional[float] = None
+    ) -> List[Scheme]:
         query = select(Scheme).options(
             selectinload(Scheme.category),
             selectinload(Scheme.aliases),
@@ -16,6 +28,25 @@ class SchemeRepository:
         )
         if category_id:
             query = query.where(Scheme.category_id == category_id)
+        if state and state != "All States / UTs":
+            state_term = f"%{state.strip()}%"
+            query = query.where((Scheme.state_district_scope.ilike(state_term)) | (Scheme.ministry.ilike(state_term)))
+        if gender and gender != "All":
+            query = query.where((Scheme.gender_restriction == "All") | (Scheme.gender_restriction == gender) | (Scheme.gender_restriction.is_(None)))
+        if min_age is not None:
+            query = query.where(Scheme.max_age >= min_age)
+        if max_age is not None:
+            query = query.where(Scheme.min_age <= max_age)
+        if community and community != "Select":
+            comm_term = f"%{community.strip()}%"
+            query = query.where((Scheme.target_community.ilike(comm_term)) | (Scheme.target_community == "All") | (Scheme.target_community.is_(None)))
+        if occupation and occupation != "Select":
+            occ_term = f"%{occupation.strip()}%"
+            query = query.where((Scheme.target_occupation.ilike(occ_term)) | (Scheme.target_occupation == "All") | (Scheme.target_occupation.is_(None)))
+        if disability is not None:
+            query = query.where(Scheme.disability_required == disability)
+        if max_income is not None:
+            query = query.where((Scheme.max_income >= max_income) | (Scheme.max_income.is_(None)))
         if search:
             search_term = f"%{search.lower()}%"
             query = query.where(

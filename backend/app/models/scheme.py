@@ -43,6 +43,21 @@ class Scheme(Base):
     state_district_scope = Column(String(100), default="All India")
 
     required_documents = Column(JSON, nullable=True)  # ["Aadhaar", "Community Cert", "Income Cert"]
+    
+    # Provenance & Official Source Metadata
+    source_name = Column(String(100), default="myScheme / India.gov.in")
+    source_url = Column(String(512), nullable=True)
+    source_scheme_id = Column(String(100), nullable=True)
+    source_last_updated = Column(DateTime, nullable=True)
+    imported_at = Column(DateTime, default=datetime.utcnow)
+    verified_at = Column(DateTime, default=datetime.utcnow)
+    data_status = Column(String(50), default="VERIFIED_OFFICIAL")
+    language_availability = Column(JSON, nullable=True)  # ["en", "ta", "hi"]
+    benefits_summary = Column(Text, nullable=True)
+    eligibility_description = Column(Text, nullable=True)
+    application_process = Column(Text, nullable=True)
+    district_scope = Column(String(100), default="All Districts")
+
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

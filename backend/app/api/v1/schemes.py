@@ -18,10 +18,29 @@ async def list_categories(db: AsyncSession = Depends(get_db)):
 async def list_schemes(
     search: Optional[str] = Query(None),
     category_id: Optional[str] = Query(None),
+    state: Optional[str] = Query(None),
+    gender: Optional[str] = Query(None),
+    min_age: Optional[int] = Query(None),
+    max_age: Optional[int] = Query(None),
+    community: Optional[str] = Query(None),
+    occupation: Optional[str] = Query(None),
+    disability: Optional[bool] = Query(None),
+    max_income: Optional[float] = Query(None),
     db: AsyncSession = Depends(get_db)
 ):
     repo = SchemeRepository(db)
-    return await repo.get_all(search=search, category_id=category_id)
+    return await repo.get_all(
+        search=search,
+        category_id=category_id,
+        state=state,
+        gender=gender,
+        min_age=min_age,
+        max_age=max_age,
+        community=community,
+        occupation=occupation,
+        disability=disability,
+        max_income=max_income
+    )
 
 @router.get("/alias/search", response_model=AliasResolveResponse)
 async def search_scheme_by_alias(alias: str = Query(..., description="Query phrase or scheme alias in Tamil, English, or Hindi"), db: AsyncSession = Depends(get_db)):

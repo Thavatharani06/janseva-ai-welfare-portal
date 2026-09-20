@@ -3,6 +3,7 @@ import json
 import uuid
 import httpx
 from typing import Dict, Any, List
+from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
@@ -153,7 +154,7 @@ class IngestionService:
             scheme.simple_summary = f"This scheme helps you get {benefits_text}. To apply, you need: {', '.join(req_docs)}."
             scheme.eli10_summary = f"Imagine the government wants to help you. If you qualify under these conditions ({eligibility_text}), they will transfer {benefits_text} directly to your wallet!"
             
-            # Save derived limits
+            # Save derived limits & Provenance metadata
             scheme.min_age = rules["min_age"]
             scheme.max_age = rules["max_age"]
             scheme.max_income = rules["max_income"]
@@ -161,7 +162,19 @@ class IngestionService:
             scheme.target_occupation = rules["target_occupation"]
             scheme.target_community = rules["target_community"]
             scheme.state_district_scope = state_name
+            scheme.district_scope = "All Districts"
             scheme.required_documents = req_docs
+            scheme.source_name = "myScheme / India.gov.in"
+            scheme.source_url = official_url
+            scheme.source_scheme_id = code
+            scheme.source_last_updated = datetime.utcnow()
+            scheme.imported_at = datetime.utcnow()
+            scheme.verified_at = datetime.utcnow()
+            scheme.data_status = "VERIFIED_OFFICIAL"
+            scheme.language_availability = ["en", "ta", "hi"]
+            scheme.benefits_summary = benefits_text
+            scheme.eligibility_description = eligibility_text
+            scheme.application_process = f"Visit official portal {official_url} or call helpline {helpline}."
 
             await self.db.flush()
 

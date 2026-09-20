@@ -52,7 +52,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # API Base URL
-API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+API_BASE_URL = os.getenv("BACKEND_API_URL", "http://127.0.0.1:8000/api/v1")
 
 
 SCHEMES_I18N = {
@@ -205,147 +205,7 @@ def get_image_b64(filename):
 logo_b64 = get_image_b64("gwa-logo.png")
 hero_b64 = get_image_b64("gwa-hero.png")
 
-# Core Real Dataset Fallback
-DEFAULT_CATEGORIES = [
-    {"id": "cat_housing", "name": "Housing & Urban Development", "name_ta": "வீட்டுவசதித் திட்டம்", "name_hi": "आवास और शहरी विकास", "icon": "home", "description": "Subsidies and financial aid for housing construction"},
-    {"id": "cat_agriculture", "name": "Agriculture & Farmers Welfare", "name_ta": "வேளாண்மை உதவி", "name_hi": "কৃষি एवं किसान कल्याण", "icon": "sprout", "description": "Direct income support and credit for farmers"},
-    {"id": "cat_women", "name": "Women & Child Development", "name_ta": "மகளிர் நலம்", "name_hi": "महिला एवं बाल विकास", "icon": "heart", "description": "Monthly assistance, maternity benefit, and empowerment grants"},
-    {"id": "cat_health", "name": "Healthcare & Insurance", "name_ta": "சுகாதாரம் & காப்பீடு", "name_hi": "स्वास्थ्य सेवा एवं बीमा", "icon": "activity", "description": "Cashless hospital treatment and medical coverage"},
-    {"id": "cat_education", "name": "Education & Scholarships", "name_ta": "கல்வி உதவித் தொகை", "name_hi": "शिक्षा एवं छात्रवृत्ति", "icon": "graduation-cap", "description": "Financial assistance for school and college education"}
-]
-
-DEFAULT_SCHEMES = [
-    {
-        "id": "pmay-urban",
-        "category_id": "cat_housing",
-        "title": "Pradhan Mantri Awas Yojana (PMAY-Urban)",
-        "title_ta": "பிரதம மந்திரி ஆவாஸ் யோஜனா (வீட்டுவசதி திட்டம்)",
-        "title_hi": "प्रधानमंत्री आवास योजना (शहरी)",
-        "code": "PMAY-U",
-        "ministry": "Ministry of Housing and Urban Affairs",
-        "official_website": "https://pmaymis.gov.in",
-        "helpline_number": "1800-11-3377",
-        "go_reference": "G.O. MS No. 142/2015 - Credit Linked Subsidy Scheme",
-        "legal_summary": "Under G.O. MS No. 142/2015, Credit Linked Subsidy Scheme (CLSS) provides upfront interest subsidy up to Rs. 2.67 Lakhs on housing loans for EWS/LIG families with annual income up to Rs. 3,00,000.",
-        "simple_summary": "PMAY helps low-income families get a government grant and interest reduction up to ₹2.67 Lakh to build or buy a first-time pucca home.",
-        "simple_summary_ta": "குறைந்த வருமானம் கொண்ட குடும்பங்களுக்கு முதல் முறையாக வீடு கட்ட அல்லது வாங்க ₹2.67 லட்சம் வரை அரசு மானியம் மற்றும் வட்டி குறைப்பு பெற PMAY உதவுகிறது.",
-        "simple_summary_hi": "PMAY कम आय वाले परिवारों को पहली बार पक्का मकान बनाने या खरीदने के लिए ₹2.67 लाख तक की सरकारी सब्सिडी प्रदान करता है।",
-        "eli10_summary": "Imagine the government giving your family money to help build your dream house so everyone gets a safe room to sleep in!",
-        "min_age": 18,
-        "max_age": 70,
-        "max_income": 300000.0,
-        "gender_restriction": "All",
-        "disability_required": False,
-        "target_community": "EWS/LIG",
-        "target_occupation": "All Citizens",
-        "state_district_scope": "Urban India",
-        "required_documents": ["Aadhaar Card", "Income Certificate", "Ration Card", "Bank Passbook", "Property Land Deed"]
-    },
-    {
-        "id": "pm-kisan",
-        "category_id": "cat_agriculture",
-        "title": "PM-KISAN Samman Nidhi Scheme",
-        "title_ta": "பி.எம். கிசான் விவசாயிகள் உதவித் தொகை",
-        "title_hi": "पीएम-किसान सम्मान निधि योजना",
-        "code": "PM-KISAN",
-        "ministry": "Ministry of Agriculture & Farmers Welfare",
-        "official_website": "https://pmkisan.gov.in",
-        "helpline_number": "155261",
-        "go_reference": "PM-KISAN National Guidelines 2019",
-        "legal_summary": "Under PM-KISAN guidelines 2019, all landholding farmer families receive income support of Rs. 6,000 per year in three equal quarterly installments of Rs. 2,000 transferred directly into bank accounts.",
-        "simple_summary": "Eligible land-owning farmers receive ₹6,000 every year directly in their bank accounts in 3 equal quarterly installments of ₹2,000.",
-        "simple_summary_ta": "தகுதியுள்ள விவசாயிகளுக்கு ஆண்டுதோறும் ₹6,000 அவர்களின் வங்கிச் கணக்கில் 3 சம தவணைகளாக (₹2,000) நேரடியாக செலுத்தப்படுகிறது.",
-        "simple_summary_hi": "पात्र भूमिधारक किसानों को हर साल ₹6,000 सीधे उनके बैंक खातों में 3 समान किस्तों (₹2,000) में मिलते हैं।",
-        "eli10_summary": "The government sends 2,000 rupees three times a year to farmers to buy seeds and fertilizer for crops!",
-        "min_age": 18,
-        "max_age": 100,
-        "max_income": 500000.0,
-        "gender_restriction": "All",
-        "disability_required": False,
-        "target_community": "Farmers",
-        "target_occupation": "Farmer",
-        "state_district_scope": "All India",
-        "required_documents": ["Aadhaar Card", "Land Patta Certificate", "Bank Account Passbook"]
-    },
-    {
-        "id": "kalaignar-magalir",
-        "category_id": "cat_women",
-        "title": "Kalaignar Magalir Urimai Thogai Scheme",
-        "title_ta": "கலைஞர் மகளிர் உரிமைத் தொகைத் திட்டம்",
-        "title_hi": "कलाईग्नार महिला अधिकार योजना",
-        "code": "KMT",
-        "ministry": "Government of Tamil Nadu - Special Programme Implementation",
-        "official_website": "https://kmt.tn.gov.in",
-        "helpline_number": "1100",
-        "go_reference": "G.O. MS No. 46/2023 - Tamil Nadu Special Programme",
-        "legal_summary": "Under G.O. MS No. 46/2023, female heads of households with annual income below Rs. 2.5 Lakhs and electricity usage under 3600 units receive a monthly right grant of Rs. 1,000.",
-        "simple_summary": "Women heads of families in Tamil Nadu with annual family income under ₹2.5 Lakhs get ₹1,000 monthly direct bank transfer.",
-        "simple_summary_ta": "தமிழ்நாட்டில் ஆண்டு வருமானம் ₹2.5 லட்சத்திற்கு கீழ் உள்ள குடும்பத் தலைவிகளுக்கு மாதம் ₹1,000 வங்கிச் கணக்கில் நேரடியாக வழங்கப்படுகிறது.",
-        "simple_summary_hi": "तमिलनाडु में ₹2.5 लाख से कम वार्षिक आय वाले परिवारों की महिला प्रमुखों को हर महीने ₹1,000 सीधे बैंक खाते में मिलते हैं।",
-        "eli10_summary": "Every month, moms get 1,000 rupees from the government to help run the house smoothly!",
-        "min_age": 21,
-        "max_age": 100,
-        "max_income": 250000.0,
-        "gender_restriction": "Female",
-        "disability_required": False,
-        "target_community": "EWS",
-        "target_occupation": "Homemaker / Worker",
-        "state_district_scope": "Tamil Nadu",
-        "required_documents": ["Aadhaar Card", "Smart Ration Card", "Electricity Bill", "Bank Passbook"]
-    },
-    {
-        "id": "ayushman-bharat",
-        "category_id": "cat_health",
-        "title": "Ayushman Bharat PM-JAY Health Insurance",
-        "title_ta": "ஆயுஷ்மான் பாரத் மருத்துவக் காப்பீடு",
-        "title_hi": "आयुष्मान भारत पीएम-जय स्वास्थ्य बीमा",
-        "code": "PM-JAY",
-        "ministry": "National Health Authority",
-        "official_website": "https://pmjay.gov.in",
-        "helpline_number": "14555",
-        "go_reference": "PM-JAY National Health Protection Mission 2018",
-        "legal_summary": "PM-JAY provides cashless secondary and tertiary hospitalization coverage up to Rs. 5,00,000 per family per year for bottom 40% vulnerable population based on SECC 2011.",
-        "simple_summary": "Get free cashless hospital treatment coverage up to ₹5 Lakhs per family every year in empaneled public and private hospitals.",
-        "simple_summary_ta": "அரசு மற்றும் தனியார் மருத்துவமனைகளில் குடும்பத்திற்கு ஆண்டுக்கு ₹5 லட்சம் வரை இலவச ரொக்கமில்லா மருத்துவ சிகிச்சை காப்பீடு பெறலாம்.",
-        "simple_summary_hi": "संबद्ध सरकारी और निजी अस्पतालों में प्रति वर्ष प्रति परिवार ₹5 लाख तक का मुफ्त कैशलेस अस्पताल उपचार कवर प्राप्त करें।",
-        "eli10_summary": "If anyone in your family gets sick and needs hospital treatment, the health card pays up to 5 lakh rupees!",
-        "min_age": 0,
-        "max_age": 120,
-        "max_income": 250000.0,
-        "gender_restriction": "All",
-        "disability_required": False,
-        "target_community": "BPL / EWS",
-        "target_occupation": "All Citizens",
-        "state_district_scope": "All India",
-        "required_documents": ["Aadhaar Card", "Ration Card", "PM-JAY Card / SECC Household ID"]
-    },
-    {
-        "id": "moovalur-ramamirtham",
-        "category_id": "cat_education",
-        "title": "Pudhumai Penn Scheme (Higher Education Assurance)",
-        "title_ta": "புதுமைப் பெண் திட்டம் (மூவலூர் ராமாமிர்தம் அம்மையார்)",
-        "title_hi": "पुदुमई पेन योजना (उच्च शिक्षा आश्वासन)",
-        "code": "PUDHUMAI-PENN",
-        "ministry": "Department of Higher Education, Government of Tamil Nadu",
-        "official_website": "https://pen.tn.gov.in",
-        "helpline_number": "1800-425-1000",
-        "go_reference": "G.O. MS No. 116/2022 - Social Welfare & Women Empowerment",
-        "legal_summary": "Under G.O. MS No. 116/2022, girl students who studied in Tamil Nadu Government schools from Class 6 to Class 12 receive Rs. 1,000 monthly assistance during their undergraduate degree/diploma.",
-        "simple_summary": "Girl students from TN government schools get ₹1,000 every month directly in bank account until completing college degree.",
-        "simple_summary_ta": "அரசுப் பள்ளிகளில் படித்த மாணவிகளுக்கு கல்லூரிப் படிப்பு முடியும் வரை மாதம் ₹1,000 உதவித் தொகை வழங்கப்படுகிறது.",
-        "simple_summary_hi": "तमिलनाडु के सरकारी स्कूलों की छात्राओं को कॉलेज की डिग्री पूरी करने तक हर महीने ₹1,000 सीधे बैंक खाते में मिलते हैं।",
-        "eli10_summary": "Girls who studied in government schools get 1,000 rupees every month to go to college and become doctors, engineers, or teachers!",
-        "min_age": 17,
-        "max_age": 26,
-        "max_income": 400000.0,
-        "gender_restriction": "Female",
-        "disability_required": False,
-        "target_community": "Government School Students",
-        "target_occupation": "Student",
-        "state_district_scope": "Tamil Nadu",
-        "required_documents": ["Aadhaar Card", "Class 6-12 Govt School Certificate", "College Admission Bonafide", "Bank Account Passbook"]
-    }
-]
+# Real Government Scheme Data fetched dynamically from FastAPI / Database
 
 # Shared Navigation Banner for Functional Streamlit Pages
 def render_functional_header(title_en, title_ta, subtitle_en=""):
@@ -502,16 +362,6 @@ def render_schemes_page():
     speech_lang_map = {"en": "en-IN", "ta": "ta-IN", "hi": "hi-IN"}
     speech_lang = speech_lang_map.get(cur_lang, "en-IN")
 
-    # Fetch Real Schemes from Backend API or Fallback
-    schemes_to_show = DEFAULT_SCHEMES
-    try:
-        with httpx.Client(timeout=3.0) as client:
-            resp = client.get(f"{API_BASE_URL}/schemes")
-            if resp.status_code == 200:
-                schemes_to_show = resp.json()
-    except Exception:
-        pass
-
     # Custom CSS
     st.markdown("""
     <style>
@@ -528,6 +378,8 @@ def render_schemes_page():
         .scheme-card-desc { font-size: 14px; color: #334155; margin-bottom: 14px; line-height: 1.5; }
         .tag-pill { display: inline-block; background: #ffffff; border: 1px solid #10b981; color: #047857; font-size: 12px; font-weight: 600; padding: 3px 12px; border-radius: 20px; margin-right: 6px; margin-bottom: 6px; }
         .search-helper-text { font-size: 12px; color: #64748b; margin-top: 4px; margin-bottom: 16px; }
+        .disclaimer-banner { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; font-size: 12px; color: #475569; margin-bottom: 16px; }
+        .error-card { background: #fef2f2; border: 1px solid #fca5a5; padding: 20px; border-radius: 10px; color: #991b1b; text-align: center; margin-top: 20px; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -677,49 +529,65 @@ def render_schemes_page():
             
         st.markdown(f'<p class="search-helper-text">{t["exact_match_helper"]}</p>', unsafe_allow_html=True)
 
+        # Source Transparency Disclaimer
+        st.markdown("""
+        <div class="disclaimer-banner">
+            🏛️ <b>JanSeva AI — Government Scheme Information Assistant</b> (Not an official government website)<br/>
+            Official Scheme Data Source: <b>myScheme / India.gov.in</b>
+        </div>
+        """, unsafe_allow_html=True)
+
         # Tabs: All Schemes | State/UT Schemes | Central Schemes
         scheme_tab = st.radio("Scheme Origin", [t["all_schemes"], t["state_schemes"], t["central_schemes"]], horizontal=True, label_visibility="collapsed")
         
-        # Apply REAL Filtering Logic to database backend results
-        filtered = schemes_to_show
+        # Build API Query Parameters for Database Parameterized Filtering
+        api_params = {}
+        if search_q:
+            api_params["search"] = search_q
+        if state_filter and state_filter != t["all_states"]:
+            api_params["state"] = state_filter
+        if gender_filter and gender_filter != t["all_genders"]:
+            api_params["gender"] = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
+        if caste_filter and caste_filter != t["select"]:
+            api_params["community"] = caste_filter
+        if occ_filter and occ_filter != t["select"]:
+            api_params["occupation"] = occ_filter
+        if disability_filter and disability_filter != t["select"]:
+            api_params["disability"] = "true" if "Benchmark" in disability_filter else "false"
 
-        # 1. Tab Origin Filter
+        # Fetch Real Schemes directly from FastAPI backend
+        fetched_schemes = []
+        api_error = False
+        error_msg = ""
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                resp = client.get(f"{API_BASE_URL}/schemes", params=api_params)
+                if resp.status_code == 200:
+                    fetched_schemes = resp.json()
+                else:
+                    api_error = True
+                    error_msg = f"HTTP {resp.status_code}"
+        except Exception as err:
+            api_error = True
+            error_msg = str(err)
+
+        if api_error:
+            st.markdown(f"""
+            <div class="error-card">
+                <h3>⚠️ Unable to connect to the Government Scheme Database</h3>
+                <p>Please ensure the backend API service is running and accessible at <code>{API_BASE_URL}</code>.</p>
+                <p><small>Error details: {error_msg}</small></p>
+            </div>
+            """, unsafe_allow_html=True)
+            return
+
+        filtered = fetched_schemes
+
+        # Tab Origin Filtering
         if scheme_tab == t["state_schemes"]:
             filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "State" in str(s.get("ministry","")) or "Government of Tamil Nadu" in str(s.get("ministry",""))]
         elif scheme_tab == t["central_schemes"]:
             filtered = [s for s in filtered if "All India" in str(s.get("state_district_scope","")) or "Urban India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry","")) or "National" in str(s.get("ministry",""))]
-
-        # 2. State/UT Dropdown Filter (Fixing Problem 1)
-        if state_filter != t["all_states"]:
-            if "Tamil Nadu" in state_filter:
-                filtered = [s for s in filtered if "Tamil Nadu" in str(s.get("state_district_scope","")) or "Tamil Nadu" in str(s.get("ministry",""))]
-            elif "Urban India" in state_filter:
-                filtered = [s for s in filtered if "Urban India" in str(s.get("state_district_scope","")) or "Urban" in str(s.get("ministry",""))]
-            elif "All India" in state_filter:
-                filtered = [s for s in filtered if "All India" in str(s.get("state_district_scope","")) or "Ministry" in str(s.get("ministry",""))]
-
-        # 3. Category Dropdown Filter
-        if cat_filter != t["all_categories"]:
-            if "Housing" in cat_filter or "வீட்டுவசதி" in cat_filter or "आवास" in cat_filter:
-                filtered = [s for s in filtered if "cat_housing" in str(s.get("category_id","")) or "Housing" in s.get("title","") or "Awas" in s.get("title","")]
-            elif "Agriculture" in cat_filter or "வேளாண்மை" in cat_filter or "कृषि" in cat_filter:
-                filtered = [s for s in filtered if "cat_agriculture" in str(s.get("category_id","")) or "KISAN" in s.get("title","")]
-            elif "Women" in cat_filter or "மகளிர்" in cat_filter or "महिला" in cat_filter:
-                filtered = [s for s in filtered if "cat_women" in str(s.get("category_id","")) or "Magalir" in s.get("title","")]
-            elif "Health" in cat_filter or "சுகாதாரம்" in cat_filter or "स्वास्थ्य" in cat_filter:
-                filtered = [s for s in filtered if "cat_health" in str(s.get("category_id","")) or "Health" in s.get("title","") or "Ayushman" in s.get("title","")]
-            elif "Education" in cat_filter or "கல்வி" in cat_filter or "शिक्षा" in cat_filter:
-                filtered = [s for s in filtered if "cat_education" in str(s.get("category_id","")) or "Penn" in s.get("title","")]
-
-        # 4. Gender Filter
-        if gender_filter != t["all_genders"]:
-            g_target = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
-            filtered = [s for s in filtered if s.get("gender_restriction") in ["All", g_target, None]]
-
-        # 5. Search Text Filter (Typed or Voice)
-        if search_q:
-            q_clean = search_q.replace('"', '').strip().lower()
-            filtered = [s for s in filtered if q_clean in s.get("title","").lower() or q_clean in s.get("simple_summary","").lower() or q_clean in s.get("code","").lower() or q_clean in str(s.get("title_ta","")).lower() or q_clean in str(s.get("title_hi","")).lower()]
 
         # Results Count & Sort Row
         cnt_col1, cnt_col2 = st.columns([3, 1])
@@ -733,7 +601,7 @@ def render_schemes_page():
 
         # Render Real Scheme Result Cards matching myScheme format
         for s in filtered:
-            sid = s.get("id", "pmay-urban")
+            sid = s.get("id")
             code = s.get("code", "SCHEME")
             ministry = s.get("ministry", "Ministry of Social Justice")
             
@@ -748,12 +616,13 @@ def render_schemes_page():
             category_tag = t["central_schemes"] if ("Ministry" in ministry or "India" in str(s.get("state_district_scope",""))) else t["state_schemes"]
             community_tag = s.get("target_community", "All Citizens")
             scope_tag = s.get("state_district_scope", "All India")
+            src_name = s.get("source_name", "myScheme / India.gov.in")
             
             with st.container():
                 st.markdown(f"""
                 <div class="scheme-result-card">
                     <div class="scheme-card-title">{title}</div>
-                    <div class="scheme-card-ministry">{ministry}</div>
+                    <div class="scheme-card-ministry">{ministry} • <span style="color:#00865a; font-weight:600;">Source: {src_name}</span></div>
                     <div class="scheme-card-desc">{summary}</div>
                     <div style="margin-bottom:14px;">
                         <span class="tag-pill">{code}</span>
@@ -775,27 +644,32 @@ def render_schemes_page():
 
 
 def render_scheme_detail_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
-    
+    scheme = None
     try:
-        with httpx.Client(timeout=3.0) as client:
+        with httpx.Client(timeout=4.0) as client:
             resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
             if resp.status_code == 200:
                 scheme = resp.json()
-    except Exception:
-        pass
+    except Exception as err:
+        st.error("⚠️ Unable to connect to the Government Scheme Database. Please ensure backend is running.")
+        return
+
+    if not scheme:
+        st.error("⚠️ Scheme record not found in official database.")
+        return
         
     title = scheme.get("title", "Government Scheme")
     title_ta = scheme.get("title_ta", "அரசுத் திட்டம்")
     ministry = scheme.get("ministry", "Ministry of Social Welfare")
-    go_ref = scheme.get("go_reference", "G.O. MS Gazette Reference")
+    go_ref = scheme.get("go_reference", "G.O. Official Reference")
     legal_summary = scheme.get("legal_summary", "Legal provision for welfare support.")
     eli10 = scheme.get("eli10_summary", "Government support program for citizens.")
     docs = scheme.get("required_documents", ["Aadhaar Card", "Income Certificate", "Ration Card"])
     helpline = scheme.get("helpline_number", "1800-11-3377")
     website = scheme.get("official_website", "https://india.gov.in")
+    src_name = scheme.get("source_name", "myScheme / India.gov.in")
     
-    render_functional_header(title, title_ta, f"Official Ministry: {ministry}")
+    render_functional_header(title, title_ta, f"Official Ministry: {ministry} | Data Source: {src_name}")
     
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -813,6 +687,10 @@ def render_scheme_detail_page(scheme_id):
             
             <h4 style="color:#0f172a; margin-top:20px;">📋 Required Documents Checklist</h4>
             {doc_html}
+
+            <div style="margin-top:20px; padding:10px 14px; background:#f8fafc; border-radius:6px; font-size:12px; color:#64748b;">
+                🏛️ <b>Data Provenance:</b> Sourced from <b>{src_name}</b>. JanSeva AI is an independent scheme discovery assistant.
+            </div>
         </div>
         """, unsafe_allow_html=True)
         
@@ -830,9 +708,32 @@ def render_scheme_detail_page(scheme_id):
         st.markdown(f"**Official Portal:** 🌐 [{website}]({website})")
         st.markdown("</div>", unsafe_allow_html=True)
 
+
 def render_eligibility_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
-    code = scheme.get("code", "PMAY-U")
+    scheme = {}
+    try:
+        with httpx.Client(timeout=4.0) as client:
+            resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
+            if resp.status_code == 200:
+                scheme = resp.json()
+    except Exception:
+        pass
+
+    if not scheme:
+        try:
+            with httpx.Client(timeout=4.0) as client:
+                resp = client.get(f"{API_BASE_URL}/schemes")
+                if resp.status_code == 200:
+                    schemes = resp.json()
+                    scheme = next((s for s in schemes if s.get("id") == scheme_id or str(s.get("code")).lower() in str(scheme_id).lower()), schemes[0] if schemes else {})
+        except Exception:
+            pass
+
+    if not scheme:
+        st.error("⚠️ Unable to connect to the Government Scheme Database to evaluate eligibility.")
+        return
+
+    code = scheme.get("code", "SCHEME")
     title = scheme.get("title", "Government Scheme")
     
     render_functional_header(f"Eligibility Evaluator — {code}", "தகுதி தணிக்கை கணிப்பான்", f"Verifying against G.O. Gazette rules for {title}")
@@ -875,27 +776,29 @@ def render_eligibility_page(scheme_id):
             pass
             
         pass_age = age >= scheme.get("min_age", 18) and age <= scheme.get("max_age", 70)
-        pass_inc = income <= scheme.get("max_income", 300000.0)
+        pass_inc = income <= scheme.get("max_income", 300000.0) if scheme.get("max_income") else True
         pass_gen = scheme.get("gender_restriction", "All") in ["All", gender]
         score = int(((pass_age + pass_inc + pass_gen) / 3) * 100)
-        go_ref = scheme.get("go_reference", "G.O. MS Gazette Reference")
+        go_ref = scheme.get("go_reference", "Official Source Guidelines")
         
         st.markdown("<div style='margin-top:20px;'></div>", unsafe_allow_html=True)
         st.subheader("📊 WhyEligible Audit Verification Result")
         
         if score == 100:
-            st.success(f"🎉 100% ELIGIBLE across 3/3 G.O. Gazette Criteria for {title}!")
+            st.success(f"🎉 100% ELIGIBLE across criteria for {title}!")
+        elif score >= 66:
+            st.warning(f"⚠️ {score}% Partial Match — Criteria Verified.")
         else:
-            st.warning(f"⚠️ {score}% Partial Match — 2/3 Criteria Verified.")
+            st.info("ℹ️ Eligibility cannot be determined from available official information.")
             
         st.markdown(f"""
         <div style="background:white; padding:20px; border-radius:10px; border:1px solid #e2e8f0; margin-top:10px;">
-            <h4 style="margin:0 0 10px 0; color:#0f172a;">G.O. Gazette Rule Audit Checklist ({go_ref})</h4>
+            <h4 style="margin:0 0 10px 0; color:#0f172a;">Rule Audit Checklist ({go_ref})</h4>
             <div style="padding:6px 0; color:{'#15803d' if pass_age else '#b91c1c'}; font-weight:600;">
                 {'✓' if pass_age else '✗'} Age Criteria: {age} yrs (Permitted range: {scheme.get('min_age',18)}-{scheme.get('max_age',70)} yrs)
             </div>
             <div style="padding:6px 0; color:{'#15803d' if pass_inc else '#b91c1c'}; font-weight:600;">
-                {'✓' if pass_inc else '✗'} Income Limit: ₹{income:,} (Permitted ceiling: ₹{scheme.get('max_income',300000):,})
+                {'✓' if pass_inc else '✗'} Income Limit: ₹{income:,} (Permitted ceiling: ₹{int(scheme.get('max_income',300000) or 300000):,})
             </div>
             <div style="padding:6px 0; color:{'#15803d' if pass_gen else '#b91c1c'}; font-weight:600;">
                 {'✓' if pass_gen else '✗'} Gender Specification: {gender} (Required restriction: {scheme.get('gender_restriction','All')})
@@ -908,7 +811,14 @@ def render_eligibility_page(scheme_id):
             navigate("apply", id=scheme_id)
 
 def render_apply_page(scheme_id):
-    scheme = next((s for s in DEFAULT_SCHEMES if s["id"] == scheme_id or s["code"].lower() in scheme_id.lower()), DEFAULT_SCHEMES[0])
+    scheme = {}
+    try:
+        with httpx.Client(timeout=4.0) as client:
+            resp = client.get(f"{API_BASE_URL}/schemes/{scheme_id}")
+            if resp.status_code == 200:
+                scheme = resp.json()
+    except Exception:
+        pass
     code = scheme.get("code", "PMAY-U")
     title = scheme.get("title", "Government Scheme")
     
