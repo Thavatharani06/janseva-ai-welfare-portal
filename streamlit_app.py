@@ -86,6 +86,257 @@ def get_canonical_category_terms(cat_input: str) -> list:
             terms.update(v)
     return list(terms)
 
+import urllib.parse
+import urllib.request
+
+@st.cache_data(ttl=3600)
+def get_tts_audio_data_uri(text: str, lang: str) -> str:
+    iso = "ta" if lang in ["ta", "ta-IN", "தமிழ்"] else ("hi" if lang in ["hi", "hi-IN", "हिन्दी"] else "en")
+    url = f"https://translate.google.com/translate_tts?ie=UTF-8&q={urllib.parse.quote(text)}&tl={iso}&client=tw-ob"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+    try:
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            audio_bytes = resp.read()
+            b64 = base64.b64encode(audio_bytes).decode("utf-8")
+            return f"data:audio/mp3;base64,{b64}"
+    except Exception as e:
+        return ""
+
+class SchemeEligibilityDeriver:
+    @staticmethod
+    def derive_profile(s: dict) -> dict:
+        title = str(s.get("title") or "")
+        title_ta = str(s.get("title_ta") or "")
+        cat_name = str(s.get("category_name") or s.get("category") or "")
+        legal_sum = str(s.get("legal_summary") or "")
+        simple_sum = str(s.get("simple_summary") or "")
+        eli10 = str(s.get("eli10_summary") or "")
+        elig_desc = str(s.get("eligibility_description") or "")
+        benefits = str(s.get("benefits_summary") or "")
+        community = str(s.get("target_community") or "")
+        occupation = str(s.get("target_occupation") or "")
+        scope = str(s.get("state_district_scope") or "")
+        g_req = str(s.get("gender_restriction") or "")
+        min_age = s.get("min_age")
+        max_age = s.get("max_age")
+        max_income = s.get("max_income")
+        disability_req = s.get("disability_required")
+
+        full_text = f"{title} {title_ta} {cat_name} {legal_sum} {simple_sum} {eli10} {elig_desc} {benefits} {community} {occupation} {scope}".lower()
+
+        fem_terms = [
+            "female", "women", "woman", "girl", "daughter", "widow", "maternity", "pregnant", 
+            "mother", "magalir", "urimai", "pen", "பெண்", "பெண்கள்", "மகளிர்", "महिला", "बेटी", "स्त्री", "नारी", "गर्भवती"
+        ]
+        male_terms = [
+            "male", "men", "boy", "son", "ஆண்", "ஆண்கள்", "पुरुष", "लड़का"
+        ]
+
+        has_fem = any(w in full_text for w in fem_terms) or g_req.lower() in ["female", "women"]
+        has_male = any(w in full_text for w in male_terms) or g_req.lower() in ["male", "men"]
+
+        if has_fem and not has_male:
+            genders = {"FEMALE", "ALL"}
+        elif has_male and not has_fem:
+            genders = {"MALE", "ALL"}
+        else:
+            genders = {"ALL", "FEMALE", "MALE", "UNKNOWN"}
+
+        categories = set()
+        if cat_name:
+            c_clean = cat_name.strip()
+            categories.add(c_clean)
+            if "&" in c_clean:
+                categories.add(c_clean.replace("&", "and"))
+
+        cat_keywords = {
+            "Education & Scholarships": [
+                "education", "scholarship", "school", "college", "student", "samagra", "pudhumai", 
+                "study", "degree", "கல்வி", "படிப்பு", "பள்ளி", "கல்லூரி", "மாணவ", "शिक्षा", "पढ़ाई", "छात्रवृत्ति", "स्कूल"
+            ],
+            "Housing & Urban Development": [
+                "housing", "awas", "shelter", "home", "house", "building", "urban development", 
+                "வீடு", "குடியிருப்பு", "ஆவாஸ்", "घर", "मकान", "आवास", "गृह"
+            ],
+            "Agriculture & Farmers Welfare": [
+                "agriculture", "farmer", "kisan", "crop", "cultivation", "uzhavar", 
+                "விவசாயம்", "உழவர்", "பயிர்", "किसान", "कृषि", "फसल"
+            ],
+            "Healthcare & Insurance": [
+                "healthcare", "health", "insurance", "medical", "hospital", "ayushman", "maruthuvam", 
+                "சுகாதாரம்", "மருத்துவம்", "स्वास्थ्य", "अस्पताल", "बीमा", "इलाज"
+            ],
+            "Social Welfare & Pensions": [
+                "social welfare", "pension", "elderly", "old age", "welfare", "disabled", "widow", 
+                "ஓய்வூதியம்", "पेंशन", "वृद्धावस्था"
+            ],
+            "Women & Child Development": [
+                "women", "child", "girl", "maternity", "mother", "magalir", "urimai", 
+                "மகளிர்", "பெண்", "महिला", "बेटी"
+            ],
+            "Employment & Skill Development": [
+                "employment", "skill", "job", "unemployed", "work", "career", 
+                "வேலை", "தொழில்", "रोजगार", "नौकरी"
+            ],
+            "Financial Inclusion & Credit": [
+                "financial", "credit", "bank", "mudra", "loan", "dbt", 
+                "பணம்", "கடன்", "ऋण", "बैंक"
+            ],
+            "Small Business & MSME": [
+                "small business", "msme", "vendor", "svanidhi", "entrepreneur", 
+                "வியாபாரம்", "व्यापार"
+            ],
+            "Rural Development": [
+                "rural", "gramin", "panchayat", "village", 
+                "கிராமப்புற", "ग्रामीण"
+            ]
+        }
+
+        for cat_label, keywords in cat_keywords.items():
+            if any(k in full_text for k in keywords):
+                categories.add(cat_label)
+
+        states = set()
+        if "tamil nadu" in full_text or "tn" in scope.lower() or "தமிழ்நாடு" in full_text or "तमिलनाडु" in full_text:
+            states.add("Tamil Nadu")
+        if "urban india" in full_text or "urban" in scope.lower():
+            states.add("Urban India")
+        if "all india" in full_text or "central" in full_text or "national" in full_text or not scope:
+            states.add("All India")
+        if not states:
+            states.add("All India")
+
+        communities = set()
+        if community:
+            communities.add(community)
+        for c_tag in ["EWS/LIG", "Farmers", "BPL", "OBC", "SC", "ST", "General"]:
+            if c_tag.lower() in full_text or c_tag.lower() in community.lower():
+                communities.add(c_tag)
+        if not communities:
+            communities.add("All")
+
+        residence = set()
+        if "urban" in full_text or "city" in full_text or "town" in full_text:
+            residence.add("Urban")
+        if "rural" in full_text or "village" in full_text or "gramin" in full_text:
+            residence.add("Rural")
+        if not residence or "all" in full_text:
+            residence.add("All")
+
+        occupations = set()
+        if occupation:
+            occupations.add(occupation)
+        occ_map = {
+            "Farmer": ["farmer", "kisan", "cultivator", "uzhavar", "விவசாயி", "किसान"],
+            "Student": ["student", "scholar", "study", "college", "school", "மாணவர்", "छात्र"],
+            "Unorganized Worker": ["unorganized", "vendor", "artisan", "labor", "worker", "தொழிலாளி", "मज़दूर"],
+            "Homemaker": ["homemaker", "housewife", "mother", "गृहणी"],
+            "Employed": ["employed", "employee", "salaried"],
+            "Unemployed": ["unemployed", "jobless"]
+        }
+        for occ_key, occ_kw in occ_map.items():
+            if any(k in full_text for k in occ_kw):
+                occupations.add(occ_key)
+        if not occupations:
+            occupations.add("All Citizens")
+
+        benefit_types = set()
+        if "dbt" in full_text or "direct benefit" in full_text or "transfer" in full_text:
+            benefit_types.add("Direct Benefit Transfer (DBT)")
+        if "loan" in full_text or "subsidy" in full_text or "grant" in full_text or "credit" in full_text:
+            benefit_types.add("Subsidized Loan / Grant")
+        if "health" in full_text or "medical" in full_text or "insurance" in full_text:
+            benefit_types.add("Health Coverage")
+        if "pension" in full_text or "monthly" in full_text or "financial aid" in full_text:
+            benefit_types.add("Monthly Financial Aid")
+
+        has_disability = (disability_req == 1) or any(k in full_text for k in ["disab", "handicap", "divyang", "மாற்றுத்திறனாளி", "दिव्यांग"])
+
+        marital_statuses = set()
+        if "widow" in full_text or "widowed" in full_text:
+            marital_statuses.add("Widowed")
+        if "married" in full_text:
+            marital_statuses.add("Married")
+        if "single" in full_text or "unmarried" in full_text or "girl" in full_text:
+            marital_statuses.add("Single")
+        if not marital_statuses:
+            marital_statuses.add("All")
+
+        return {
+            "genders": list(genders),
+            "categories": list(categories),
+            "states": list(states),
+            "communities": list(communities),
+            "residence": list(residence),
+            "occupations": list(occupations),
+            "benefit_types": list(benefit_types),
+            "has_disability": has_disability,
+            "marital_statuses": list(marital_statuses),
+            "min_age": min_age,
+            "max_age": max_age,
+            "max_income": max_income
+        }
+
+    @staticmethod
+    def evaluate_scheme(s: dict, filters: dict) -> tuple:
+        profile = SchemeEligibilityDeriver.derive_profile(s)
+
+        req_state = filters.get("state")
+        if req_state and req_state not in ["All States / UTs", "All States", "All", "Select"]:
+            st_clean = req_state.strip()
+            if st_clean == "Tamil Nadu":
+                if not ("Tamil Nadu" in profile["states"] or "All India" in profile["states"]):
+                    return False, "NO_MATCH"
+            elif st_clean == "Urban India":
+                if not ("Urban India" in profile["states"] or "All India" in profile["states"]):
+                    return False, "NO_MATCH"
+            elif st_clean == "All India":
+                if "All India" not in profile["states"]:
+                    return False, "NO_MATCH"
+
+        req_cat = filters.get("category")
+        if req_cat and req_cat not in ["All Categories", "All", "Select"]:
+            c_clean = req_cat.strip()
+            cat_match = False
+            for c_item in profile["categories"]:
+                if c_clean.lower() in c_item.lower() or c_item.lower() in c_clean.lower():
+                    cat_match = True
+                    break
+            if not cat_match:
+                return False, "NO_MATCH"
+
+        req_gender = filters.get("gender")
+        if req_gender and req_gender not in ["All Genders", "All", "Select"]:
+            g_clean = req_gender.strip().upper()
+            if g_clean in ["FEMALE", "WOMEN"]:
+                if "FEMALE" not in profile["genders"] and "ALL" not in profile["genders"] and "UNKNOWN" not in profile["genders"]:
+                    return False, "NO_MATCH"
+            elif g_clean in ["MALE", "MEN"]:
+                if "MALE" not in profile["genders"] and "ALL" not in profile["genders"] and "UNKNOWN" not in profile["genders"]:
+                    return False, "NO_MATCH"
+
+        req_age = filters.get("age")
+        if req_age and req_age not in ["Select", "All"]:
+            min_a, max_a = None, None
+            if "18 - 25" in req_age:
+                min_a, max_a = 18, 25
+            elif "26 - 40" in req_age:
+                min_a, max_a = 26, 40
+            elif "41 - 60" in req_age:
+                min_a, max_a = 41, 60
+            elif "60+" in req_age:
+                min_a, max_a = 60, 120
+
+            if min_a is not None and max_a is not None:
+                s_min = profile.get("min_age")
+                s_max = profile.get("max_age")
+                if s_min is not None and s_min > max_a:
+                    return False, "NO_MATCH"
+                if s_max is not None and s_max < min_a:
+                    return False, "NO_MATCH"
+
+        return True, "MATCH"
+
 def ensure_sqlite_db():
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "legal_welfare.db")
@@ -930,25 +1181,23 @@ def render_schemes_page():
                 assistant_greeting = "नमस्ते! मैं आपको सरकारी योजनाएं खोजने में मदद कर सकता हूं। आपको किस प्रकार की सहायता चाहिए?"
                 sample_prompt = '💡 उदाहरण: "मुझे अपनी बेटी की पढ़ाई के लिए आर्थिक सहायता चाहिए।"'
             
-            st.markdown(f"""
-            <div style="background:#ffffff; border:2px solid #00865a; border-radius:14px; padding:18px; margin-top:8px; margin-bottom:14px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
-                    <div style="width:38px; height:38px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold;">🏛️</div>
-                    <div>
-                        <h4 style="margin:0; color:#0f172a; font-size:17px; font-weight:800;">JanSeva AI Welfare Assistant</h4>
-                        <span style="font-size:12px; color:#00865a; font-weight:600;">Conversational Voice Search</span>
-                    </div>
-                </div>
-                
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; margin-bottom:10px;">
-                    <p style="margin:0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
-                </div>
-                
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px;">
-                    {sample_prompt}
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+            tts_b64_uri = get_tts_audio_data_uri(assistant_greeting, v_lang_iso)
+            
+            st.markdown(f"""<div style="background:#ffffff; border:2px solid #00865a; border-radius:14px; padding:18px; margin-top:8px; margin-bottom:14px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
+<div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+<div style="width:38px; height:38px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold;">🏛️</div>
+<div>
+<h4 style="margin:0; color:#0f172a; font-size:17px; font-weight:800;">JanSeva AI Welfare Assistant</h4>
+<span style="font-size:12px; color:#00865a; font-weight:600;">Conversational Voice Search</span>
+</div>
+</div>
+<div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; margin-bottom:10px;">
+<p style="margin:0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
+</div>
+<div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px;">
+{sample_prompt}
+</div>
+</div>""", unsafe_allow_html=True)
             
             voice_comp_html = f"""
             <div style="text-align:center; padding:4px 0 10px 0;">
@@ -973,9 +1222,15 @@ def render_schemes_page():
                 startListening();
               }}
 
-              // 1. Play Google TTS Spoken Audio (100% reliable accent & audio stream across all platforms)
-              const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent("{assistant_greeting}") + "&tl={v_lang_iso}&client=tw-ob";
-              const audio = new Audio(ttsUrl);
+              // 1. Play Pre-synthesized Base64 Spoken Audio (100% reliable across all browsers & languages)
+              const ttsDataUri = "{tts_b64_uri}";
+              let audio;
+              if (ttsDataUri && ttsDataUri.length > 50) {{
+                audio = new Audio(ttsDataUri);
+              }} else {{
+                const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent("{assistant_greeting}") + "&tl={v_lang_iso}&client=tw-ob";
+                audio = new Audio(ttsUrl);
+              }}
 
               audio.onended = proceedToListening;
               audio.onerror = speakWithWebSpeech;
@@ -1157,53 +1412,25 @@ def render_schemes_page():
             </div>
             """, unsafe_allow_html=True)
             return
-        # Strict Python in-memory post-filtering across all 11 dropdown filters
+        # Content-Derived Scheme Eligibility Evaluation across all citizen UI filters
+        active_filters = {
+            "state": state_filter,
+            "category": cat_filter,
+            "gender": gender_filter,
+            "age": age_filter,
+            "caste": caste_filter,
+            "residence": residence_filter,
+            "benefit": benefit_filter,
+            "marital": marital_filter,
+            "disability": disability_filter,
+            "employment": emp_filter,
+            "occupation": occ_filter
+        }
         post_filtered = []
         for s in fetched_schemes:
-            # 1. State / UT
-            if state_filter and state_filter != t["all_states"]:
-                st_clean = state_filter.lower()
-                s_scope = str(s.get("state_district_scope") or "").lower()
-                s_min = str(s.get("ministry") or "").lower()
-                if st_clean == "tamil nadu":
-                    if not ("tamil nadu" in s_scope or "tn" in s_scope or "tamil nadu" in s_min or "all india" in s_scope or "central" in s_scope or not s_scope):
-                        continue
-                elif st_clean == "urban india":
-                    if not ("urban" in s_scope or "all india" in s_scope or "central" in s_scope or not s_scope):
-                        continue
-                elif st_clean == "all india":
-                    if not ("all india" in s_scope or "central" in s_scope or not s_scope):
-                        continue
-
-            # 2. Scheme Category
-            if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
-                c_clean = cat_filter.strip()
-                cat_terms = get_canonical_category_terms(c_clean)
-                
-                s_cat = str(s.get("category_name") or s.get("category") or "").lower()
-                s_title = str(s.get("title") or "").lower()
-                
-                cat_ok = any(term.lower() in s_cat or term.lower() in s_title for term in cat_terms)
-                if not cat_ok:
-                    continue
-
-            # 3. Gender
-            if gender_filter and gender_filter != t["all_genders"]:
-                g_req = str(s.get("gender_restriction") or "All")
-                g_clean = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
-                if g_req not in ["All", "None", "", None] and g_clean.lower() not in g_req.lower():
-                    continue
-
-            # 4. Residence
-            if residence_filter and residence_filter not in [t["select"], "All"]:
-                res_clean = residence_filter.lower()
-                res_text = f"{s.get('state_district_scope')} {s.get('eligibility_description')} {s.get('simple_summary')}".lower()
-                if res_clean == "urban" and "rural only" in res_text:
-                    continue
-                if res_clean == "rural" and "urban only" in res_text:
-                    continue
-
-            post_filtered.append(s)
+            is_match, _ = SchemeEligibilityDeriver.evaluate_scheme(s, active_filters)
+            if is_match:
+                post_filtered.append(s)
 
         filtered = post_filtered
 
