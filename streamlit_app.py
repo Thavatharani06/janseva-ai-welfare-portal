@@ -86,6 +86,19 @@ def get_canonical_category_terms(cat_input: str) -> list:
             terms.update(v)
     return list(terms)
 
+def normalize_filter_value(val) -> str:
+    if not val:
+        return None
+    val_str = str(val).strip()
+    neutral_set = {
+        "select", "all", "none (0%)", "none", "0%", 
+        "all states / uts", "all states", "all categories", "all genders", "all citizens",
+        "அனைத்து", "தேர்ந்தெடு", "सभी"
+    }
+    if val_str.lower() in neutral_set:
+        return None
+    return val_str
+
 import urllib.parse
 import urllib.request
 
@@ -1347,43 +1360,52 @@ def render_schemes_page():
         # Tabs: All Schemes | State/UT Schemes | Central Schemes | Saved Schemes
         scheme_tab = st.radio("Scheme Origin", [t["all_schemes"], t["state_schemes"], t["central_schemes"], "⭐ Saved Schemes"], horizontal=True, label_visibility="collapsed")
         
-        # Build API Query Parameters for Database Parameterized Filtering
+        # Explicit Filter Normalization: Convert all neutral/default choices ("Select", "All", "None (0%)") to None
+        norm_state = normalize_filter_value(state_filter)
+        norm_cat = normalize_filter_value(cat_filter)
+        norm_gender = normalize_filter_value(gender_filter)
+        norm_age = normalize_filter_value(age_filter)
+        norm_caste = normalize_filter_value(caste_filter)
+        norm_residence = normalize_filter_value(residence_filter)
+        norm_benefit = normalize_filter_value(benefit_filter)
+        norm_marital = normalize_filter_value(marital_filter)
+        norm_disability = normalize_filter_value(disability_filter)
+        norm_emp = normalize_filter_value(emp_filter)
+        norm_occ = normalize_filter_value(occ_filter)
+
+        # Build API Query Parameters using ONLY active (non-None) normalized filters
         api_params = {}
         if search_q and search_q.strip():
             api_params["search"] = search_q.strip()
-        if state_filter and state_filter != t["all_states"]:
-            api_params["state"] = state_filter
-        if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
-            api_params["category"] = cat_filter
-        if gender_filter and gender_filter != t["all_genders"]:
-            api_params["gender"] = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
-        if age_filter and age_filter != t["select"]:
-            if "18" in age_filter and "25" in age_filter:
-                api_params["min_age"] = 18
-                api_params["max_age"] = 25
-            elif "26" in age_filter and "40" in age_filter:
-                api_params["min_age"] = 26
-                api_params["max_age"] = 40
-            elif "41" in age_filter and "60" in age_filter:
-                api_params["min_age"] = 41
-                api_params["max_age"] = 60
-            elif "60+" in age_filter:
-                api_params["min_age"] = 60
-                api_params["max_age"] = 120
-        if caste_filter and caste_filter != t["select"]:
-            api_params["community"] = caste_filter
-        if residence_filter and residence_filter not in [t["select"], "All"]:
-            api_params["residence"] = residence_filter
-        if benefit_filter and benefit_filter != t["select"]:
-            api_params["benefit_type"] = benefit_filter
-        if marital_filter and marital_filter != t["select"]:
-            api_params["marital_status"] = marital_filter
-        if disability_filter and disability_filter != t["select"]:
-            api_params["disability"] = "true" if "Benchmark" in disability_filter else "false"
-        if emp_filter and emp_filter != t["select"]:
-            api_params["employment"] = emp_filter
-        if occ_filter and occ_filter != t["select"]:
-            api_params["occupation"] = occ_filter
+        if norm_state:
+            api_params["state"] = norm_state
+        if norm_cat:
+            api_params["category"] = norm_cat
+        if norm_gender:
+            api_params["gender"] = norm_gender
+        if norm_age:
+            if "18" in norm_age and "25" in norm_age:
+                api_params["min_age"] = 18; api_params["max_age"] = 25
+            elif "26" in norm_age and "40" in norm_age:
+                api_params["min_age"] = 26; api_params["max_age"] = 40
+            elif "41" in norm_age and "60" in norm_age:
+                api_params["min_age"] = 41; api_params["max_age"] = 60
+            elif "60+" in norm_age:
+                api_params["min_age"] = 60; api_params["max_age"] = 120
+        if norm_caste:
+            api_params["community"] = norm_caste
+        if norm_residence:
+            api_params["residence"] = norm_residence
+        if norm_benefit:
+            api_params["benefit_type"] = norm_benefit
+        if norm_marital:
+            api_params["marital_status"] = norm_marital
+        if norm_disability and "benchmark" in norm_disability.lower():
+            api_params["disability"] = "true"
+        if norm_emp:
+            api_params["employment"] = norm_emp
+        if norm_occ:
+            api_params["occupation"] = norm_occ
 
         # Fetch Real Schemes directly from FastAPI backend / SQLite DB
         fetched_schemes = []
@@ -1412,20 +1434,20 @@ def render_schemes_page():
             </div>
             """, unsafe_allow_html=True)
             return
-        # Content-Derived Scheme Eligibility Evaluation across all citizen UI filters
-        active_filters = {
-            "state": state_filter,
-            "category": cat_filter,
-            "gender": gender_filter,
-            "age": age_filter,
-            "caste": caste_filter,
-            "residence": residence_filter,
-            "benefit": benefit_filter,
-            "marital": marital_filter,
-            "disability": disability_filter,
-            "employment": emp_filter,
-            "occupation": occ_filter
-        }
+
+        # Content-Derived Scheme Eligibility Evaluation across ONLY active non-None filters
+        active_filters = {}
+        if norm_state: active_filters["state"] = norm_state
+        if norm_cat: active_filters["category"] = norm_cat
+        if norm_gender: active_filters["gender"] = norm_gender
+        if norm_age: active_filters["age"] = norm_age
+        if norm_caste: active_filters["caste"] = norm_caste
+        if norm_residence: active_filters["residence"] = norm_residence
+        if norm_benefit: active_filters["benefit"] = norm_benefit
+        if norm_marital: active_filters["marital"] = norm_marital
+        if norm_disability: active_filters["disability"] = norm_disability
+        if norm_emp: active_filters["employment"] = norm_emp
+        if norm_occ: active_filters["occupation"] = norm_occ
         post_filtered = []
         for s in fetched_schemes:
             is_match, _ = SchemeEligibilityDeriver.evaluate_scheme(s, active_filters)
