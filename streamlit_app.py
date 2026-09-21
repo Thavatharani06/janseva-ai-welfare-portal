@@ -4,6 +4,7 @@ import os
 import base64
 import sqlite3
 import httpx
+import re
 
 # Page Configuration
 st.set_page_config(
@@ -116,226 +117,147 @@ def get_tts_audio_data_uri(text: str, lang: str) -> str:
         return ""
 
 class SchemeEligibilityDeriver:
-    @staticmethod
-    def derive_profile(s: dict) -> dict:
+    _index = None
+
+    @classmethod
+    def get_index(cls) -> dict:
+        if cls._index is not None:
+            return cls._index
+
+        db_path = ensure_sqlite_db()
+        if not db_path or not os.path.exists(db_path):
+            return {}
+
+        conn = sqlite3.connect(db_path)
+        conn.row_factory = sqlite3.Row
+        cursor = conn.cursor()
+        schemes = [dict(r) for r in cursor.execute("SELECT * FROM schemes").fetchall()]
+        conn.close()
+
+        cls._index = {s["id"]: cls.derive_profile(s) for s in schemes}
+        return cls._index
+
+    @classmethod
+    def derive_profile(cls, s: dict) -> dict:
         title = str(s.get("title") or "")
         title_ta = str(s.get("title_ta") or "")
         cat_name = str(s.get("category_name") or s.get("category") or "")
-        legal_sum = str(s.get("legal_summary") or "")
-        simple_sum = str(s.get("simple_summary") or "")
-        eli10 = str(s.get("eli10_summary") or "")
-        elig_desc = str(s.get("eligibility_description") or "")
-        benefits = str(s.get("benefits_summary") or "")
-        community = str(s.get("target_community") or "")
-        occupation = str(s.get("target_occupation") or "")
-        scope = str(s.get("state_district_scope") or "")
         g_req = str(s.get("gender_restriction") or "")
-        min_age = s.get("min_age")
-        max_age = s.get("max_age")
-        max_income = s.get("max_income")
-        disability_req = s.get("disability_required")
+        scope = str(s.get("state_district_scope") or "")
+        occ = str(s.get("target_occupation") or "")
+        elig = str(s.get("eligibility_description") or "")
 
-        full_text = f"{title} {title_ta} {cat_name} {legal_sum} {simple_sum} {eli10} {elig_desc} {benefits} {community} {occupation} {scope}".lower()
+        elig_text = f"{g_req} {elig}".lower()
 
-        fem_terms = [
-            "female", "women", "woman", "girl", "daughter", "widow", "maternity", "pregnant", 
-            "mother", "magalir", "urimai", "pen", "பெண்", "பெண்கள்", "மகளிர்", "महिला", "बेटी", "स्त्री", "नारी", "गर्भवती"
-        ]
-        male_terms = [
-            "male", "men", "boy", "son", "ஆண்", "ஆண்கள்", "पुरुष", "लड़का"
-        ]
+        # 1. GENDER DERIVATION (Exact Word Boundary Regex)
+        fem_regex = r"\b(female|girl|girls|woman|women|daughter|widow|widows|maternity|pregnant|mother|magalir|urimai|pen|பெண்|பெண்கள்|மகளிர்|महिला|बेटी|स्त्री)\b"
+        male_regex = r"\b(male|man|men|boy|boys|son|ஆண்|ஆண்கள்|पुरुष)\b"
 
-        has_fem = any(w in full_text for w in fem_terms) or g_req.lower() in ["female", "women"]
-        has_male = any(w in full_text for w in male_terms) or g_req.lower() in ["male", "men"]
+        has_fem = bool(re.search(fem_regex, elig_text)) or g_req.lower() in ["female", "women"]
+        has_male = bool(re.search(male_regex, elig_text)) or g_req.lower() in ["male", "men"]
 
         if has_fem and not has_male:
-            genders = {"FEMALE", "ALL"}
+            gender = "FEMALE"
         elif has_male and not has_fem:
-            genders = {"MALE", "ALL"}
+            gender = "MALE"
         else:
-            genders = {"ALL", "FEMALE", "MALE", "UNKNOWN"}
+            gender = "ALL"
 
-        categories = set()
-        if cat_name:
-            c_clean = cat_name.strip()
-            categories.add(c_clean)
-            if "&" in c_clean:
-                categories.add(c_clean.replace("&", "and"))
-
-        cat_keywords = {
-            "Education & Scholarships": [
-                "education", "scholarship", "school", "college", "student", "samagra", "pudhumai", 
-                "study", "degree", "கல்வி", "படிப்பு", "பள்ளி", "கல்லூரி", "மாணவ", "शिक्षा", "पढ़ाई", "छात्रवृत्ति", "स्कूल"
-            ],
-            "Housing & Urban Development": [
-                "housing", "awas", "shelter", "home", "house", "building", "urban development", 
-                "வீடு", "குடியிருப்பு", "ஆவாஸ்", "घर", "मकान", "आवास", "गृह"
-            ],
-            "Agriculture & Farmers Welfare": [
-                "agriculture", "farmer", "kisan", "crop", "cultivation", "uzhavar", 
-                "விவசாயம்", "உழவர்", "பயிர்", "किसान", "कृषि", "फसल"
-            ],
-            "Healthcare & Insurance": [
-                "healthcare", "health", "insurance", "medical", "hospital", "ayushman", "maruthuvam", 
-                "சுகாதாரம்", "மருத்துவம்", "स्वास्थ्य", "अस्पताल", "बीमा", "इलाज"
-            ],
-            "Social Welfare & Pensions": [
-                "social welfare", "pension", "elderly", "old age", "welfare", "disabled", "widow", 
-                "ஓய்வூதியம்", "पेंशन", "वृद्धावस्था"
-            ],
-            "Women & Child Development": [
-                "women", "child", "girl", "maternity", "mother", "magalir", "urimai", 
-                "மகளிர்", "பெண்", "महिला", "बेटी"
-            ],
-            "Employment & Skill Development": [
-                "employment", "skill", "job", "unemployed", "work", "career", 
-                "வேலை", "தொழில்", "रोजगार", "नौकरी"
-            ],
-            "Financial Inclusion & Credit": [
-                "financial", "credit", "bank", "mudra", "loan", "dbt", 
-                "பணம்", "கடன்", "ऋण", "बैंक"
-            ],
-            "Small Business & MSME": [
-                "small business", "msme", "vendor", "svanidhi", "entrepreneur", 
-                "வியாபாரம்", "व्यापार"
-            ],
-            "Rural Development": [
-                "rural", "gramin", "panchayat", "village", 
-                "கிராமப்புற", "ग्रामीण"
-            ]
+        # 2. CANONICAL CATEGORY DERIVATION
+        cat_map = {
+            "education": "Education & Scholarships",
+            "scholarship": "Education & Scholarships",
+            "housing": "Housing & Urban Development",
+            "urban": "Housing & Urban Development",
+            "agriculture": "Agriculture & Farmers Welfare",
+            "farmer": "Agriculture & Farmers Welfare",
+            "health": "Healthcare & Insurance",
+            "insurance": "Healthcare & Insurance",
+            "social": "Social Welfare & Pensions",
+            "pension": "Social Welfare & Pensions",
+            "women": "Women & Child Development",
+            "child": "Women & Child Development",
+            "employment": "Employment & Skill Development",
+            "skill": "Employment & Skill Development",
+            "financial": "Financial Inclusion & Credit",
+            "credit": "Financial Inclusion & Credit",
+            "business": "Small Business & MSME",
+            "msme": "Small Business & MSME",
+            "rural": "Rural Development"
         }
+        canonical_cat = "General Welfare"
+        c_lower = cat_name.lower()
+        for k, v in cat_map.items():
+            if k in c_lower:
+                canonical_cat = v
+                break
 
-        for cat_label, keywords in cat_keywords.items():
-            if any(k in full_text for k in keywords):
-                categories.add(cat_label)
-
+        # 3. STATE SCOPE
         states = set()
-        if "tamil nadu" in full_text or "tn" in scope.lower() or "தமிழ்நாடு" in full_text or "तमिलनाडु" in full_text:
+        s_lower = scope.lower()
+        if "tamil nadu" in s_lower or "tn" in s_lower or "தமிழ்நாடு" in s_lower:
             states.add("Tamil Nadu")
-        if "urban india" in full_text or "urban" in scope.lower():
-            states.add("Urban India")
-        if "all india" in full_text or "central" in full_text or "national" in full_text or not scope:
+        if "all india" in s_lower or "central" in s_lower or not s_lower:
             states.add("All India")
         if not states:
             states.add("All India")
 
-        communities = set()
-        if community:
-            communities.add(community)
-        for c_tag in ["EWS/LIG", "Farmers", "BPL", "OBC", "SC", "ST", "General"]:
-            if c_tag.lower() in full_text or c_tag.lower() in community.lower():
-                communities.add(c_tag)
-        if not communities:
-            communities.add("All")
-
-        residence = set()
-        if "urban" in full_text or "city" in full_text or "town" in full_text:
-            residence.add("Urban")
-        if "rural" in full_text or "village" in full_text or "gramin" in full_text:
-            residence.add("Rural")
-        if not residence or "all" in full_text:
-            residence.add("All")
-
-        occupations = set()
-        if occupation:
-            occupations.add(occupation)
-        occ_map = {
-            "Farmer": ["farmer", "kisan", "cultivator", "uzhavar", "விவசாயி", "किसान"],
-            "Student": ["student", "scholar", "study", "college", "school", "மாணவர்", "छात्र"],
-            "Unorganized Worker": ["unorganized", "vendor", "artisan", "labor", "worker", "தொழிலாளி", "मज़दूर"],
-            "Homemaker": ["homemaker", "housewife", "mother", "गृहणी"],
-            "Employed": ["employed", "employee", "salaried"],
-            "Unemployed": ["unemployed", "jobless"]
-        }
-        for occ_key, occ_kw in occ_map.items():
-            if any(k in full_text for k in occ_kw):
-                occupations.add(occ_key)
-        if not occupations:
-            occupations.add("All Citizens")
-
-        benefit_types = set()
-        if "dbt" in full_text or "direct benefit" in full_text or "transfer" in full_text:
-            benefit_types.add("Direct Benefit Transfer (DBT)")
-        if "loan" in full_text or "subsidy" in full_text or "grant" in full_text or "credit" in full_text:
-            benefit_types.add("Subsidized Loan / Grant")
-        if "health" in full_text or "medical" in full_text or "insurance" in full_text:
-            benefit_types.add("Health Coverage")
-        if "pension" in full_text or "monthly" in full_text or "financial aid" in full_text:
-            benefit_types.add("Monthly Financial Aid")
-
-        has_disability = (disability_req == 1) or any(k in full_text for k in ["disab", "handicap", "divyang", "மாற்றுத்திறனாளி", "दिव्यांग"])
-
-        marital_statuses = set()
-        if "widow" in full_text or "widowed" in full_text:
-            marital_statuses.add("Widowed")
-        if "married" in full_text:
-            marital_statuses.add("Married")
-        if "single" in full_text or "unmarried" in full_text or "girl" in full_text:
-            marital_statuses.add("Single")
-        if not marital_statuses:
-            marital_statuses.add("All")
-
         return {
-            "genders": list(genders),
-            "categories": list(categories),
+            "id": s.get("id"),
+            "code": s.get("code"),
+            "title": title,
+            "gender": gender,
+            "category": canonical_cat,
             "states": list(states),
-            "communities": list(communities),
-            "residence": list(residence),
-            "occupations": list(occupations),
-            "benefit_types": list(benefit_types),
-            "has_disability": has_disability,
-            "marital_statuses": list(marital_statuses),
-            "min_age": min_age,
-            "max_age": max_age,
-            "max_income": max_income
+            "min_age": s.get("min_age"),
+            "max_age": s.get("max_age")
         }
 
-    @staticmethod
-    def evaluate_scheme(s: dict, filters: dict) -> tuple:
-        profile = SchemeEligibilityDeriver.derive_profile(s)
+    @classmethod
+    def evaluate_scheme(cls, s: dict, active_filters: dict) -> tuple:
+        idx = cls.get_index()
+        sid = s.get("id")
+        profile = idx.get(sid) or cls.derive_profile(s)
 
-        req_state = filters.get("state")
-        if req_state and req_state not in ["All States / UTs", "All States", "All", "Select"]:
-            st_clean = req_state.strip()
-            if st_clean == "Tamil Nadu":
-                if not ("Tamil Nadu" in profile["states"] or "All India" in profile["states"]):
+        # 1. State / UT Filter
+        req_state = active_filters.get("state")
+        if req_state:
+            if req_state == "Tamil Nadu":
+                if "Tamil Nadu" not in profile["states"] and "All India" not in profile["states"]:
                     return False, "NO_MATCH"
-            elif st_clean == "Urban India":
-                if not ("Urban India" in profile["states"] or "All India" in profile["states"]):
+            elif req_state == "Urban India":
+                if "Urban India" not in profile["states"] and "All India" not in profile["states"]:
                     return False, "NO_MATCH"
-            elif st_clean == "All India":
+            elif req_state == "All India":
                 if "All India" not in profile["states"]:
                     return False, "NO_MATCH"
 
-        req_cat = filters.get("category")
-        if req_cat and req_cat not in ["All Categories", "All", "Select"]:
-            c_clean = req_cat.strip()
-            cat_match = False
-            for c_item in profile["categories"]:
-                if c_clean.lower() in c_item.lower() or c_item.lower() in c_clean.lower():
-                    cat_match = True
-                    break
-            if not cat_match:
+        # 2. Category Filter
+        req_cat = active_filters.get("category")
+        if req_cat:
+            if profile["category"].lower() != req_cat.lower() and req_cat.lower() not in profile["category"].lower():
                 return False, "NO_MATCH"
 
-        req_gender = filters.get("gender")
-        if req_gender and req_gender not in ["All Genders", "All", "Select"]:
+        # 3. Gender Filter
+        req_gender = active_filters.get("gender")
+        if req_gender:
             g_clean = req_gender.strip().upper()
             if g_clean in ["FEMALE", "WOMEN"]:
-                if "FEMALE" not in profile["genders"] and "ALL" not in profile["genders"] and "UNKNOWN" not in profile["genders"]:
+                if profile["gender"] == "MALE":
                     return False, "NO_MATCH"
             elif g_clean in ["MALE", "MEN"]:
-                if "MALE" not in profile["genders"] and "ALL" not in profile["genders"] and "UNKNOWN" not in profile["genders"]:
+                if profile["gender"] == "FEMALE":
                     return False, "NO_MATCH"
 
-        req_age = filters.get("age")
-        if req_age and req_age not in ["Select", "All"]:
+        # 4. Age Filter
+        req_age = active_filters.get("age")
+        if req_age:
             min_a, max_a = None, None
-            if "18 - 25" in req_age:
+            if "18" in req_age and "25" in req_age:
                 min_a, max_a = 18, 25
-            elif "26 - 40" in req_age:
+            elif "26" in req_age and "40" in req_age:
                 min_a, max_a = 26, 40
-            elif "41 - 60" in req_age:
+            elif "41" in req_age and "60" in req_age:
                 min_a, max_a = 41, 60
             elif "60+" in req_age:
                 min_a, max_a = 60, 120
