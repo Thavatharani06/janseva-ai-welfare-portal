@@ -831,7 +831,7 @@ def render_schemes_page():
                 sample_prompt = '💡 उदाहरण: "मुझे अपनी बेटी की पढ़ाई के लिए आर्थिक सहायता चाहिए।"'
             
             st.markdown(f"""
-            <div style="background:#f8fafc; border:2px solid #00865a; border-radius:14px; padding:22px; margin-top:12px; margin-bottom:20px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
+            <div style="background:#f8fafc; border:2px solid #00865a; border-radius:14px; padding:20px; margin-top:12px; margin-bottom:16px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
                     <div style="width:42px; height:42px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;">🏛️</div>
                     <div>
@@ -840,14 +840,15 @@ def render_schemes_page():
                     </div>
                 </div>
                 
-                <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:14px;">
+                <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
                     <strong style="color:#00865a; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Assistant Speech:</strong>
                     <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
                 </div>
                 
-                <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px; margin-bottom:16px;">
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px;">
                     {sample_prompt}
                 </div>
+            </div>
             """, unsafe_allow_html=True)
             
             voice_comp_html = f"""
@@ -983,7 +984,8 @@ def render_schemes_page():
                 if st.button("❌ Close", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
                     if "v_transcript" in st.query_params:
                         del st.query_params["v_transcript"]
-            st.markdown("</div>", unsafe_allow_html=True)
+                    st.session_state["show_voice_modal"] = False
+                    st.rerun()
             
         st.markdown(f'<p class="search-helper-text">{t["exact_match_helper"]}</p>', unsafe_allow_html=True)
 
