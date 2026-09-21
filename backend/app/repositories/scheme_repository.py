@@ -5,6 +5,38 @@ from sqlalchemy.orm import selectinload
 from sqlalchemy import or_
 from app.models.scheme import Scheme, SchemeCategory, SchemeAlias, Document
 
+CATEGORY_TAXONOMY_MAP = {
+    "education": ["Education & Scholarships", "Education", "Scholarship", "Scholarships", "Samagra", "Education and Scholarships"],
+    "housing": ["Housing & Urban Development", "Housing", "Awas", "Urban Development", "Housing and Urban Development"],
+    "agriculture": ["Agriculture & Farmers Welfare", "Agriculture", "Farmer", "Farmers", "Kisan", "Agriculture and Farmers Welfare"],
+    "farmer": ["Agriculture & Farmers Welfare", "Agriculture", "Farmer", "Farmers", "Kisan", "Agriculture and Farmers Welfare"],
+    "health": ["Healthcare & Insurance", "Healthcare", "Health", "Insurance", "Medical", "Healthcare and Insurance"],
+    "healthcare": ["Healthcare & Insurance", "Healthcare", "Health", "Insurance", "Medical", "Healthcare and Insurance"],
+    "social": ["Social Welfare & Pensions", "Social Welfare", "Pension", "Pensions", "Welfare", "Social Welfare and Pensions"],
+    "pension": ["Social Welfare & Pensions", "Social Welfare", "Pension", "Pensions", "Welfare", "Social Welfare and Pensions"],
+    "women": ["Women & Child Development", "Women", "Child", "Girl", "Women and Child Development"],
+    "employment": ["Employment & Skill Development", "Employment", "Skill", "Job", "Employment and Skill Development"],
+    "financial": ["Financial Inclusion & Credit", "Financial", "Credit", "Bank", "Mudra", "Financial Inclusion and Credit"],
+    "business": ["Small Business & MSME", "Small Business", "MSME", "Business", "Small Business and MSME"],
+    "msme": ["Small Business & MSME", "Small Business", "MSME", "Business", "Small Business and MSME"],
+    "rural": ["Rural Development", "Rural", "Gramin", "Panchayat", "Rural Development"]
+}
+
+def get_canonical_category_terms(cat_input: str) -> list:
+    if not cat_input:
+        return []
+    c_raw = cat_input.strip()
+    c_lower = c_raw.lower()
+    terms = {c_raw}
+    if "&" in c_raw:
+        terms.add(c_raw.replace("&", "and"))
+    if " and " in c_lower:
+        terms.add(c_raw.replace(" and ", " & "))
+    for k, v in CATEGORY_TAXONOMY_MAP.items():
+        if k in c_lower:
+            terms.update(v)
+    return list(terms)
+
 class SchemeRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
@@ -29,11 +61,7 @@ class SchemeRepository:
         )
         if category_id and category_id.strip() not in ["All Categories", "Select", "All"]:
             c_clean = category_id.strip()
-            cat_terms = {c_clean}
-            if "&" in c_clean:
-                cat_terms.add(c_clean.replace("&", "and"))
-            if " and " in c_clean:
-                cat_terms.add(c_clean.replace(" and ", " & "))
+            cat_terms = get_canonical_category_terms(c_clean)
             
             cat_conditions = []
             for term in cat_terms:
@@ -41,7 +69,8 @@ class SchemeRepository:
                 cat_conditions.extend([
                     Scheme.category_id == term,
                     Scheme.category_name.ilike(cat_term),
-                    SchemeCategory.name.ilike(cat_term)
+                    SchemeCategory.name.ilike(cat_term),
+                    Scheme.title.ilike(cat_term)
                 ])
             query = query.outerjoin(Scheme.category).where(or_(*cat_conditions))
         if state and state not in ["All", "All States / UTs"]:

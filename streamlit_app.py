@@ -54,6 +54,38 @@ st.markdown("""
 # API Base URL
 API_BASE_URL = os.getenv("BACKEND_API_URL", "http://127.0.0.1:8000/api/v1")
 
+CATEGORY_TAXONOMY_MAP = {
+    "education": ["Education & Scholarships", "Education", "Scholarship", "Scholarships", "Samagra", "Education and Scholarships"],
+    "housing": ["Housing & Urban Development", "Housing", "Awas", "Urban Development", "Housing and Urban Development"],
+    "agriculture": ["Agriculture & Farmers Welfare", "Agriculture", "Farmer", "Farmers", "Kisan", "Agriculture and Farmers Welfare"],
+    "farmer": ["Agriculture & Farmers Welfare", "Agriculture", "Farmer", "Farmers", "Kisan", "Agriculture and Farmers Welfare"],
+    "health": ["Healthcare & Insurance", "Healthcare", "Health", "Insurance", "Medical", "Healthcare and Insurance"],
+    "healthcare": ["Healthcare & Insurance", "Healthcare", "Health", "Insurance", "Medical", "Healthcare and Insurance"],
+    "social": ["Social Welfare & Pensions", "Social Welfare", "Pension", "Pensions", "Welfare", "Social Welfare and Pensions"],
+    "pension": ["Social Welfare & Pensions", "Social Welfare", "Pension", "Pensions", "Welfare", "Social Welfare and Pensions"],
+    "women": ["Women & Child Development", "Women", "Child", "Girl", "Women and Child Development"],
+    "employment": ["Employment & Skill Development", "Employment", "Skill", "Job", "Employment and Skill Development"],
+    "financial": ["Financial Inclusion & Credit", "Financial", "Credit", "Bank", "Mudra", "Financial Inclusion and Credit"],
+    "business": ["Small Business & MSME", "Small Business", "MSME", "Business", "Small Business and MSME"],
+    "msme": ["Small Business & MSME", "Small Business", "MSME", "Business", "Small Business and MSME"],
+    "rural": ["Rural Development", "Rural", "Gramin", "Panchayat", "Rural Development"]
+}
+
+def get_canonical_category_terms(cat_input: str) -> list:
+    if not cat_input:
+        return []
+    c_raw = cat_input.strip()
+    c_lower = c_raw.lower()
+    terms = {c_raw}
+    if "&" in c_raw:
+        terms.add(c_raw.replace("&", "and"))
+    if " and " in c_lower:
+        terms.add(c_raw.replace(" and ", " & "))
+    for k, v in CATEGORY_TAXONOMY_MAP.items():
+        if k in c_lower:
+            terms.update(v)
+    return list(terms)
+
 def ensure_sqlite_db():
     base_dir = os.path.dirname(__file__)
     db_path = os.path.join(base_dir, "legal_welfare.db")
@@ -1145,27 +1177,13 @@ def render_schemes_page():
 
             # 2. Scheme Category
             if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
+                c_clean = cat_filter.strip()
+                cat_terms = get_canonical_category_terms(c_clean)
+                
                 s_cat = str(s.get("category_name") or s.get("category") or "").lower()
                 s_title = str(s.get("title") or "").lower()
-                c_clean = cat_filter.lower().replace(" and ", " & ")
-                c_alt = cat_filter.lower().replace(" & ", " and ")
                 
-                cat_ok = (c_clean in s_cat or c_alt in s_cat)
-                if not cat_ok:
-                    if "housing" in c_clean and ("housing" in s_cat or "awas" in s_cat or "housing" in s_title or "awas" in s_title):
-                        cat_ok = True
-                    elif "education" in c_clean and ("education" in s_cat or "scholarship" in s_cat or "study" in s_title or "scholarship" in s_title):
-                        cat_ok = True
-                    elif "farmer" in c_clean and ("farmer" in s_cat or "agriculture" in s_cat or "kisan" in s_title or "crop" in s_title):
-                        cat_ok = True
-                    elif "health" in c_clean and ("health" in s_cat or "medical" in s_cat or "insurance" in s_cat):
-                        cat_ok = True
-                    elif "social welfare" in c_clean and ("social" in s_cat or "welfare" in s_cat or "pension" in s_cat or "pension" in s_title):
-                        cat_ok = True
-                    elif "women" in c_clean and ("women" in s_cat or "child" in s_cat or "girl" in s_title or "matru" in s_title):
-                        cat_ok = True
-                    elif "business" in c_clean and ("business" in s_cat or "msme" in s_cat or "mudra" in s_title or "svanidhi" in s_title):
-                        cat_ok = True
+                cat_ok = any(term.lower() in s_cat or term.lower() in s_title for term in cat_terms)
                 if not cat_ok:
                     continue
 
