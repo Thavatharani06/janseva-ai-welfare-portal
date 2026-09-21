@@ -1432,23 +1432,17 @@ def render_schemes_page():
         if norm_occ:
             api_params["occupation"] = norm_occ
 
-        # Fetch Real Schemes directly from FastAPI backend / SQLite DB
+        # Fetch Candidate Schemes directly from SQLite DB / Master Catalog
         fetched_schemes = []
         api_error = False
         error_msg = ""
         try:
-            with httpx.Client(timeout=3.0) as client:
-                resp = client.get(f"{API_BASE_URL}/schemes", params=api_params)
-                if resp.status_code == 200:
-                    fetched_schemes = resp.json()
-                else:
-                    fetched_schemes = fetch_schemes_from_sqlite_db(api_params)
-        except Exception:
-            try:
-                fetched_schemes = fetch_schemes_from_sqlite_db(api_params)
-            except Exception as err:
-                api_error = True
-                error_msg = str(err)
+            # Pass only search parameter to SQLite DB so structured filters are evaluated exclusively by Master Catalog
+            search_param = {"search": search_q.strip()} if (search_q and search_q.strip()) else {}
+            fetched_schemes = fetch_schemes_from_sqlite_db(search_param)
+        except Exception as err:
+            api_error = True
+            error_msg = str(err)
 
         if api_error:
             st.markdown(f"""
