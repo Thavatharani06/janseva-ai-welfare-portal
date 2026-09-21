@@ -219,8 +219,35 @@ def fetch_schemes_from_sqlite_db(params):
         s_lower = s_raw.lower()
         s_term = f"%{s_lower}%"
         import re
-        words = [w.lower() for w in re.findall(r'\w+', s_raw) if len(w) > 2 and w.lower() not in {"need", "want", "for", "the", "and", "from", "looking", "help", "with"}]
         
+        stop_words = {
+            "i", "a", "an", "the", "in", "on", "at", "to", "for", "of", "or", "and", "is", "it", "am", "are", "be", "by", "my", "me", "we", "us", "he", "she", "do", "no", "so", "if", "as",
+            "need", "want", "looking", "help", "with", "scheme", "schemes", "government", "govt", "support", "assistance",
+            "எனக்கு", "வேண்டும்", "உதவி", "திட்டம்", "அரசு", "ஒரு", "மற்றும்", "உள்ளது",
+            "मुझे", "चाहिए", "सहायता", "योजना", "सरकारी", "एक", "और", "का", "की", "के", "में", "से", "हूँ", "है", "लिए"
+        }
+        raw_tokens = [w.lower() for w in re.findall(r'[^\s,.!?\-\"\']+', s_raw)]
+        words = [w for w in raw_tokens if len(w) >= 2 and w not in stop_words]
+        
+        concept_keywords = []
+        valid_words = [w for w in raw_tokens if len(w) <= 20]
+        s_combined = " ".join(valid_words)
+        
+        if s_combined and any(k in s_combined for k in ["education", "study", "student", "scholarship", "school", "college", "degree", "கல்வி", "படிப்பு", "பள்ளி", "கல்லூரி", "மாணவ", "शिक्षा", "पढ़ाई", "छात्रवृत्ति", "स्कूल"]):
+            concept_keywords.extend(["education", "scholarship", "school", "college", "student", "samagra", "pudhumai"])
+        elif s_combined and any(k in s_combined for k in ["housing", "house", "home", "building", "construction", "pmay", "shelter", "வீடு", "குடியிருப்பு", "ஆவாஸ்", "घर", "मकान", "आवास", "गृह"]):
+            concept_keywords.extend(["housing", "awas", "house", "home", "building"])
+        elif s_combined and any(k in s_combined for k in ["farmer", "agriculture", "crop", "kisan", "cultivation", "power", "solar", "விவசாயி", "விவசாயம்", "பயிர்", "உழவர்", "किसान", "कृषि", "फसल"]):
+            concept_keywords.extend(["farmer", "agriculture", "kisan", "crop", "uzhavar"])
+        elif s_combined and any(k in s_combined for k in ["health", "hospital", "insurance", "medical", "treatment", "medicine", "dialysis", "மருத்துவம்", "சுகாதாரம்", "மருத்துவமனை", "स्वास्थ्य", "अस्पताल", "इलाज", "बीमा"]):
+            concept_keywords.extend(["health", "insurance", "ayushman", "maruthuvam", "medical"])
+        elif s_combined and any(k in s_combined for k in ["pension", "elderly", "old age", "widow", "disabled", "disability", "ஓய்வூதியம்", "पेंशन", "वृद्धावस्था"]):
+            concept_keywords.extend(["pension", "old age", "widow", "disability", "disabled"])
+        elif s_combined and any(k in s_combined for k in ["women", "girl", "mother", "female", "maternity", "marriage", "மகளிர்", "பெண்", "பெண்கள்", "திருமணம்", "महिला", "बेटी", "स्त्री", "विवाह"]):
+            concept_keywords.extend(["women", "girl", "matru", "magalir", "maternity", "marriage"])
+        elif s_combined and any(k in s_combined for k in ["business", "loan", "entrepreneur", "employment", "skill", "vendor", "job", "வேலை", "தொழில்", "கடன்", "रोजगार", "नौकरी", "व्यापार", "ऋण"]):
+            concept_keywords.extend(["employment", "skill", "mudra", "svanidhi", "entrepreneur", "business"])
+
         search_clauses = [
             "title LIKE ?", "title_ta LIKE ?", "code LIKE ?",
             "legal_summary LIKE ?", "simple_summary LIKE ?",
@@ -228,7 +255,8 @@ def fetch_schemes_from_sqlite_db(params):
         ]
         sql_params.extend([s_term, s_term, s_term, s_term, s_term, s_term, s_term])
         
-        for w in words:
+        all_query_words = words + concept_keywords
+        for w in all_query_words:
             w_pattern = f"%{w}%"
             search_clauses.extend([
                 "title LIKE ?", "title_ta LIKE ?", "code LIKE ?", f"{cat_col} LIKE ?",
@@ -265,8 +293,36 @@ def fetch_schemes_from_sqlite_db(params):
 
     occupation = params.get("occupation")
     if occupation and occupation != "Select":
-        query += " AND (target_occupation = 'All' OR target_occupation LIKE ?)"
+        query += " AND (target_occupation = 'All' OR target_occupation LIKE ? OR target_occupation IS NULL)"
         sql_params.append(f"%{occupation}%")
+
+    residence = params.get("residence")
+    if residence and residence not in ["All", "Select"]:
+        query += " AND (state_district_scope LIKE ? OR eligibility_description LIKE ? OR simple_summary LIKE ? OR state_district_scope LIKE '%All%')"
+        sql_params.extend([f"%{residence}%", f"%{residence}%", f"%{residence}%"])
+
+    benefit_type = params.get("benefit_type")
+    if benefit_type and benefit_type != "Select":
+        if "DBT" in benefit_type:
+            query += " AND (benefits_summary LIKE '%DBT%' OR benefits_summary LIKE '%Transfer%' OR benefits_summary LIKE '%Financial%' OR benefits_summary LIKE '%Cash%')"
+        elif "Loan" in benefit_type or "Grant" in benefit_type:
+            query += " AND (benefits_summary LIKE '%Loan%' OR benefits_summary LIKE '%Subsidy%' OR benefits_summary LIKE '%Grant%' OR benefits_summary LIKE '%Credit%')"
+        elif "Health" in benefit_type:
+            query += " AND (benefits_summary LIKE '%Health%' OR benefits_summary LIKE '%Medical%' OR benefits_summary LIKE '%Insurance%' OR category_name LIKE '%Health%')"
+        elif "Monthly" in benefit_type:
+            query += " AND (benefits_summary LIKE '%Monthly%' OR benefits_summary LIKE '%Pension%' OR benefits_summary LIKE '%Per Month%')"
+
+    disability = params.get("disability")
+    if disability is not None:
+        if disability == "true" or disability is True:
+            query += " AND (disability_required = 1 OR eligibility_description LIKE '%disab%' OR legal_summary LIKE '%disab%')"
+        elif disability == "false" or disability is False:
+            query += " AND (disability_required = 0 OR disability_required IS NULL)"
+
+    employment = params.get("employment")
+    if employment and employment != "Select":
+        query += " AND (target_occupation LIKE ? OR target_occupation = 'All' OR target_occupation IS NULL OR eligibility_description LIKE ?)"
+        sql_params.extend([f"%{employment}%", f"%{employment}%"])
 
     category = params.get("category")
     if category and category not in ["All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
@@ -282,7 +338,6 @@ def fetch_schemes_from_sqlite_db(params):
             cat_pattern = f"%{term}%"
             cat_clauses.append(f"({cat_col} LIKE ? OR category LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)")
             sql_params.extend([cat_pattern, cat_pattern, cat_pattern, cat_pattern, cat_pattern])
-        
         query += f" AND ({' OR '.join(cat_clauses)})"
 
     rows = cursor.execute(query, sql_params).fetchall()
@@ -729,6 +784,14 @@ def render_schemes_page():
     # MAIN SEARCH AREA: TWO COLUMN LAYOUT (26% Filter | 74% Results)
     col_filter, col_results = st.columns([26, 74])
 
+    # Synchronize query parameters with session state BEFORE rendering widgets
+    qp_transcript = st.query_params.get("v_transcript")
+    qp_search_param = st.query_params.get("search")
+    if qp_transcript:
+        st.session_state["search_text_input"] = qp_transcript
+    elif qp_search_param and "search_text_input" not in st.session_state:
+        st.session_state["search_text_input"] = qp_search_param
+
     # LEFT FILTER PANEL
     with col_filter:
         st.markdown(f"""
@@ -738,20 +801,11 @@ def render_schemes_page():
         """, unsafe_allow_html=True)
         
         if st.button(t["reset_filters"], key="reset_filters_btn", type="secondary", use_container_width=True):
-            st.session_state["f_state"] = t["all_states"]
-            st.session_state["f_cat"] = t["all_categories"]
-            st.session_state["f_gender"] = t["all_genders"]
-            st.session_state["f_age"] = t["select"]
-            st.session_state["f_caste"] = t["select"]
-            st.session_state["f_residence"] = t["select"]
-            st.session_state["f_benefit"] = t["select"]
-            st.session_state["f_marital"] = t["select"]
-            st.session_state["f_disability"] = t["select"]
-            st.session_state["f_emp"] = t["select"]
-            st.session_state["f_occ"] = t["select"]
-            st.session_state["search_text_input"] = ""
-            st.session_state["v_text"] = ""
-            for k in ["search", "v_transcript", "category", "state", "gender", "age", "community"]:
+            for k in ["f_state", "f_cat", "f_gender", "f_age", "f_caste", "f_residence", "f_benefit", "f_marital", "f_disability", "f_emp", "f_occ", "search_text_input", "v_text"]:
+                if k in st.session_state:
+                    del st.session_state[k]
+            st.session_state["show_voice_modal"] = False
+            for k in ["search", "v_transcript", "category", "state", "gender", "age", "community", "residence", "benefit", "marital", "disability", "emp", "occ"]:
                 if k in st.query_params:
                     del st.query_params[k]
             st.rerun()
@@ -801,8 +855,8 @@ def render_schemes_page():
     # RIGHT RESULTS PANEL
     with col_results:
         # Welcome Greeting Banner for Scheme Search
-        default_search = st.query_params.get("v_transcript") or st.query_params.get("search", "")
-        if not default_search and not st.session_state.get("search_text_input"):
+        default_search = st.session_state.get("search_text_input", "") or st.query_params.get("v_transcript", "") or st.query_params.get("search", "")
+        if not default_search:
             st.markdown("""
             <div style="background:linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border:1px solid #bae6fd; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
                 <h3 style="margin:0 0 6px 0; color:#0f172a; font-size:18px; font-weight:800;">👋 Welcome to Scheme Search</h3>
@@ -835,7 +889,7 @@ def render_schemes_page():
             v_lang_iso = "en" if v_lang == "English" else ("ta" if v_lang == "தமிழ்" else "hi")
             
             if v_lang == "English":
-                assistant_greeting = "Hi! I can help you find government schemes. What kind of support are you looking for?"
+                assistant_greeting = "Hi! Welcome to Scheme Search. What kind of government support are you looking for?"
                 sample_prompt = '💡 Example: "I need financial help for my daughter\'s education."'
             elif v_lang == "தமிழ்":
                 assistant_greeting = "வணக்கம்! அரசு திட்டங்களை கண்டுபிடிக்க நான் உதவுகிறேன். உங்களுக்கு எந்த வகையான உதவி தேவை?"
@@ -845,18 +899,17 @@ def render_schemes_page():
                 sample_prompt = '💡 उदाहरण: "मुझे अपनी बेटी की पढ़ाई के लिए आर्थिक सहायता चाहिए।"'
             
             st.markdown(f"""
-            <div style="background:#ffffff; border:2px solid #00865a; border-radius:14px; padding:20px; margin-top:8px; margin-bottom:16px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
-                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-                    <div style="width:42px; height:42px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;">🏛️</div>
+            <div style="background:#ffffff; border:2px solid #00865a; border-radius:14px; padding:18px; margin-top:8px; margin-bottom:14px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:10px;">
+                    <div style="width:38px; height:38px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:bold;">🏛️</div>
                     <div>
-                        <h4 style="margin:0; color:#0f172a; font-size:18px; font-weight:800;">JanSeva AI — Government Welfare Assistant</h4>
-                        <span style="font-size:12px; color:#00865a; font-weight:600;">Voice Search & Scheme Discovery</span>
+                        <h4 style="margin:0; color:#0f172a; font-size:17px; font-weight:800;">JanSeva AI Welfare Assistant</h4>
+                        <span style="font-size:12px; color:#00865a; font-weight:600;">Conversational Voice Search</span>
                     </div>
                 </div>
                 
-                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
-                    <strong style="color:#00865a; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Assistant Speech:</strong>
-                    <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:12px 14px; margin-bottom:10px;">
+                    <p style="margin:0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
                 </div>
                 
                 <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px;">
@@ -866,11 +919,11 @@ def render_schemes_page():
             """, unsafe_allow_html=True)
             
             voice_comp_html = f"""
-            <div style="text-align:center; padding:6px 0 12px 0;">
+            <div style="text-align:center; padding:4px 0 10px 0;">
               <button id="v-mic-btn" onclick="startGuidedVoiceFlow()" style="background:#00865a; color:#ffffff; border:none; border-radius:30px; padding:12px 28px; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:10px; box-shadow:0 4px 12px rgba(0,134,90,0.25); transition:all 0.2s;">
                 🎙️ Click to Speak ({v_lang})
               </button>
-              <div id="v-status" style="margin-top:12px; font-size:13px; font-weight:700; color:#475569;">Click button to hear Assistant & Speak.</div>
+              <div id="v-status" style="margin-top:10px; font-size:13px; font-weight:700; color:#475569;">Click button to hear Assistant & Speak.</div>
             </div>
             <script>
             function startGuidedVoiceFlow() {{
@@ -888,24 +941,36 @@ def render_schemes_page():
                 startListening();
               }}
 
-              if ('speechSynthesis' in window) {{
-                window.speechSynthesis.cancel();
-                const u = new SpeechSynthesisUtterance("{assistant_greeting}");
-                u.lang = "{v_lang_code}";
-                u.rate = 0.95;
-                
-                const voices = window.speechSynthesis.getVoices();
-                const matched = voices.find(v => v.lang.toLowerCase().includes("{v_lang_iso}"));
-                if (matched) u.voice = matched;
+              // 1. Play Google TTS Spoken Audio (100% reliable accent & audio stream across all platforms)
+              const ttsUrl = "https://translate.google.com/translate_tts?ie=UTF-8&q=" + encodeURIComponent("{assistant_greeting}") + "&tl={v_lang_iso}&client=tw-ob";
+              const audio = new Audio(ttsUrl);
 
-                u.onend = proceedToListening;
-                u.onerror = proceedToListening;
-                window.speechSynthesis.speak(u);
+              audio.onended = proceedToListening;
+              audio.onerror = speakWithWebSpeech;
 
-                setTimeout(proceedToListening, 2200);
-              }} else {{
-                proceedToListening();
+              audio.play().catch(speakWithWebSpeech);
+
+              function speakWithWebSpeech() {{
+                if ('speechSynthesis' in window) {{
+                  window.speechSynthesis.cancel();
+                  const u = new SpeechSynthesisUtterance("{assistant_greeting}");
+                  u.lang = "{v_lang_code}";
+                  u.rate = 0.95;
+                  
+                  const voices = window.speechSynthesis.getVoices();
+                  const matched = voices.find(v => v.lang.toLowerCase().includes("{v_lang_iso}"));
+                  if (matched) u.voice = matched;
+
+                  u.onend = proceedToListening;
+                  u.onerror = proceedToListening;
+                  window.speechSynthesis.speak(u);
+                }} else {{
+                  proceedToListening();
+                }}
               }}
+
+              // Safety timer guarantee (2.5s)
+              setTimeout(proceedToListening, 2500);
 
               function startListening() {{
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -954,55 +1019,22 @@ def render_schemes_page():
             }}
             </script>
             """
-            components.html(voice_comp_html, height=120)
+            components.html(voice_comp_html, height=110)
             
-            captured_transcript = st.query_params.get("v_transcript", st.session_state.get("v_text", ""))
+            captured_transcript = st.query_params.get("v_transcript", st.session_state.get("search_text_input", ""))
             
             if captured_transcript:
-                # Auto-sync with search input state
-                st.session_state["search_text_input"] = captured_transcript
-                st.query_params["search"] = captured_transcript
-
                 st.markdown(f"""
-                <div style="background:#ffffff; border:1px solid #0284c7; border-radius:10px; padding:14px; margin-bottom:14px;">
-                    <span style="font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">Your Request:</span>
-                    <p style="margin:4px 0 0 0; font-size:16px; font-weight:700; color:#0f172a;">"{captured_transcript}"</p>
+                <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:12px 16px; margin-bottom:12px;">
+                    <span style="font-size:12px; font-weight:700; color:#166534; text-transform:uppercase;">Conversational Assistant:</span>
+                    <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600;">You said: "{captured_transcript}"</p>
+                    <p style="margin:4px 0 0 0; color:#047857; font-size:14px; font-weight:500;">Searching for relevant schemes matching your request...</p>
                 </div>
                 """, unsafe_allow_html=True)
-                
-                # Execute RAG Guidance check for adaptive follow-up
-                try:
-                    with httpx.Client(timeout=3.0) as client:
-                        v_resp = client.post(f"{API_BASE_URL}/voice/process", data={"raw_transcript": captured_transcript, "language": v_lang_code})
-                        if v_resp.status_code == 200:
-                            v_data = v_resp.json()
-                            ast_speech = v_data.get("assistant_speech", "I found relevant government schemes matching your request.")
-                            follow_up_q = v_data.get("follow_up")
-                            
-                            st.markdown(f"""
-                            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:14px; margin-bottom:14px;">
-                                <strong style="color:#166534; font-size:13px; text-transform:uppercase;">🤖 Assistant Response:</strong>
-                                <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600;">{ast_speech}</p>
-                                {f'<div style="margin-top:10px; padding:8px; background:#ffffff; border-radius:6px; color:#1e3a8a; font-size:13px; font-weight:600;">💡 Follow-up: {follow_up_q}</div>' if follow_up_q else ''}
-                            </div>
-                            """, unsafe_allow_html=True)
-                except Exception:
-                    pass
-
-            rec_text = st.text_input("Your Request / உங்கள் கோரிக்கை / आपकी मांग", value=captured_transcript, placeholder="Type or speak your request...", key="voice_recognized_input")
             
-            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
-            with btn_col1:
-                if st.button("🔍 Find Schemes", key="voice_modal_search_btn", type="primary", use_container_width=True):
-                    if rec_text.strip():
-                        st.session_state["search_text_input"] = rec_text.strip()
-                        st.query_params["search"] = rec_text.strip()
-                        if "v_transcript" in st.query_params:
-                            del st.query_params["v_transcript"]
-                        st.session_state["show_voice_modal"] = False
-                        st.rerun()
-            with btn_col2:
-                if st.button("🔄 Clear Request", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
+            v_b1, v_b2 = st.columns([1, 1])
+            with v_b1:
+                if st.button("🔄 Clear Voice Query", key="v_clear_btn", type="secondary", use_container_width=True):
                     if "v_transcript" in st.query_params:
                         del st.query_params["v_transcript"]
                     if "search" in st.query_params:
@@ -1010,10 +1042,8 @@ def render_schemes_page():
                     st.session_state["search_text_input"] = ""
                     st.session_state["v_text"] = ""
                     st.rerun()
-            with btn_col3:
-                if st.button("❌ Close", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
-                    if "v_transcript" in st.query_params:
-                        del st.query_params["v_transcript"]
+            with v_b2:
+                if st.button("❌ Close Voice", key="v_close_btn", type="secondary", use_container_width=True):
                     st.session_state["show_voice_modal"] = False
                     st.rerun()
             
@@ -1032,8 +1062,8 @@ def render_schemes_page():
         
         # Build API Query Parameters for Database Parameterized Filtering
         api_params = {}
-        if search_q:
-            api_params["search"] = search_q
+        if search_q and search_q.strip():
+            api_params["search"] = search_q.strip()
         if state_filter and state_filter != t["all_states"]:
             api_params["state"] = state_filter
         if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
@@ -1055,10 +1085,18 @@ def render_schemes_page():
                 api_params["max_age"] = 120
         if caste_filter and caste_filter != t["select"]:
             api_params["community"] = caste_filter
-        if occ_filter and occ_filter != t["select"]:
-            api_params["occupation"] = occ_filter
+        if residence_filter and residence_filter not in [t["select"], "All"]:
+            api_params["residence"] = residence_filter
+        if benefit_filter and benefit_filter != t["select"]:
+            api_params["benefit_type"] = benefit_filter
+        if marital_filter and marital_filter != t["select"]:
+            api_params["marital_status"] = marital_filter
         if disability_filter and disability_filter != t["select"]:
             api_params["disability"] = "true" if "Benchmark" in disability_filter else "false"
+        if emp_filter and emp_filter != t["select"]:
+            api_params["employment"] = emp_filter
+        if occ_filter and occ_filter != t["select"]:
+            api_params["occupation"] = occ_filter
 
         # Fetch Real Schemes directly from FastAPI backend / SQLite DB
         fetched_schemes = []
@@ -1087,8 +1125,69 @@ def render_schemes_page():
             </div>
             """, unsafe_allow_html=True)
             return
+        # Strict Python in-memory post-filtering across all 11 dropdown filters
+        post_filtered = []
+        for s in fetched_schemes:
+            # 1. State / UT
+            if state_filter and state_filter != t["all_states"]:
+                st_clean = state_filter.lower()
+                s_scope = str(s.get("state_district_scope") or "").lower()
+                s_min = str(s.get("ministry") or "").lower()
+                if st_clean == "tamil nadu":
+                    if not ("tamil nadu" in s_scope or "tn" in s_scope or "tamil nadu" in s_min or "all india" in s_scope or "central" in s_scope or not s_scope):
+                        continue
+                elif st_clean == "urban india":
+                    if not ("urban" in s_scope or "all india" in s_scope or "central" in s_scope or not s_scope):
+                        continue
+                elif st_clean == "all india":
+                    if not ("all india" in s_scope or "central" in s_scope or not s_scope):
+                        continue
 
-        filtered = fetched_schemes
+            # 2. Scheme Category
+            if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
+                s_cat = str(s.get("category_name") or s.get("category") or "").lower()
+                s_title = str(s.get("title") or "").lower()
+                c_clean = cat_filter.lower().replace(" and ", " & ")
+                c_alt = cat_filter.lower().replace(" & ", " and ")
+                
+                cat_ok = (c_clean in s_cat or c_alt in s_cat)
+                if not cat_ok:
+                    if "housing" in c_clean and ("housing" in s_cat or "awas" in s_cat or "housing" in s_title or "awas" in s_title):
+                        cat_ok = True
+                    elif "education" in c_clean and ("education" in s_cat or "scholarship" in s_cat or "study" in s_title or "scholarship" in s_title):
+                        cat_ok = True
+                    elif "farmer" in c_clean and ("farmer" in s_cat or "agriculture" in s_cat or "kisan" in s_title or "crop" in s_title):
+                        cat_ok = True
+                    elif "health" in c_clean and ("health" in s_cat or "medical" in s_cat or "insurance" in s_cat):
+                        cat_ok = True
+                    elif "social welfare" in c_clean and ("social" in s_cat or "welfare" in s_cat or "pension" in s_cat or "pension" in s_title):
+                        cat_ok = True
+                    elif "women" in c_clean and ("women" in s_cat or "child" in s_cat or "girl" in s_title or "matru" in s_title):
+                        cat_ok = True
+                    elif "business" in c_clean and ("business" in s_cat or "msme" in s_cat or "mudra" in s_title or "svanidhi" in s_title):
+                        cat_ok = True
+                if not cat_ok:
+                    continue
+
+            # 3. Gender
+            if gender_filter and gender_filter != t["all_genders"]:
+                g_req = str(s.get("gender_restriction") or "All")
+                g_clean = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)
+                if g_req not in ["All", "None", "", None] and g_clean.lower() not in g_req.lower():
+                    continue
+
+            # 4. Residence
+            if residence_filter and residence_filter not in [t["select"], "All"]:
+                res_clean = residence_filter.lower()
+                res_text = f"{s.get('state_district_scope')} {s.get('eligibility_description')} {s.get('simple_summary')}".lower()
+                if res_clean == "urban" and "rural only" in res_text:
+                    continue
+                if res_clean == "rural" and "urban only" in res_text:
+                    continue
+
+            post_filtered.append(s)
+
+        filtered = post_filtered
 
         # Tab Origin Filtering
         if scheme_tab == t["state_schemes"]:
