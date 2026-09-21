@@ -250,10 +250,21 @@ def fetch_schemes_from_sqlite_db(params):
         sql_params.append(f"%{occupation}%")
 
     category = params.get("category")
-    if category and category not in ["All Categories", "Select"]:
-        query += f" AND ({cat_col} LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)"
-        cat_term = f"%{category}%"
-        sql_params.extend([cat_term, cat_term, cat_term, cat_term])
+    if category and category not in ["All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
+        c_clean = category.strip()
+        cat_terms = {c_clean}
+        if "&" in c_clean:
+            cat_terms.add(c_clean.replace("&", "and"))
+        if " and " in c_clean:
+            cat_terms.add(c_clean.replace(" and ", " & "))
+        
+        cat_clauses = []
+        for term in cat_terms:
+            cat_pattern = f"%{term}%"
+            cat_clauses.append(f"({cat_col} LIKE ? OR category LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ? OR title LIKE ?)")
+            sql_params.extend([cat_pattern, cat_pattern, cat_pattern, cat_pattern, cat_pattern])
+        
+        query += f" AND ({' OR '.join(cat_clauses)})"
 
     rows = cursor.execute(query, sql_params).fetchall()
     results = []
@@ -694,8 +705,9 @@ def render_schemes_page():
             st.session_state["f_disability"] = t["select"]
             st.session_state["f_emp"] = t["select"]
             st.session_state["f_occ"] = t["select"]
-            if "search" in st.query_params:
-                del st.query_params["search"]
+            for k in ["search", "category", "state", "gender", "age", "community"]:
+                if k in st.query_params:
+                    del st.query_params[k]
             st.rerun()
 
         state_opts = [t["all_states"], "Tamil Nadu", "Urban India", "All India"]
@@ -713,6 +725,20 @@ def render_schemes_page():
             "Women & Child Development"
         ])
         gender_opts = [t["all_genders"], t["female"], t["male"], t["transgender"]]
+
+        if "f_state" not in st.session_state and "state" in st.query_params:
+            qp_state = st.query_params.get("state")
+            if qp_state in state_opts:
+                st.session_state["f_state"] = qp_state
+
+        if "f_cat" not in st.session_state and "category" in st.query_params:
+            qp_cat = st.query_params.get("category")
+            if qp_cat:
+                qp_clean = qp_cat.strip().replace(" and ", " & ")
+                for c_opt in cat_opts:
+                    if c_opt.strip().replace(" and ", " & ").lower() == qp_clean.lower():
+                        st.session_state["f_cat"] = c_opt
+                        break
 
         state_filter = st.selectbox(t["state_ut"], state_opts, key="f_state")
         cat_filter = st.selectbox(t["scheme_category"], cat_opts, key="f_cat")
@@ -807,7 +833,7 @@ def render_schemes_page():
             api_params["search"] = search_q
         if state_filter and state_filter != t["all_states"]:
             api_params["state"] = state_filter
-        if cat_filter and cat_filter != t["all_categories"]:
+        if cat_filter and cat_filter not in [t["all_categories"], "All Categories", "அனைத்து பிரிவுகள்", "सभी श्रेणियां", "All", "Select"]:
             api_params["category"] = cat_filter
         if gender_filter and gender_filter != t["all_genders"]:
             api_params["gender"] = "Female" if (gender_filter == t["female"] or gender_filter == "Female") else ("Male" if (gender_filter == t["male"] or gender_filter == "Male") else gender_filter)

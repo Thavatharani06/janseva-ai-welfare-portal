@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
+from sqlalchemy import or_
 from app.models.scheme import Scheme, SchemeCategory, SchemeAlias, Document
 
 class SchemeRepository:
@@ -26,13 +27,23 @@ class SchemeRepository:
             selectinload(Scheme.aliases),
             selectinload(Scheme.documents)
         )
-        if category_id:
-            cat_term = f"%{category_id.strip()}%"
-            query = query.outerjoin(Scheme.category).where(
-                (Scheme.category_id == category_id) | 
-                (Scheme.category_name.ilike(cat_term)) | 
-                (SchemeCategory.name.ilike(cat_term))
-            )
+        if category_id and category_id.strip() not in ["All Categories", "Select", "All"]:
+            c_clean = category_id.strip()
+            cat_terms = {c_clean}
+            if "&" in c_clean:
+                cat_terms.add(c_clean.replace("&", "and"))
+            if " and " in c_clean:
+                cat_terms.add(c_clean.replace(" and ", " & "))
+            
+            cat_conditions = []
+            for term in cat_terms:
+                cat_term = f"%{term}%"
+                cat_conditions.extend([
+                    Scheme.category_id == term,
+                    Scheme.category_name.ilike(cat_term),
+                    SchemeCategory.name.ilike(cat_term)
+                ])
+            query = query.outerjoin(Scheme.category).where(or_(*cat_conditions))
         if state and state not in ["All", "All States / UTs"]:
             if state == "All India" or state == "Central":
                 query = query.where(
