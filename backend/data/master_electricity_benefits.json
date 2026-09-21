@@ -1,0 +1,61 @@
+[
+  {
+    "benefit_id": "TN_DOMESTIC_ELECTRICITY_SUBSIDY",
+    "name": "Tamil Nadu Domestic Electricity Subsidy",
+    "service": "Electricity",
+    "state": "Tamil Nadu",
+    "beneficiary_category": "Domestic Consumer",
+    "benefit_type": "Free electricity",
+    "unit_limit": 100,
+    "period": "bi-monthly",
+    "eligibility_rules": {
+      "state": "Tamil Nadu",
+      "consumer_category": ["Domestic Consumer", "Domestic"]
+    },
+    "required_information": ["state", "consumer_category"],
+    "official_source": "Government of Tamil Nadu — Energy Department & TANGEDCO Tariff Orders",
+    "source_url": "https://www.tangedco.gov.in",
+    "source_verified_at": "2026-09-21",
+    "status": "ACTIVE"
+  },
+  {
+    "benefit_id": "TN_HANDLOOM_FREE_ELECTRICITY",
+    "name": "Tamil Nadu Free Electricity Scheme for Handloom Weavers",
+    "service": "Electricity",
+    "state": "Tamil Nadu",
+    "beneficiary_category": "Handloom Weaver",
+    "benefit_type": "Free electricity",
+    "unit_limit": 200,
+    "period": "bi-monthly",
+    "eligibility_rules": {
+      "state": "Tamil Nadu",
+      "occupation": ["Handloom Weaver", "Handloom"],
+      "consumer_category": ["Handloom Weaver", "Handloom"]
+    },
+    "required_information": ["state", "occupation"],
+    "official_source": "Government of Tamil Nadu — Department of Handlooms, Handicrafts, Textiles and Khadi",
+    "source_url": "https://www.tn.gov.in/handlooms",
+    "source_verified_at": "2026-09-21",
+    "status": "ACTIVE"
+  },
+  {
+    "benefit_id": "TN_POWERLOOM_FREE_ELECTRICITY",
+    "name": "Tamil Nadu Free Electricity Scheme for Powerloom Weavers",
+    "service": "Electricity",
+    "state": "Tamil Nadu",
+    "beneficiary_category": "Powerloom Weaver",
+    "benefit_type": "Free electricity",
+    "unit_limit": 750,
+    "period": "bi-monthly",
+    "eligibility_rules": {
+      "state": "Tamil Nadu",
+      "occupation": ["Powerloom Weaver", "Powerloom"],
+      "consumer_category": ["Powerloom Weaver", "Powerloom"]
+    },
+    "required_information": ["state", "occupation"],
+    "official_source": "Government of Tamil Nadu — Department of Handlooms, Handicrafts, Textiles and Khadi",
+    "source_url": "https://www.tn.gov.in/handlooms",
+    "source_verified_at": "2026-09-21",
+    "status": "ACTIVE"
+  }
+]

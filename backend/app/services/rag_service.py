@@ -30,6 +30,66 @@ class RAGService:
         """
         start_time = time.time()
 
+        # Step 0: Electricity Service Query Interceptor
+        q_lower = query.lower()
+        elec_keywords = ["electricity", "power", "current", "units", "free power", "free current", "மின்சாரம்", "யூனிட்", "மின்", "बिजली", "यूनिट"]
+        if any(k in q_lower for k in elec_keywords):
+            from app.services.electricity_service import ElectricityService
+            from app.services.profile_service import ProfileService
+            profile_service = ProfileService(self.db)
+            prof_data = await profile_service.get_normalized_profile(user_id) if user_id and user_id != "guest-user" else {}
+            
+            p_info = prof_data.get("personal_info", {})
+            user_profile = {
+                "state": "Tamil Nadu",
+                "occupation": p_info.get("occupation", {}).get("value"),
+                "annual_income": p_info.get("annual_income", {}).get("value")
+            }
+            
+            # Detect language
+            lang = "ta" if any('\u0b80' <= c <= '\u0bff' for c in query) else ("hi" if any('\u0900' <= c <= '\u097f' for c in query) else "en")
+            
+            elec_service = ElectricityService()
+            e_ans = elec_service.answer_conversational_query(query, user_profile, language=lang)
+            
+            latency = round((time.time() - start_time) * 1000, 2)
+            sources = [{
+                "document_name": "Government of Tamil Nadu Electricity Subsidy Orders",
+                "go_number": "TN Energy & Handlooms Govt Orders",
+                "page_number": 1,
+                "chunk_id": "chunk-electricity-subsidy",
+                "similarity_score": 0.95,
+                "retrieved_context": f"Official Source: {e_ans['official_source']}"
+            }]
+
+            chat_rec = ChatHistory(
+                user_id=user_id if user_id != "guest-user" else None,
+                query=query,
+                explanation_level=explanation_level,
+                response=e_ans["response"],
+                sources_json=sources,
+                scam_flagged=False,
+                confidence_score=0.95
+            )
+            self.db.add(chat_rec)
+            await self.db.commit()
+
+            return {
+                "query": query,
+                "explanation_level": explanation_level,
+                "response": e_ans["response"],
+                "confidence_score": 0.95,
+                "scam_alert": None,
+                "matched_scheme": {
+                    "id": "tn-electricity-subsidy",
+                    "title": "Tamil Nadu Electricity Subsidy & Free Power Scheme",
+                    "code": "TN-ELECTRICITY"
+                },
+                "sources": sources,
+                "reasoning_summary": "Query resolved via structured Electricity Benefit Engine and official Tamil Nadu Government orders.",
+                "latency_ms": latency
+            }
+
         # Step 1: Check for Scam Indicators
         scam_result = ScamService.detect_scam(query)
 

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.database import init_db, AsyncSessionLocal
 from app.services.seed_service import seed_initial_welfare_data
-from app.api.v1 import auth, schemes, rag, voice, eligibility, applications, dashboard, admin, digilocker, lpg, profile
+from app.api.v1 import auth, schemes, rag, voice, eligibility, applications, dashboard, admin, digilocker, lpg, profile, electricity
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -47,6 +47,7 @@ app.include_router(admin.router, prefix=settings.API_V1_STR)
 app.include_router(digilocker.router, prefix=settings.API_V1_STR)
 app.include_router(lpg.router, prefix=settings.API_V1_STR)
 app.include_router(profile.router, prefix=settings.API_V1_STR)
+app.include_router(electricity.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")

@@ -1779,13 +1779,14 @@ def render_apply_page(scheme_id):
             name_input = st.text_input(f"Applicant Name {name_source}", value=applicant_name)
             income_input = st.number_input(f"Annual Household Income (₹) {income_source}", value=float(income_val))
         with col_f2:
-            st.text_input("Aadhaar Number [Verified Masked]", value="XXXX-XXXX-8912", disabled=True)
+            aadhaar_label = "[Source: Verified DigiLocker Profile]" if digilocker_verified else "[Source: Demo Profile Data]"
+            st.text_input(f"Aadhaar Number {aadhaar_label}", value="XXXX-XXXX-8912", disabled=True)
             st.text_input("Ration Card / Smart Card ID [From Profile]", value="TN-33-908123")
             
         st.text_area("Residential Address [From Profile]", value=address_val)
         
         st.subheader("📑 Verified Required Document Attachments")
-        st.checkbox("Aadhaar Card (UIDAI)", value=True, help="Verified via UIDAI / DigiLocker")
+        st.checkbox("Aadhaar Card (UIDAI)", value=digilocker_verified, help="Verified via UIDAI / DigiLocker" if digilocker_verified else "Connect DigiLocker to verify via UIDAI")
         st.checkbox("Income & Asset Certificate", value=digilocker_verified, help="Verified via Revenue Dept")
         st.checkbox("Ration Card (TN e-District)", value=True)
         
@@ -2049,6 +2050,83 @@ def render_dashboard_page():
             st.success("✓ DBTL Direct Bank Transfer Subsidy Active under PMUY Scheme")
         else:
             st.info("ℹ️ LPG information is currently unlinked. Enter your Consumer ID on the left to display verified PAHAL subsidy status.")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    st.divider()
+
+    # --- ELECTRICITY SERVICE & BENEFIT ELIGIBILITY SECTION ---
+    st.subheader("⚡ Electricity Benefits & Subsidy (Official Benefit Engine)")
+    e_col1, e_col2 = st.columns([1.2, 1.8])
+    with e_col1:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        st.markdown("<b>Check Electricity Benefits Available</b>", unsafe_allow_html=True)
+        st.caption("Evaluate official state electricity subsidies and free unit quotas grounded in official government rules.")
+        
+        with st.form("electricity_check_form"):
+            e_state = st.selectbox("State / UT", ["Tamil Nadu", "Karnataka", "Kerala", "Other"], index=0)
+            e_cat = st.selectbox("Consumer / Beneficiary Category", [
+                "Domestic Consumer",
+                "Handloom Weaver",
+                "Powerloom Weaver",
+                "Other / General Worker"
+            ])
+            e_units = st.number_input("Average Bi-Monthly Consumption (Units, Optional)", min_value=0, value=150, step=10)
+            e_submit = st.form_submit_button("Check Electricity Benefit Eligibility →", use_container_width=True, type="primary")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with e_col2:
+        st.markdown("<div style='background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
+        st.markdown("<b>Electricity Eligibility Result</b>", unsafe_allow_html=True)
+        
+        # Determine evaluation inputs
+        profile_occ = p_info.get("occupation", {}).get("value", "Student")
+        eval_occ = e_cat if (e_submit or st.session_state.get("e_checked")) else profile_occ
+        eval_state = e_state if (e_submit or st.session_state.get("e_checked")) else "Tamil Nadu"
+
+        if e_submit:
+            st.session_state["e_checked"] = True
+            st.session_state["e_cat"] = e_cat
+            st.session_state["e_state"] = e_state
+
+        from app.services.electricity_service import ElectricityService
+        e_service = ElectricityService()
+        e_result = e_service.evaluate_eligibility(
+            profile={"state": eval_state, "occupation": eval_occ},
+            consumer_type=eval_occ,
+            occupation=eval_occ,
+            state=eval_state
+        )
+
+        if e_result["status"] == "ELIGIBLE":
+            st.success(f"{e_result['title']} ({e_result['summary']})")
+            for b in e_result.get("evaluated_benefits", []):
+                st.markdown(f"""
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; padding:12px; border-radius:8px; margin-bottom:8px;">
+                    <strong style="color:#166534; font-size:15px;">{b['name']}</strong><br/>
+                    <span style="color:#15803d; font-size:13px; font-weight:600;">Benefit: Up to {b['unit_limit']} units of free electricity ({b['period']})</span>
+                    <ul style="margin:6px 0 0 16px; font-size:12px; color:#166534;">
+                        {''.join(f'<li>{r}</li>' for r in b['matching_rules'])}
+                    </ul>
+                    <div style="margin-top:6px; font-size:11px; color:#475569;">
+                        <b>Official Source:</b> {b['official_source']} 
+                        <a href="{b['source_url']}" target="_blank" style="color:#2563eb;">[View Official Details]</a>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+        elif e_result["status"] == "MORE_INFORMATION_REQUIRED":
+            st.info("ℹ️ Not enough information to determine exact eligibility")
+            st.write(e_result["summary"])
+            st.write(f"**We need:**\n• Consumer category\n• Occupation\n• State")
+            st.caption(f"Question: {e_result.get('question')}")
+        else:
+            st.error("❌ Not Currently Eligible")
+            st.write(e_result["summary"])
+            for fr in e_result.get("failed_rules", []):
+                st.caption(f"• {fr}")
+            if e_result.get("alternative_benefit"):
+                st.info(f"ℹ️ {e_result['alternative_benefit']}")
+
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
