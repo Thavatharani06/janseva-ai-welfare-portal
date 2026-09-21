@@ -81,8 +81,43 @@ class SchemeRepository:
             s_lower = s_raw.lower()
             search_term = f"%{s_lower}%"
             import re
-            words = [w.lower() for w in re.findall(r'\w+', s_raw) if len(w) > 2 and w.lower() not in {"need", "want", "for", "the", "and", "from", "looking", "help", "with"}]
             
+            stop_words = {
+                "i", "a", "an", "the", "in", "on", "at", "to", "for", "of", "or", "and", "is", "it", "am", "are", "be", "by", "my", "me", "we", "us", "he", "she", "do", "no", "so", "if", "as",
+                "need", "want", "looking", "help", "with", "scheme", "schemes", "government", "govt", "support", "assistance",
+                "எனக்கு", "வேண்டும்", "உதவி", "திட்டம்", "அரசு", "ஒரு", "மற்றும்", "உள்ளது",
+                "मुझे", "चाहिए", "सहायता", "योजना", "सरकारी", "एक", "और", "का", "की", "के", "में", "से", "हूँ", "है", "लिए"
+            }
+            raw_tokens = [w.lower() for w in re.findall(r'[^\s,.!?\-\"\']+', s_raw)]
+            words = [w for w in raw_tokens if len(w) >= 2 and w not in stop_words]
+            
+            # Multilingual Domain Concepts Mapping with agglutinative suffix support for valid tokens
+            concept_keywords = []
+            valid_words = [w for w in raw_tokens if len(w) <= 20]
+            s_combined = " ".join(valid_words)
+            
+            # Education domain
+            if s_combined and any(k in s_combined for k in ["education", "study", "student", "scholarship", "school", "college", "degree", "கல்வி", "படிப்பு", "பள்ளி", "கல்லூரி", "மாணவ", "शिक्षा", "पढ़ाई", "छात्रवृत्ति", "स्कूल"]):
+                concept_keywords.extend(["education", "scholarship", "school", "college", "student", "matric", "samagra", "poshan", "pudhumai"])
+            # Housing domain
+            if s_combined and any(k in s_combined for k in ["housing", "house", "home", "building", "construction", "pmay", "shelter", "வீடு", "குடியிருப்பு", "ஆவாஸ்", "घर", "मकान", "आवास", "गृह"]):
+                concept_keywords.extend(["housing", "awas", "house", "green house", "home", "building"])
+            # Agriculture / Farmer domain
+            if s_combined and any(k in s_combined for k in ["farmer", "agriculture", "crop", "kisan", "cultivation", "power", "solar", "விவசாயி", "விவசாயம்", "பயிர்", "உழவர்", "किसान", "कृषि", "फसल"]):
+                concept_keywords.extend(["farmer", "agriculture", "kisan", "crop", "fasal", "uzhavar", "rythu", "kalia"])
+            # Healthcare domain
+            if s_combined and any(k in s_combined for k in ["health", "hospital", "insurance", "medical", "treatment", "medicine", "dialysis", "மருத்துவம்", "சுகாதாரம்", "மருத்துவமனை", "स्वास्थ्य", "अस्पताल", "इलाज", "बीमा"]):
+                concept_keywords.extend(["health", "insurance", "ayushman", "maruthuvam", "medical", "hospital", "dialysis"])
+            # Social Welfare / Pension domain
+            if s_combined and any(k in s_combined for k in ["pension", "elderly", "old age", "widow", "disabled", "disability", "ஓய்வூதியம்", "பரிசு", "पेंशन", "वृद्धावस्था"]):
+                concept_keywords.extend(["pension", "old age", "widow", "disability", "disabled", "maintenance"])
+            # Women & Girl Child domain
+            if s_combined and any(k in s_combined for k in ["women", "girl", "mother", "female", "maternity", "marriage", "மகளிர்", "பெண்", "பெண்கள்", "திருமணம்", "महिला", "बेटी", "स्त्री", "विवाह"]):
+                concept_keywords.extend(["women", "girl", "matru", "magalir", "maternity", "marriage", "kanyashree", "sukanya", "ladli"])
+            # Business / Employment / MSME domain
+            if s_combined and any(k in s_combined for k in ["business", "loan", "entrepreneur", "employment", "skill", "vendor", "job", "வேலை", "தொழில்", "கடன்", "रोजगार", "नौकरी", "व्यापार", "ऋण"]):
+                concept_keywords.extend(["employment", "skill", "mudra", "svanidhi", "entrepreneur", "business", "unemployed", "vishwakarma"])
+
             search_conditions = [
                 Scheme.title.ilike(search_term),
                 Scheme.title_ta.ilike(search_term),
@@ -92,7 +127,8 @@ class SchemeRepository:
                 Scheme.benefits_summary.ilike(search_term),
                 Scheme.eligibility_description.ilike(search_term)
             ]
-            for w in words:
+            all_search_words = words + concept_keywords
+            for w in all_search_words:
                 w_pattern = f"%{w}%"
                 search_conditions.extend([
                     Scheme.title.ilike(w_pattern),
@@ -112,7 +148,9 @@ class SchemeRepository:
         if search and search.strip():
             s_lower = search.strip().lower()
             import re
-            q_words = [w for w in re.findall(r'\w+', s_lower) if len(w) > 2]
+            raw_eval_tokens = [w.lower() for w in re.findall(r'[^\s,.!?\-\"\']+', s_lower)]
+            q_words = [w for w in raw_eval_tokens if len(w) >= 2 and w not in stop_words]
+            all_eval_words = q_words + concept_keywords
             
             def calculate_relevance(s):
                 score = 0.0
@@ -122,13 +160,13 @@ class SchemeRepository:
                 desc_lower = f"{s.legal_summary or ''} {s.simple_summary or ''} {s.benefits_summary or ''} {s.eligibility_description or ''}".lower()
                 
                 if s_lower in code_lower or s_lower in title_lower:
-                    score += 10.0
+                    score += 15.0
                 
-                for qw in q_words:
-                    if qw in code_lower: score += 5.0
-                    if qw in title_lower: score += 4.0
-                    if qw in cat_lower: score += 3.0
-                    if qw in desc_lower: score += 1.0
+                for qw in all_eval_words:
+                    if qw in code_lower: score += 6.0
+                    if qw in title_lower: score += 5.0
+                    if qw in cat_lower: score += 4.0
+                    if qw in desc_lower: score += 2.0
                 return score
             
             schemes = list(schemes)

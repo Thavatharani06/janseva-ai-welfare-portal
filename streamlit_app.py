@@ -749,7 +749,9 @@ def render_schemes_page():
             st.session_state["f_disability"] = t["select"]
             st.session_state["f_emp"] = t["select"]
             st.session_state["f_occ"] = t["select"]
-            for k in ["search", "category", "state", "gender", "age", "community"]:
+            st.session_state["search_text_input"] = ""
+            st.session_state["v_text"] = ""
+            for k in ["search", "v_transcript", "category", "state", "gender", "age", "community"]:
                 if k in st.query_params:
                     del st.query_params[k]
             st.rerun()
@@ -798,11 +800,22 @@ def render_schemes_page():
 
     # RIGHT RESULTS PANEL
     with col_results:
+        # Welcome Greeting Banner for Scheme Search
+        default_search = st.query_params.get("v_transcript") or st.query_params.get("search", "")
+        if not default_search and not st.session_state.get("search_text_input"):
+            st.markdown("""
+            <div style="background:linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%); border:1px solid #bae6fd; border-radius:12px; padding:16px 20px; margin-bottom:16px;">
+                <h3 style="margin:0 0 6px 0; color:#0f172a; font-size:18px; font-weight:800;">👋 Welcome to Scheme Search</h3>
+                <p style="margin:0; color:#334155; font-size:14px; font-weight:500;">
+                    Tell me what kind of government support you're looking for. You can type or speak in <b>English</b>, <b>தமிழ்</b> or <b>हिन्दी</b>.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+
         # Search Box with Conversational Voice Integration
-        default_search = st.query_params.get("search", "")
         s_col1, s_col2, s_col3 = st.columns([5, 1.6, 1.2])
         with s_col1:
-            search_q = st.text_input(t["search_schemes"], value=default_search, placeholder=t["search_placeholder"], label_visibility="collapsed", key="search_text_input")
+            search_q = st.text_input(t["search_schemes"], value=default_search, placeholder="Type or speak your request (e.g. 'education scholarship', 'housing support')...", label_visibility="collapsed", key="search_text_input")
         with s_col2:
             if st.button(t["speak"], key="toggle_voice_modal_btn", type="secondary", use_container_width=True):
                 st.session_state["show_voice_modal"] = not st.session_state.get("show_voice_modal", False)
@@ -819,28 +832,29 @@ def render_schemes_page():
             
             v_lang = st.radio("Voice Language / மொழி / भाषा", ["English", "தமிழ்", "हिन्दी"], horizontal=True, key="v_lang_choice")
             v_lang_code = "en-IN" if v_lang == "English" else ("ta-IN" if v_lang == "தமிழ்" else "hi-IN")
+            v_lang_iso = "en" if v_lang == "English" else ("ta" if v_lang == "தமிழ்" else "hi")
             
             if v_lang == "English":
-                assistant_greeting = "Hi! I can help you find government schemes. Tell me what kind of support you are looking for."
+                assistant_greeting = "Hi! I can help you find government schemes. What kind of support are you looking for?"
                 sample_prompt = '💡 Example: "I need financial help for my daughter\'s education."'
             elif v_lang == "தமிழ்":
-                assistant_greeting = "வணக்கம்! உங்களுக்கு எந்த வகையான அரசு உதவி தேவை?"
+                assistant_greeting = "வணக்கம்! அரசு திட்டங்களை கண்டுபிடிக்க நான் உதவுகிறேன். உங்களுக்கு எந்த வகையான உதவி தேவை?"
                 sample_prompt = '💡 உதாரணம்: "என் மகளுடைய படிப்புக்கு நிதி உதவி வேண்டும்."'
             else:
-                assistant_greeting = "नमस्ते! आपको किस प्रकार की सरकारी सहायता चाहिए?"
+                assistant_greeting = "नमस्ते! मैं आपको सरकारी योजनाएं खोजने में मदद कर सकता हूं। आपको किस प्रकार की सहायता चाहिए?"
                 sample_prompt = '💡 उदाहरण: "मुझे अपनी बेटी की पढ़ाई के लिए आर्थिक सहायता चाहिए।"'
             
             st.markdown(f"""
-            <div style="background:#f8fafc; border:2px solid #00865a; border-radius:14px; padding:20px; margin-top:12px; margin-bottom:16px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
+            <div style="background:#ffffff; border:2px solid #00865a; border-radius:14px; padding:20px; margin-top:8px; margin-bottom:16px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
                 <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
                     <div style="width:42px; height:42px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;">🏛️</div>
                     <div>
-                        <h4 style="margin:0; color:#0f172a; font-size:18px; font-weight:800;">JanSeva AI — Human-Guided Voice Assistant</h4>
-                        <span style="font-size:12px; color:#00865a; font-weight:600;">Multilingual Whisper ASR & RAG Powered</span>
+                        <h4 style="margin:0; color:#0f172a; font-size:18px; font-weight:800;">JanSeva AI — Government Welfare Assistant</h4>
+                        <span style="font-size:12px; color:#00865a; font-weight:600;">Voice Search & Scheme Discovery</span>
                     </div>
                 </div>
                 
-                <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
+                <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:12px;">
                     <strong style="color:#00865a; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Assistant Speech:</strong>
                     <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
                 </div>
@@ -856,39 +870,47 @@ def render_schemes_page():
               <button id="v-mic-btn" onclick="startGuidedVoiceFlow()" style="background:#00865a; color:#ffffff; border:none; border-radius:30px; padding:12px 28px; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:10px; box-shadow:0 4px 12px rgba(0,134,90,0.25); transition:all 0.2s;">
                 🎙️ Click to Speak ({v_lang})
               </button>
-              <div id="v-status" style="margin-top:12px; font-size:13px; font-weight:700; color:#475569;">Ready. Click button to hear Assistant & Speak.</div>
+              <div id="v-status" style="margin-top:12px; font-size:13px; font-weight:700; color:#475569;">Click button to hear Assistant & Speak.</div>
             </div>
             <script>
             function startGuidedVoiceFlow() {{
               const btn = document.getElementById("v-mic-btn");
               const status = document.getElementById("v-status");
               
-              // 1. Assistant Speaks Greeting Aloud
               btn.style.background = "#0284c7";
               btn.innerHTML = "🔊 Assistant Speaking...";
               status.innerHTML = "Assistant is speaking in {v_lang}...";
               
+              let listeningStarted = false;
+              function proceedToListening() {{
+                if (listeningStarted) return;
+                listeningStarted = true;
+                startListening();
+              }}
+
               if ('speechSynthesis' in window) {{
                 window.speechSynthesis.cancel();
                 const u = new SpeechSynthesisUtterance("{assistant_greeting}");
                 u.lang = "{v_lang_code}";
                 u.rate = 0.95;
                 
-                u.onend = function() {{
-                  startListening();
-                }};
-                u.onerror = function() {{
-                  startListening();
-                }};
+                const voices = window.speechSynthesis.getVoices();
+                const matched = voices.find(v => v.lang.toLowerCase().includes("{v_lang_iso}"));
+                if (matched) u.voice = matched;
+
+                u.onend = proceedToListening;
+                u.onerror = proceedToListening;
                 window.speechSynthesis.speak(u);
+
+                setTimeout(proceedToListening, 2200);
               }} else {{
-                startListening();
+                proceedToListening();
               }}
 
               function startListening() {{
                 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
                 if (!SpeechRecognition) {{
-                  status.innerHTML = "⚠️ Speech recognition is not supported in this browser. Please type your query below.";
+                  status.innerHTML = "⚠️ Speech recognition is not supported in this browser. Please type your request below.";
                   btn.style.background = "#00865a";
                   btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
                   return;
@@ -900,23 +922,24 @@ def render_schemes_page():
                 
                 btn.style.background = "#dc2626";
                 btn.innerHTML = "🔴 Listening... Speak Now";
-                status.innerHTML = "🔴 Microphone Active in {v_lang}. Speak your request now...";
+                status.innerHTML = "🔴 Microphone Active. Speak your request now...";
 
                 rec.onresult = function(e) {{
                   const text = e.results[0][0].transcript;
                   btn.style.background = "#059669";
-                  btn.innerHTML = "⚙️ Processing (Whisper ASR)...";
-                  status.innerHTML = "✅ Captured speech: " + text;
+                  btn.innerHTML = "⚡ Finding schemes...";
+                  status.innerHTML = "✅ Request received: \\"" + text + "\\"";
 
                   const url = new URL(window.parent.location.href);
                   url.searchParams.set("v_transcript", text);
+                  url.searchParams.set("search", text);
                   window.parent.location.href = url.href;
                 }};
 
                 rec.onerror = function(err) {{
                   btn.style.background = "#00865a";
                   btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
-                  status.innerHTML = "⚠️ Microphone error or permission denied. Please try again or type below.";
+                  status.innerHTML = "I couldn't hear that clearly. Please try again or type your request below.";
                 }};
 
                 rec.onend = function() {{
@@ -936,9 +959,13 @@ def render_schemes_page():
             captured_transcript = st.query_params.get("v_transcript", st.session_state.get("v_text", ""))
             
             if captured_transcript:
+                # Auto-sync with search input state
+                st.session_state["search_text_input"] = captured_transcript
+                st.query_params["search"] = captured_transcript
+
                 st.markdown(f"""
                 <div style="background:#ffffff; border:1px solid #0284c7; border-radius:10px; padding:14px; margin-bottom:14px;">
-                    <span style="font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">You Said:</span>
+                    <span style="font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">Your Request:</span>
                     <p style="margin:4px 0 0 0; font-size:16px; font-weight:700; color:#0f172a;">"{captured_transcript}"</p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -962,11 +989,11 @@ def render_schemes_page():
                 except Exception:
                     pass
 
-            rec_text = st.text_input("Recognized Speech Query", value=captured_transcript, placeholder="Transcribed speech will appear here (or type your request)...", key="voice_recognized_input")
+            rec_text = st.text_input("Your Request / உங்கள் கோரிக்கை / आपकी मांग", value=captured_transcript, placeholder="Type or speak your request...", key="voice_recognized_input")
             
             btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
             with btn_col1:
-                if st.button("🔍 View Schemes", key="voice_modal_search_btn", type="primary", use_container_width=True):
+                if st.button("🔍 Find Schemes", key="voice_modal_search_btn", type="primary", use_container_width=True):
                     if rec_text.strip():
                         st.session_state["search_text_input"] = rec_text.strip()
                         st.query_params["search"] = rec_text.strip()
@@ -975,9 +1002,12 @@ def render_schemes_page():
                         st.session_state["show_voice_modal"] = False
                         st.rerun()
             with btn_col2:
-                if st.button("🔄 Try Again", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
+                if st.button("🔄 Clear Request", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
                     if "v_transcript" in st.query_params:
                         del st.query_params["v_transcript"]
+                    if "search" in st.query_params:
+                        del st.query_params["search"]
+                    st.session_state["search_text_input"] = ""
                     st.session_state["v_text"] = ""
                     st.rerun()
             with btn_col3:
