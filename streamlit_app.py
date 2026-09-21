@@ -813,58 +813,180 @@ def render_schemes_page():
                     st.query_params["search"] = search_q
                 st.rerun()
 
-        # CONVERSATIONAL VOICE SEARCH MODAL
+        # CONVERSATIONAL HUMAN-GUIDED VOICE ASSISTANT MODAL
         if st.session_state.get("show_voice_modal", False):
             import streamlit.components.v1 as components
-            st.markdown("""
-            <div style="background:#ffffff; border:2px solid #00865a; border-radius:12px; padding:20px; margin-top:10px; margin-bottom:20px; box-shadow:0 10px 25px rgba(0,0,0,0.08);">
-            <h4 style="margin:0; color:#00865a; font-size:18px; font-weight:700;">🎙️ Conversational Voice Scheme Search</h4>
-            <p style="margin:6px 0 2px 0; color:#0f172a; font-size:15px; font-weight:600;">What are you looking for?</p>
-            <p style="margin:0 0 14px 0; color:#64748b; font-size:13px;">Tell me about the government support or scheme you need.</p>
-            """, unsafe_allow_html=True)
             
-            v_lang = st.radio("Voice Language", ["English", "தமிழ்", "हिन्दी"], horizontal=True, key="v_lang_choice")
+            v_lang = st.radio("Voice Language / மொழி / भाषा", ["English", "தமிழ்", "हिन्दी"], horizontal=True, key="v_lang_choice")
             v_lang_code = "en-IN" if v_lang == "English" else ("ta-IN" if v_lang == "தமிழ்" else "hi-IN")
             
             if v_lang == "English":
+                assistant_greeting = "Hi! I can help you find government schemes. Tell me what kind of support you are looking for."
                 sample_prompt = '💡 Example: "I need financial help for my daughter\'s education."'
             elif v_lang == "தமிழ்":
-                sample_prompt = '💡 உதாரணம்: "எனக்கு வீடு கட்ட அரசு உதவி வேண்டும்."'
+                assistant_greeting = "வணக்கம்! உங்களுக்கு எந்த வகையான அரசு உதவி தேவை?"
+                sample_prompt = '💡 உதாரணம்: "என் மகளுடைய படிப்புக்கு நிதி உதவி வேண்டும்."'
             else:
-                sample_prompt = '💡 उदाहरण: "मुझे किसानों के लिए सरकारी योजना चाहिए।"'
+                assistant_greeting = "नमस्ते! आपको किस प्रकार की सरकारी सहायता चाहिए?"
+                sample_prompt = '💡 उदाहरण: "मुझे अपनी बेटी की पढ़ाई के लिए आर्थिक सहायता चाहिए।"'
             
-            st.markdown(f'<div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:6px; font-size:13px; margin-bottom:14px;">{sample_prompt}</div>', unsafe_allow_html=True)
+            st.markdown(f"""
+            <div style="background:#f8fafc; border:2px solid #00865a; border-radius:14px; padding:22px; margin-top:12px; margin-bottom:20px; box-shadow:0 12px 28px rgba(0,134,90,0.12);">
+                <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+                    <div style="width:42px; height:42px; border-radius:50%; background:#00865a; color:#ffffff; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:bold;">🏛️</div>
+                    <div>
+                        <h4 style="margin:0; color:#0f172a; font-size:18px; font-weight:800;">JanSeva AI — Human-Guided Voice Assistant</h4>
+                        <span style="font-size:12px; color:#00865a; font-weight:600;">Multilingual Whisper ASR & RAG Powered</span>
+                    </div>
+                </div>
+                
+                <div style="background:#ffffff; border:1px solid #cbd5e1; border-radius:10px; padding:14px 16px; margin-bottom:14px;">
+                    <strong style="color:#00865a; font-size:13px; text-transform:uppercase; letter-spacing:0.5px;">Assistant Speech:</strong>
+                    <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600; line-height:1.4;">"{assistant_greeting}"</p>
+                </div>
+                
+                <div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:8px; font-size:13px; margin-bottom:16px;">
+                    {sample_prompt}
+                </div>
+            """, unsafe_allow_html=True)
             
             voice_comp_html = f"""
-            <div style="text-align:center; padding:10px 0;">
-              <button id="v-mic-btn" onclick="startVoiceRec()" style="background:#00865a; color:#ffffff; border:none; border-radius:30px; padding:10px 24px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+            <div style="text-align:center; padding:6px 0 12px 0;">
+              <button id="v-mic-btn" onclick="startGuidedVoiceFlow()" style="background:#00865a; color:#ffffff; border:none; border-radius:30px; padding:12px 28px; font-size:15px; font-weight:700; cursor:pointer; display:inline-flex; align-items:center; gap:10px; box-shadow:0 4px 12px rgba(0,134,90,0.25); transition:all 0.2s;">
                 🎙️ Click to Speak ({v_lang})
               </button>
-              <div id="v-status" style="margin-top:10px; font-size:13px; font-weight:600; color:#475569;">Ready to listen...</div>
+              <div id="v-status" style="margin-top:12px; font-size:13px; font-weight:700; color:#475569;">Ready. Click button to hear Assistant & Speak.</div>
             </div>
             <script>
-            function startVoiceRec() {{
+            function startGuidedVoiceFlow() {{
               const btn = document.getElementById("v-mic-btn");
               const status = document.getElementById("v-status");
-              const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-              if (!SpeechRecognition) {{
-                status.innerHTML = "⚠️ Speech recognition is not supported in this browser. Please type below.";
-                return;
+              
+              // 1. Assistant Speaks Greeting Aloud
+              btn.style.background = "#0284c7";
+              btn.innerHTML = "🔊 Assistant Speaking...";
+              status.innerHTML = "Assistant is speaking in {v_lang}...";
+              
+              if ('speechSynthesis' in window) {{
+                window.speechSynthesis.cancel();
+                const u = new SpeechSynthesisUtterance("{assistant_greeting}");
+                u.lang = "{v_lang_code}";
+                u.rate = 0.95;
+                
+                u.onend = function() {{
+                  startListening();
+                }};
+                u.onerror = function() {{
+                  startListening();
+                }};
+                window.speechSynthesis.speak(u);
+              }} else {{
+                startListening();
               }}
-              const rec = new SpeechRecognition();
-              rec.lang = "{v_lang_code}";
-              rec.interimResults = false;
-              btn.style.background = "#dc2626";
-              btn.innerHTML = "🔴 Listening...";
-              status.innerHTML = "Listening in {v_lang}... Speak clearly now.";
 
-              rec.onresult = function(e) {{
-                const text = e.results[0][0].transcript;
-                btn.style.background = "#00865a";
-                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
-                status.innerHTML = "✅ Captured: " + text;
+              function startListening() {{
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {{
+                  status.innerHTML = "⚠️ Speech recognition is not supported in this browser. Please type your query below.";
+                  btn.style.background = "#00865a";
+                  btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
+                  return;
+                }}
+                
+                const rec = new SpeechRecognition();
+                rec.lang = "{v_lang_code}";
+                rec.interimResults = false;
+                
+                btn.style.background = "#dc2626";
+                btn.innerHTML = "🔴 Listening... Speak Now";
+                status.innerHTML = "🔴 Microphone Active in {v_lang}. Speak your request now...";
 
-                const url = new URL(window.parent.location.href);
+                rec.onresult = function(e) {{
+                  const text = e.results[0][0].transcript;
+                  btn.style.background = "#059669";
+                  btn.innerHTML = "⚙️ Processing (Whisper ASR)...";
+                  status.innerHTML = "✅ Captured speech: " + text;
+
+                  const url = new URL(window.parent.location.href);
+                  url.searchParams.set("v_transcript", text);
+                  window.parent.location.href = url.href;
+                }};
+
+                rec.onerror = function(err) {{
+                  btn.style.background = "#00865a";
+                  btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
+                  status.innerHTML = "⚠️ Microphone error or permission denied. Please try again or type below.";
+                }};
+
+                rec.onend = function() {{
+                  if (btn.innerHTML.includes("Listening")) {{
+                    btn.style.background = "#00865a";
+                    btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
+                  }}
+                }};
+
+                rec.start();
+              }}
+            }}
+            </script>
+            """
+            components.html(voice_comp_html, height=120)
+            
+            captured_transcript = st.query_params.get("v_transcript", st.session_state.get("v_text", ""))
+            
+            if captured_transcript:
+                st.markdown(f"""
+                <div style="background:#ffffff; border:1px solid #0284c7; border-radius:10px; padding:14px; margin-bottom:14px;">
+                    <span style="font-size:12px; font-weight:700; color:#0284c7; text-transform:uppercase; letter-spacing:0.5px;">You Said:</span>
+                    <p style="margin:4px 0 0 0; font-size:16px; font-weight:700; color:#0f172a;">"{captured_transcript}"</p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Execute RAG Guidance check for adaptive follow-up
+                try:
+                    with httpx.Client(timeout=3.0) as client:
+                        v_resp = client.post(f"{API_BASE_URL}/voice/process", data={"raw_transcript": captured_transcript, "language": v_lang_code})
+                        if v_resp.status_code == 200:
+                            v_data = v_resp.json()
+                            ast_speech = v_data.get("assistant_speech", "I found relevant government schemes matching your request.")
+                            follow_up_q = v_data.get("follow_up")
+                            
+                            st.markdown(f"""
+                            <div style="background:#f0fdf4; border:1px solid #86efac; border-radius:10px; padding:14px; margin-bottom:14px;">
+                                <strong style="color:#166534; font-size:13px; text-transform:uppercase;">🤖 Assistant Response:</strong>
+                                <p style="margin:4px 0 0 0; color:#0f172a; font-size:15px; font-weight:600;">{ast_speech}</p>
+                                {f'<div style="margin-top:10px; padding:8px; background:#ffffff; border-radius:6px; color:#1e3a8a; font-size:13px; font-weight:600;">💡 Follow-up: {follow_up_q}</div>' if follow_up_q else ''}
+                            </div>
+                            """, unsafe_allow_html=True)
+                except Exception:
+                    pass
+
+            rec_text = st.text_input("Recognized Speech Query", value=captured_transcript, placeholder="Transcribed speech will appear here (or type your request)...", key="voice_recognized_input")
+            
+            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
+            with btn_col1:
+                if st.button("🔍 View Schemes", key="voice_modal_search_btn", type="primary", use_container_width=True):
+                    if rec_text.strip():
+                        st.session_state["search_text_input"] = rec_text.strip()
+                        st.query_params["search"] = rec_text.strip()
+                        if "v_transcript" in st.query_params:
+                            del st.query_params["v_transcript"]
+                        st.session_state["show_voice_modal"] = False
+                        st.rerun()
+            with btn_col2:
+                if st.button("🔄 Try Again", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
+                    if "v_transcript" in st.query_params:
+                        del st.query_params["v_transcript"]
+                    st.session_state["v_text"] = ""
+                    st.rerun()
+            with btn_col3:
+                if st.button("❌ Close", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
+                    if "v_transcript" in st.query_params:
+                        del st.query_params["v_transcript"]
+                    st.session_state["show_voice_modal"] = False
+                    st.rerun()
+
+            st.markdown("</div>", unsafe_allow_html=True)        const url = new URL(window.parent.location.href);
                 url.searchParams.set("v_transcript", text);
                 window.parent.location.href = url.href;
               }};

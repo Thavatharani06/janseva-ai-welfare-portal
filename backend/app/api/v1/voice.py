@@ -18,13 +18,16 @@ async def process_voice(
     db: AsyncSession = Depends(get_db)
 ):
     speech_service = SpeechService(db)
+    audio_bytes = None
     file_path = None
     if file:
+        audio_bytes = await file.read()
         file_path = f"uploads/voice_{file.filename}"
 
     user_id = current_user.id if current_user else "guest-user"
     return await speech_service.process_voice_input(
         user_id=user_id,
+        audio_bytes=audio_bytes,
         audio_file_path=file_path,
         raw_transcript=raw_transcript,
         language=language
