@@ -214,15 +214,34 @@ def fetch_schemes_from_sqlite_db(params):
     sql_params = []
 
     search_q = params.get("search")
-    if search_q:
-        query += " AND (title LIKE ? OR title_ta LIKE ? OR code LIKE ? OR legal_summary LIKE ? OR simple_summary LIKE ?)"
-        term = f"%{search_q}%"
-        sql_params.extend([term, term, term, term, term])
+    if search_q and search_q.strip():
+        s_raw = search_q.strip()
+        s_lower = s_raw.lower()
+        s_term = f"%{s_lower}%"
+        import re
+        words = [w.lower() for w in re.findall(r'\w+', s_raw) if len(w) > 2 and w.lower() not in {"need", "want", "for", "the", "and", "from", "looking", "help", "with"}]
+        
+        search_clauses = [
+            "title LIKE ?", "title_ta LIKE ?", "code LIKE ?",
+            "legal_summary LIKE ?", "simple_summary LIKE ?",
+            "benefits_summary LIKE ?", "eligibility_description LIKE ?"
+        ]
+        sql_params.extend([s_term, s_term, s_term, s_term, s_term, s_term, s_term])
+        
+        for w in words:
+            w_pattern = f"%{w}%"
+            search_clauses.extend([
+                "title LIKE ?", "title_ta LIKE ?", "code LIKE ?", f"{cat_col} LIKE ?",
+                "legal_summary LIKE ?", "simple_summary LIKE ?", "benefits_summary LIKE ?"
+            ])
+            sql_params.extend([w_pattern, w_pattern, w_pattern, w_pattern, w_pattern, w_pattern, w_pattern])
+            
+        query += f" AND ({' OR '.join(search_clauses)})"
 
     state = params.get("state")
-    if state and state not in ["All States / UTs", "All States"]:
-        query += " AND (state_district_scope LIKE ? OR state_district_scope LIKE ? OR state_district_scope LIKE ?)"
-        sql_params.extend([f"%{state}%", "%All India%", "%Central%"])
+    if state and state not in ["All States / UTs", "All States", "அனைத்து மாநிலங்கள் / யூனியன் பிரதேசங்கள்", "सभी राज्य / केंद्र शासित प्रदेश"]:
+        query += " AND (state_district_scope LIKE ? OR state_district_scope LIKE ? OR state_district_scope LIKE ? OR state_district_scope IS NULL OR ministry LIKE ?)"
+        sql_params.extend([f"%{state}%", "%All India%", "%Central%", f"%{state}%"])
 
     gender = params.get("gender")
     if gender and gender != "All":
@@ -273,6 +292,31 @@ def fetch_schemes_from_sqlite_db(params):
         d["official_url"] = d.get("official_website") or d.get("source_url", "")
         results.append(d)
     conn.close()
+
+    if search_q and search_q.strip():
+        s_lower = search_q.strip().lower()
+        import re
+        q_words = [w for w in re.findall(r'\w+', s_lower) if len(w) > 2]
+        
+        def calculate_relevance(d):
+            score = 0.0
+            title_lower = str(d.get("title", "")).lower()
+            code_lower = str(d.get("code", "")).lower()
+            cat_lower = str(d.get("category_name", "") or d.get("category", "")).lower()
+            desc_lower = f"{d.get('legal_summary', '')} {d.get('simple_summary', '')} {d.get('benefits_summary', '')} {d.get('eligibility_description', '')}".lower()
+            
+            if s_lower in code_lower or s_lower in title_lower:
+                score += 10.0
+            
+            for qw in q_words:
+                if qw in code_lower: score += 5.0
+                if qw in title_lower: score += 4.0
+                if qw in cat_lower: score += 3.0
+                if qw in desc_lower: score += 1.0
+            return score
+        
+        results.sort(key=calculate_relevance, reverse=True)
+
     return results
 
 def get_scheme_by_id_or_code_sqlite(scheme_id):
@@ -754,65 +798,123 @@ def render_schemes_page():
 
     # RIGHT RESULTS PANEL
     with col_results:
-        # Search Box with Voice Button Integration
+        # Search Box with Conversational Voice Integration
         default_search = st.query_params.get("search", "")
-        s_col1, s_col2, s_col3 = st.columns([5, 1.5, 1.2])
+        s_col1, s_col2, s_col3 = st.columns([5, 1.6, 1.2])
         with s_col1:
             search_q = st.text_input(t["search_schemes"], value=default_search, placeholder=t["search_placeholder"], label_visibility="collapsed", key="search_text_input")
         with s_col2:
+            if st.button(t["speak"], key="toggle_voice_modal_btn", type="secondary", use_container_width=True):
+                st.session_state["show_voice_modal"] = not st.session_state.get("show_voice_modal", False)
+                st.rerun()
+        with s_col3:
+            if st.button("🔍", key="search_exec_btn", type="primary", use_container_width=True):
+                if search_q:
+                    st.query_params["search"] = search_q
+                st.rerun()
+
+        # CONVERSATIONAL VOICE SEARCH MODAL
+        if st.session_state.get("show_voice_modal", False):
             import streamlit.components.v1 as components
-            voice_html = f"""
-            <div style="margin:0; padding:0;">
-              <button id="mic-btn" onclick="startSpeech()" style="width:100%; height:40px; background:#ffffff; color:#00865a; border:1px solid #cbd5e1; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px; display:flex; align-items:center; justify-content:center; gap:4px;">
-                {t['speak']}
+            st.markdown("""
+            <div style="background:#ffffff; border:2px solid #00865a; border-radius:12px; padding:20px; margin-top:10px; margin-bottom:20px; box-shadow:0 10px 25px rgba(0,0,0,0.08);">
+            <h4 style="margin:0; color:#00865a; font-size:18px; font-weight:700;">🎙️ Conversational Voice Scheme Search</h4>
+            <p style="margin:6px 0 2px 0; color:#0f172a; font-size:15px; font-weight:600;">What are you looking for?</p>
+            <p style="margin:0 0 14px 0; color:#64748b; font-size:13px;">Tell me about the government support or scheme you need.</p>
+            """, unsafe_allow_html=True)
+            
+            v_lang = st.radio("Voice Language", ["English", "தமிழ்", "हिन्दी"], horizontal=True, key="v_lang_choice")
+            v_lang_code = "en-IN" if v_lang == "English" else ("ta-IN" if v_lang == "தமிழ்" else "hi-IN")
+            
+            if v_lang == "English":
+                sample_prompt = '💡 Example: "I need financial help for my daughter\'s education."'
+            elif v_lang == "தமிழ்":
+                sample_prompt = '💡 உதாரணம்: "எனக்கு வீடு கட்ட அரசு உதவி வேண்டும்."'
+            else:
+                sample_prompt = '💡 उदाहरण: "मुझे किसानों के लिए सरकारी योजना चाहिए।"'
+            
+            st.markdown(f'<div style="background:#f0fdf4; border:1px solid #bbf7d0; color:#166534; padding:8px 12px; border-radius:6px; font-size:13px; margin-bottom:14px;">{sample_prompt}</div>', unsafe_allow_html=True)
+            
+            voice_comp_html = f"""
+            <div style="text-align:center; padding:10px 0;">
+              <button id="v-mic-btn" onclick="startVoiceRec()" style="background:#00865a; color:#ffffff; border:none; border-radius:30px; padding:10px 24px; font-size:14px; font-weight:600; cursor:pointer; display:inline-flex; align-items:center; gap:8px;">
+                🎙️ Click to Speak ({v_lang})
               </button>
+              <div id="v-status" style="margin-top:10px; font-size:13px; font-weight:600; color:#475569;">Ready to listen...</div>
             </div>
             <script>
-            function startSpeech() {{
-              const btn = document.getElementById("mic-btn");
+            function startVoiceRec() {{
+              const btn = document.getElementById("v-mic-btn");
+              const status = document.getElementById("v-status");
               const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
               if (!SpeechRecognition) {{
-                alert("Speech recognition is not supported in this browser.");
+                status.innerHTML = "⚠️ Speech recognition is not supported in this browser. Please type below.";
                 return;
               }}
-              const recognition = new SpeechRecognition();
-              recognition.lang = "{speech_lang}";
-              recognition.interimResults = false;
-              btn.innerHTML = "🔴 {t['listening']}";
-              btn.style.background = "#fee2e2";
-              btn.style.color = "#dc2626";
+              const rec = new SpeechRecognition();
+              rec.lang = "{v_lang_code}";
+              rec.interimResults = false;
+              btn.style.background = "#dc2626";
+              btn.innerHTML = "🔴 Listening...";
+              status.innerHTML = "Listening in {v_lang}... Speak clearly now.";
 
-              recognition.onresult = function(event) {{
-                const text = event.results[0][0].transcript;
-                btn.innerHTML = "{t['speak']}";
-                btn.style.background = "#ffffff";
-                btn.style.color = "#00865a";
-                
+              rec.onresult = function(e) {{
+                const text = e.results[0][0].transcript;
+                btn.style.background = "#00865a";
+                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
+                status.innerHTML = "✅ Captured: " + text;
+
                 const url = new URL(window.parent.location.href);
-                url.searchParams.set("search", text);
+                url.searchParams.set("v_transcript", text);
                 window.parent.location.href = url.href;
               }};
 
-              recognition.onerror = function() {{
-                btn.innerHTML = "{t['speak']}";
-                btn.style.background = "#ffffff";
-                btn.style.color = "#00865a";
+              rec.onerror = function(err) {{
+                btn.style.background = "#00865a";
+                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
+                status.innerHTML = "⚠️ Voice error or mic permission denied. Please try again or type below.";
               }};
 
-              recognition.onend = function() {{
-                btn.innerHTML = "{t['speak']}";
-                btn.style.background = "#ffffff";
-                btn.style.color = "#00865a";
+              rec.onend = function() {{
+                btn.style.background = "#00865a";
+                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
               }};
 
-              recognition.start();
+              rec.start();
             }}
             </script>
             """
-            components.html(voice_html, height=45)
+            components.html(voice_comp_html, height=100)
+            
+            captured_transcript = st.query_params.get("v_transcript", st.session_state.get("v_text", ""))
+            
+            st.markdown("<p style='font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px;'>You said:</p>", unsafe_allow_html=True)
+            rec_text = st.text_input("Recognized Speech", value=captured_transcript, placeholder="Speech text will appear here (or type your request)...", key="voice_recognized_input", label_visibility="collapsed")
+            
+            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
+            with btn_col1:
+                if st.button("🔍 Search", key="voice_modal_search_btn", type="primary", use_container_width=True):
+                    if rec_text.strip():
+                        st.session_state["search_text_input"] = rec_text.strip()
+                        st.query_params["search"] = rec_text.strip()
+                        if "v_transcript" in st.query_params:
+                            del st.query_params["v_transcript"]
+                        st.session_state["show_voice_modal"] = False
+                        st.rerun()
+            with btn_col2:
+                if st.button("🔄 Try Again", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
+                    if "v_transcript" in st.query_params:
+                        del st.query_params["v_transcript"]
+                    st.session_state["v_text"] = ""
+                    st.rerun()
+            with btn_col3:
+                if st.button("❌ Cancel", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
+                    if "v_transcript" in st.query_params:
+                        del st.query_params["v_transcript"]
+                    st.session_state["show_voice_modal"] = False
+                    st.rerun()
 
-        with s_col3:
-            st.button("🔍", key="search_exec_btn", type="primary", use_container_width=True)
+            st.markdown("</div>", unsafe_allow_html=True)
             
         st.markdown(f'<p class="search-helper-text">{t["exact_match_helper"]}</p>', unsafe_allow_html=True)
 

@@ -76,16 +76,65 @@ class SchemeRepository:
             query = query.where(Scheme.disability_required == disability)
         if max_income is not None:
             query = query.where((Scheme.max_income >= max_income) | (Scheme.max_income.is_(None)))
-        if search:
-            search_term = f"%{search.lower()}%"
-            query = query.where(
-                (Scheme.title.ilike(search_term)) |
-                (Scheme.title_ta.ilike(search_term)) |
-                (Scheme.code.ilike(search_term)) |
-                (Scheme.legal_summary.ilike(search_term))
-            )
+        if search and search.strip():
+            s_raw = search.strip()
+            s_lower = s_raw.lower()
+            search_term = f"%{s_lower}%"
+            import re
+            words = [w.lower() for w in re.findall(r'\w+', s_raw) if len(w) > 2 and w.lower() not in {"need", "want", "for", "the", "and", "from", "looking", "help", "with"}]
+            
+            search_conditions = [
+                Scheme.title.ilike(search_term),
+                Scheme.title_ta.ilike(search_term),
+                Scheme.code.ilike(search_term),
+                Scheme.legal_summary.ilike(search_term),
+                Scheme.simple_summary.ilike(search_term),
+                Scheme.benefits_summary.ilike(search_term),
+                Scheme.eligibility_description.ilike(search_term)
+            ]
+            for w in words:
+                w_pattern = f"%{w}%"
+                search_conditions.extend([
+                    Scheme.title.ilike(w_pattern),
+                    Scheme.title_ta.ilike(w_pattern),
+                    Scheme.code.ilike(w_pattern),
+                    Scheme.category_name.ilike(w_pattern),
+                    Scheme.legal_summary.ilike(w_pattern),
+                    Scheme.simple_summary.ilike(w_pattern),
+                    Scheme.benefits_summary.ilike(w_pattern),
+                    Scheme.eligibility_description.ilike(w_pattern)
+                ])
+            query = query.where(or_(*search_conditions))
+
         result = await self.db.execute(query)
-        return result.scalars().all()
+        schemes = result.scalars().all()
+
+        if search and search.strip():
+            s_lower = search.strip().lower()
+            import re
+            q_words = [w for w in re.findall(r'\w+', s_lower) if len(w) > 2]
+            
+            def calculate_relevance(s):
+                score = 0.0
+                title_lower = (s.title or "").lower()
+                code_lower = (s.code or "").lower()
+                cat_lower = (s.category_name or "").lower()
+                desc_lower = f"{s.legal_summary or ''} {s.simple_summary or ''} {s.benefits_summary or ''} {s.eligibility_description or ''}".lower()
+                
+                if s_lower in code_lower or s_lower in title_lower:
+                    score += 10.0
+                
+                for qw in q_words:
+                    if qw in code_lower: score += 5.0
+                    if qw in title_lower: score += 4.0
+                    if qw in cat_lower: score += 3.0
+                    if qw in desc_lower: score += 1.0
+                return score
+            
+            schemes = list(schemes)
+            schemes.sort(key=calculate_relevance, reverse=True)
+
+        return schemes
 
     async def get_by_id(self, scheme_id: str) -> Optional[Scheme]:
         query = select(Scheme).options(

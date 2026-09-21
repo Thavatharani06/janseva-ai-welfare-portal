@@ -1,3 +1,4 @@
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -48,6 +49,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession
             detail="Could not validate credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+async def get_optional_current_user(token: Optional[str] = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Optional[User]:
+    """Return user if authenticated token is provided, else return None for guest requests."""
+    if not token:
+        return None
+    try:
+        payload = decode_access_token(token)
+        if not payload or "sub" not in payload or payload.get("type") != "access":
+            return None
+        user_repo = UserRepository(db)
+        return await user_repo.get_by_id(payload["sub"])
+    except Exception:
+        return None
 
 async def get_current_admin(current_user: User = Depends(get_current_user)) -> User:
     """Enforce strict ADMIN role check. Throw HTTP 403 if citizen."""
