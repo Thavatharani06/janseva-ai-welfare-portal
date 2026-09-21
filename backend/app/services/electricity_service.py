@@ -15,12 +15,18 @@ class ElectricityService:
         self.benefits = self._load_catalog()
 
     def _load_catalog(self) -> List[Dict[str, Any]]:
-        try:
-            if os.path.exists(self.catalog_path):
-                with open(self.catalog_path, "r", encoding="utf-8") as f:
-                    return json.load(f)
-        except Exception as e:
-            logger.error(f"Failed to load electricity benefit catalog: {e}")
+        possible_paths = [
+            self.catalog_path,
+            os.path.join(os.getcwd(), "backend", "data", "master_electricity_benefits.json"),
+            os.path.join(os.getcwd(), "data", "master_electricity_benefits.json")
+        ]
+        for path in possible_paths:
+            if path and os.path.exists(path):
+                try:
+                    with open(path, "r", encoding="utf-8") as f:
+                        return json.load(f)
+                except Exception as e:
+                    logger.error(f"Failed to load catalog from {path}: {e}")
         
         # Fallback default catalog
         return [

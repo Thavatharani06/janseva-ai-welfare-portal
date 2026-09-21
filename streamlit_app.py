@@ -1,10 +1,19 @@
 import streamlit as st
 import json
 import os
+import sys
 import base64
 import sqlite3
 import httpx
 import re
+
+# Ensure backend directory is in python path for Streamlit Cloud & local execution
+_BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+_BACKEND_DIR = os.path.join(_BASE_DIR, "backend")
+if _BACKEND_DIR not in sys.path:
+    sys.path.insert(0, _BACKEND_DIR)
+if _BASE_DIR not in sys.path:
+    sys.path.insert(0, _BASE_DIR)
 
 # Page Configuration
 st.set_page_config(
@@ -2089,7 +2098,10 @@ def render_dashboard_page():
             st.session_state["e_cat"] = e_cat
             st.session_state["e_state"] = e_state
 
-        from app.services.electricity_service import ElectricityService
+        try:
+            from app.services.electricity_service import ElectricityService
+        except ModuleNotFoundError:
+            from backend.app.services.electricity_service import ElectricityService
         e_service = ElectricityService()
         e_result = e_service.evaluate_eligibility(
             profile={"state": eval_state, "occupation": eval_occ},
