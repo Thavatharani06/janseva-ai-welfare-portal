@@ -983,59 +983,6 @@ def render_schemes_page():
                 if st.button("❌ Close", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
                     if "v_transcript" in st.query_params:
                         del st.query_params["v_transcript"]
-                    st.session_state["show_voice_modal"] = False
-                    st.rerun()
-
-            st.markdown("</div>", unsafe_allow_html=True)        const url = new URL(window.parent.location.href);
-                url.searchParams.set("v_transcript", text);
-                window.parent.location.href = url.href;
-              }};
-
-              rec.onerror = function(err) {{
-                btn.style.background = "#00865a";
-                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
-                status.innerHTML = "⚠️ Voice error or mic permission denied. Please try again or type below.";
-              }};
-
-              rec.onend = function() {{
-                btn.style.background = "#00865a";
-                btn.innerHTML = "🎙️ Click to Speak ({v_lang})";
-              }};
-
-              rec.start();
-            }}
-            </script>
-            """
-            components.html(voice_comp_html, height=100)
-            
-            captured_transcript = st.query_params.get("v_transcript", st.session_state.get("v_text", ""))
-            
-            st.markdown("<p style='font-size:14px; font-weight:700; color:#0f172a; margin-bottom:4px;'>You said:</p>", unsafe_allow_html=True)
-            rec_text = st.text_input("Recognized Speech", value=captured_transcript, placeholder="Speech text will appear here (or type your request)...", key="voice_recognized_input", label_visibility="collapsed")
-            
-            btn_col1, btn_col2, btn_col3 = st.columns([1, 1, 1])
-            with btn_col1:
-                if st.button("🔍 Search", key="voice_modal_search_btn", type="primary", use_container_width=True):
-                    if rec_text.strip():
-                        st.session_state["search_text_input"] = rec_text.strip()
-                        st.query_params["search"] = rec_text.strip()
-                        if "v_transcript" in st.query_params:
-                            del st.query_params["v_transcript"]
-                        st.session_state["show_voice_modal"] = False
-                        st.rerun()
-            with btn_col2:
-                if st.button("🔄 Try Again", key="voice_modal_retry_btn", type="secondary", use_container_width=True):
-                    if "v_transcript" in st.query_params:
-                        del st.query_params["v_transcript"]
-                    st.session_state["v_text"] = ""
-                    st.rerun()
-            with btn_col3:
-                if st.button("❌ Cancel", key="voice_modal_cancel_btn", type="secondary", use_container_width=True):
-                    if "v_transcript" in st.query_params:
-                        del st.query_params["v_transcript"]
-                    st.session_state["show_voice_modal"] = False
-                    st.rerun()
-
             st.markdown("</div>", unsafe_allow_html=True)
             
         st.markdown(f'<p class="search-helper-text">{t["exact_match_helper"]}</p>', unsafe_allow_html=True)
