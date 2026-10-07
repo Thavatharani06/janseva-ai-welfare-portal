@@ -1600,7 +1600,7 @@ def render_scheme_detail_page(scheme_id):
     col1, col2 = st.columns([2, 1])
     with col1:
         doc_html = "".join([f"<div style='padding:6px 0; color:#475569;'>✔ {d}</div>" for d in docs])
-                st.markdown(f"""
+        st.markdown(f"""
         <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
             <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:700; color:#0f172a; display:inline-block; margin-bottom:15px;">
                 📜 Gazette Reference: {go_ref}
