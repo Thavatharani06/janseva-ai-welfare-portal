@@ -4,7 +4,7 @@ import os
 import sys
 import base64
 import sqlite3
-import httpx
+import http
 import re
 import textwrap
 
@@ -1607,7 +1607,7 @@ def render_scheme_detail_page(scheme_id):
         st.subheader("Legal Provision & Summary")
         st.write(legal_summary)
         
-        st.subheader("💡 ELI10 Simple Explanation")
+        st.subheader("💡 Simple Explanation")
         st.info(eli10)
         
         st.subheader("📋 Required Documents Checklist")
