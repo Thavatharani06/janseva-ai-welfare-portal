@@ -6,6 +6,7 @@ import base64
 import sqlite3
 import httpx
 import re
+import textwrap
 
 # Ensure backend directory is in python path for Streamlit Cloud & local execution
 _BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -1600,8 +1601,9 @@ def render_scheme_detail_page(scheme_id):
     col1, col2 = st.columns([2, 1])
     with col1:
         doc_html = "".join([f"<div style='padding:6px 0; color:#475569;'>✔ {d}</div>" for d in docs])
-        st.markdown(f"""
-            <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
+               # Dedent HTML string to strip Python function indentation
+        card_content = textwrap.dedent(f"""
+        <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
             <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:700; color:#0f172a; display:inline-block; margin-bottom:15px;">
                 📜 Gazette Reference: {go_ref}
             </div>
@@ -1618,7 +1620,9 @@ def render_scheme_detail_page(scheme_id):
                 🏛️ <b>Data Provenance:</b> Sourced from <b>{src_name}</b>. JanSeva AI is an independent scheme discovery assistant.
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
+
+        st.markdown(card_content, unsafe_allow_html=True)
         
     with col2:
         st.markdown("<div style='background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
