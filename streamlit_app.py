@@ -1610,7 +1610,7 @@ def render_scheme_detail_page(scheme_id):
             <h3 style="color:#0f172a; margin-top:10px;">Legal Provision & Summary</h3>
             <div style="color:#334155; font-size:15px; line-height:1.6; margin-bottom:15px;">{legal_summary}</div>
             
-            <h4 style="color:#0f172a; margin-top:20px;">ELI10 Simple Explanation</h4>
+            <h4 style="color:#0f172a; margin-top:20px;">SArav ELI10 Simple Explanation</h4>
             <div style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600; margin-top:6px;">💡 {eli10}</div>
             
             <h4 style="color:#0f172a; margin-top:20px;">📋 Required Documents Checklist</h4>
