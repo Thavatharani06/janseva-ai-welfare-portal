@@ -1600,19 +1600,19 @@ def render_scheme_detail_page(scheme_id):
     col1, col2 = st.columns([2, 1])
     with col1:
         doc_html = "".join([f"<div style='padding:6px 0; color:#475569;'>✔ {d}</div>" for d in docs])
-        st.markdown(f"""
+                st.markdown(f"""
         <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
             <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:700; color:#0f172a; display:inline-block; margin-bottom:15px;">
                 📜 Gazette Reference: {go_ref}
             </div>
-            <h3 style="color:#0f172a;">Legal Provision & Summary</h3>
-            <p style="color:#334155; font-size:15px; line-height:1.6;">{legal_summary}</p>
+            <h3 style="color:#0f172a; margin-top:10px;">Legal Provision & Summary</h3>
+            <div style="color:#334155; font-size:15px; line-height:1.6; margin-bottom:15px;">{legal_summary}</div>
             
             <h4 style="color:#0f172a; margin-top:20px;">ELI10 Simple Explanation</h4>
-            <p style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600;">💡 {eli10}</p>
+            <div style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600; margin-top:6px;">💡 {eli10}</div>
             
             <h4 style="color:#0f172a; margin-top:20px;">📋 Required Documents Checklist</h4>
-            {doc_html}
+            <div style="margin-top:6px;">{doc_html}</div>
 
             <div style="margin-top:20px; padding:10px 14px; background:#f8fafc; border-radius:6px; font-size:12px; color:#64748b;">
                 🏛️ <b>Data Provenance:</b> Sourced from <b>{src_name}</b>. JanSeva AI is an independent scheme discovery assistant.
