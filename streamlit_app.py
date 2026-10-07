@@ -1601,28 +1601,24 @@ def render_scheme_detail_page(scheme_id):
     col1, col2 = st.columns([2, 1])
     with col1:
         doc_html = "".join([f"<div style='padding:6px 0; color:#475569;'>✔ {d}</div>" for d in docs])
-               # Dedent HTML string to strip Python function indentation
-        card_content = textwrap.dedent(f"""
-        <div style="background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;">
-            <div style="background:#f1f5f9; padding:8px 14px; border-radius:6px; font-weight:700; color:#0f172a; display:inline-block; margin-bottom:15px;">
-                📜 Gazette Reference: {go_ref}
-            </div>
-            <h3 style="color:#0f172a; margin-top:10px;">Legal Provision & Summary</h3>
-            <div style="color:#334155; font-size:15px; line-height:1.6; margin-bottom:15px;">{legal_summary}</div>
+                      # --- Scheme Detail Card (Native Streamlit Components) ---
+        st.caption(f"📜 Gazette Reference: {go_ref}")
+        
+        st.subheader("Legal Provision & Summary")
+        st.write(legal_summary)
+        
+        st.subheader("💡 ELI10 Simple Explanation")
+        st.info(eli10)
+        
+        st.subheader("📋 Required Documents Checklist")
+        req_docs = scheme.get("required_documents", ["Aadhaar Card", "Smart Ration Card"])
+        if isinstance(req_docs, list):
+            for doc in req_docs:
+                st.write(f"✓ **{doc}**")
+        else:
+            st.write(f"✓ **{req_docs}**")
             
-            <h4 style="color:#0f172a; margin-top:20px;">SArav ELI10 Simple Explanation</h4>
-            <div style="color:#00865a; background:#eef8f5; padding:12px 16px; border-radius:8px; font-weight:600; margin-top:6px;">💡 {eli10}</div>
-            
-            <h4 style="color:#0f172a; margin-top:20px;">📋 Required Documents Checklist</h4>
-            <div style="margin-top:6px;">{doc_html}</div>
-
-            <div style="margin-top:20px; padding:10px 14px; background:#f8fafc; border-radius:6px; font-size:12px; color:#64748b;">
-                🏛️ <b>Data Provenance:</b> Sourced from <b>{src_name}</b>. JanSeva AI is an independent scheme discovery assistant.
-            </div>
-        </div>
-        """)
-
-        st.markdown(card_content, unsafe_allow_html=True)
+        st.caption(f"🏛️ **Data Provenance:** Sourced from **{src_name}**. JanSeva AI is an independent welfare guidance platform.")
         
     with col2:
         st.markdown("<div style='background:white; padding:24px; border-radius:12px; border:1px solid #e2e8f0;'>", unsafe_allow_html=True)
